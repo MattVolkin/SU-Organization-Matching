@@ -1,6 +1,18 @@
 import './App.css'
 
-function App() {
+import SwipingDemo from './SwipingDemo.jsx'
+import TarotCard from './TarotCard.jsx'
+
+function App() { 
+  return (
+    <div className="container">
+      <TarotCard />
+    <h1>hello</h1>
+    </div>
+  )
+}
+
+function Choices() {
   return (
     <div className="App">
       <div className="w-3/4 m-auto">
@@ -32,6 +44,8 @@ function App() {
 
   );
 }
+
+
 
 const houses = [
   {
