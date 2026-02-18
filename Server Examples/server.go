@@ -6,15 +6,27 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"server-example/ent"
+
+	_ "github.com/lib/pq"
 )
 
+//host=localhost port=5432 user=dev_user password=testing
+
 func main() {
+	dsn := "host=localhost port=5432 user=dev_user password=testing"
+	client, err := ent.Open("postgres", dsn)
+	if err != nil {
+		log.Fatalf("failed opening connection to postgres: %v", err)
+	}
+	defer client.Close()
+
 	os.Chdir("../Svelte Examples/plain-svelte-app/dist")
 	http.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			var submission struct {
-				Name   string `json:"name"`
-				Club   string `json:"club"`
+				Name    string `json:"name"`
+				Club    string `json:"club"`
 				Contact string `json:"contact"`
 				Officer string `json:"officer"`
 			}
@@ -25,6 +37,16 @@ func main() {
 				return
 			}
 			fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer)
+			if submission.Officer == "yes" {
+				_, err := client.User.Create().
+					SetGoogleID(submission.Name).
+					Save(r.Context())
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					json.NewEncoder(w).Encode(map[string]string{"error": "Failed to save user"})
+					return
+				}
+			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(map[string]string{"message": "Form submitted successfully!"})

@@ -2,7 +2,10 @@ module server-example
 
 go 1.23
 
-require entgo.io/ent v0.14.5
+require (
+	entgo.io/ent v0.14.5
+	github.com/lib/pq v1.11.2
+)
 
 require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
