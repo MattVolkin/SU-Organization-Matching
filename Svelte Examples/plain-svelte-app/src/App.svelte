@@ -6,6 +6,20 @@
 
   function submit() {
     console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}`)
+    fetch('http://localhost:8080/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, club, contact, officer })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success:', data)
+    })
+    .catch((error) => {
+      console.error('Error:', error)
+    })
   }
 </script>
 
