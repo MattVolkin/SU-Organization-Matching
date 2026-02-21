@@ -6,7 +6,7 @@ import TarotCard from './TarotCard.jsx'
 function App() { 
   return (
     <div className="container">
-      <TarotCard />
+      <SwipingDemo />
     <h1>hello</h1>
     </div>
   )

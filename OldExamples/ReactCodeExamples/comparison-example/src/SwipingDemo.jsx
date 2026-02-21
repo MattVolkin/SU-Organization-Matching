@@ -62,7 +62,7 @@ function Cards() {
     // now show the animation and cards
 
     return (
-        <>
+        <div>
             {props.map(({x,y,rot,scale}, i) => (
                 <animated.div className={cardsStyle} key={i} style={{ x, y }}>
                     {/*describe/form the visual of the card*/}
@@ -74,16 +74,17 @@ function Cards() {
                     }} 
 
                     />   
+                    <h2>Hello, this is in the return of the cards function</h2>
                 </animated.div>
 
             ))} 
 
             <p>
-                hello
+                hello this is in the Cards function
             </p>
         
         
-        </>
+        </div>
     )
 
 
@@ -94,7 +95,8 @@ function Cards() {
 function SwipingDemo() {
     return (
         <div className='Deck-Of-Cards'>
-            <h1>this works</h1>
+            <Cards />
+            <h1>this works in swiping demo</h1>
         </div>
 
     )
