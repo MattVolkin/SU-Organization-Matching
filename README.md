@@ -21,9 +21,141 @@ Communication with other student orgs - Aidan and Tanner
 
 ## Task list
 
-- [ ] Create a webpage (using <s>React?</s> Svelte) to start showing concepts of how we want the user to interact with entering their information (Aidan and Matt)
-- [ ] Start building and researching the best way to set up a database, as well as what kind (Ben)
+- [ ] Create a webpage (using React?) to start showing concepts of how we want the user to interact with entering their information (Aidan and Matt)
+- [] Start building and researching the best way to set up a database, as well as what kind (Ben)
 - [x] Finish form for club officers to fill out to give data about the individual organizations across campus (Tanner)
 - [ ] Create brand guidelines document that discusses what colors and logos to use, as to fit into the Southwestern image (all)
 
+## Prerequisites
 
+The project requires the following software versions:
+
+Go: 1.23+
+
+PostgreSQL: 16+
+
+Node.js: 24+ (via NVM)
+
+### Linux (Debian-based)
+
+1. Install System Packages
+
+Install the core dependencies using apt:
+```
+sudo apt update
+sudo apt install golang-1.23-go golang-1.23-src postgresql nvm
+```
+
+2. Configure Node.js
+
+Use NVM to install the specific Node version:
+```
+nvm install 24
+nvm use 24
+```
+
+3. Configure PostgreSQL
+
+Edit the configuration file to allow local connections:
+```
+sudo nano /etc/postgresql/16/main/postgresql.conf
+```
+
+Find and uncomment: listen_addresses = 'localhost'
+
+4. Database Setup
+
+Access the PostgreSQL prompt to create the user and database:
+```
+sudo -u postgres psql
+```
+
+Run the following SQL commands:
+```SQL
+CREATE USER dev_user WITH PASSWORD 'testing';
+CREATE DATABASE dev_project_db OWNER dev_user;
+GRANT ALL PRIVILEGES ON DATABASE dev_project_db TO dev_user;
+\q
+```
+
+Restart the service to apply changes:
+```
+sudo systemctl restart postgresql
+```
+
+### Windows
+
+1. Install System Packages
+
+Open PowerShell as Administrator and run:
+
+#### Install Go and PostgreSQL
+```
+winget install GoLang.Go.1.23
+winget install PostgreSQL.PostgreSQL.16
+```
+
+#### Install NVM for Windows (requires a new terminal after install)
+```
+winget install CoreyButler.NVMforWindows
+```
+
+2. Configure Node.js
+
+Open a new PowerShell window and run:
+```
+nvm install 24.0.0
+nvm use 24.0.0
+```
+
+3. Database Setup
+
+PostgreSQL on Windows usually listens on localhost by default. To set up the user:
+
+Open the SQL Shell (psql) from the Start Menu.
+
+Log in with the postgres superuser (password set during installation).
+
+Run the following SQL commands:
+```SQL
+CREATE USER dev_user WITH PASSWORD 'testing';
+CREATE DATABASE dev_project_db OWNER dev_user;
+GRANT ALL PRIVILEGES ON DATABASE dev_project_db TO dev_user;
+\q
+```
+
+## Project Initialization
+
+After setting up the environment, run these commands in the project root folder:
+
+Initialize Database Schema
+
+#### Provide password 'testing' when prompted
+```
+psql -h localhost -U dev_user -d dev_project_db -f init_db.sql
+```
+
+Backend Setup (Go)
+```
+cd 'Server Examples'
+go mod tidy
+cd ..
+```
+
+Frontend Setup (Svelte)
+```
+cd 'Svelte Examples/plain-svelte-app'
+npm install
+```
+
+## Running:
+### Build Frontend:
+In the "Svelte Examples/plain-svelte-app" directory, run the following:
+```
+npm run build
+```
+### Run Server:
+In the "Server Examples" directory, run this:
+```
+go run server.go
+```
