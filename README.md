@@ -91,7 +91,7 @@ Open PowerShell as Administrator and run:
 
 #### Install Go and PostgreSQL
 ```
-winget install GoLang.Go.1.23
+winget install GoLang.Go --version 1.23
 winget install PostgreSQL.PostgreSQL.16
 ```
 
