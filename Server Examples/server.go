@@ -14,7 +14,7 @@ import (
 //host=localhost port=5432 user=dev_user password=testing
 
 func main() {
-	dsn := "host=localhost port=5432 user=dev_user password=testing"
+	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	client, err := ent.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
@@ -26,6 +26,7 @@ func main() {
 		if r.Method == http.MethodPost {
 			var submission struct {
 				Name    string `json:"name"`
+				Email   string `json:"email"`
 				Club    string `json:"club"`
 				Contact string `json:"contact"`
 				Officer string `json:"officer"`
@@ -36,14 +37,16 @@ func main() {
 				json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
 				return
 			}
-			fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer)
+			fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s, Email=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer, submission.Email)
 			if submission.Officer == "yes" {
 				_, err := client.User.Create().
 					SetGoogleID(submission.Name).
+					SetEmail(submission.Email).
 					Save(r.Context())
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					json.NewEncoder(w).Encode(map[string]string{"error": "Failed to save user"})
+					fmt.Println(err)
 					return
 				}
 			}

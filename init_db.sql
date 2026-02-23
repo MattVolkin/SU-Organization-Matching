@@ -2,18 +2,18 @@
 -- Using UUIDs is often better for security, but we'll stick to BIGINT for simplicity.
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. User Info Table
-CREATE TABLE user_info (
-    user_id SERIAL PRIMARY KEY,
+-- 2. User Table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
     google_id VARCHAR(255) UNIQUE NOT NULL, -- Login ID from Google
     email VARCHAR(255) UNIQUE NOT NULL,
     tags JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Club Info Table
-CREATE TABLE club_info (
-    club_id SERIAL PRIMARY KEY,
+-- 3. Club Table
+CREATE TABLE clubs (
+    id SERIAL PRIMARY KEY,
     club_name VARCHAR(255) NOT NULL,
     description TEXT,
     image_path VARCHAR(512), -- Store the path, not the file
@@ -25,14 +25,14 @@ CREATE TABLE club_info (
 
 -- 4. Club Leaders (Join Table for Many-to-Many)
 CREATE TABLE club_leaders (
-    club_id INTEGER REFERENCES club_info(club_id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES user_info(user_id) ON DELETE CASCADE,
+    club_id INTEGER REFERENCES clubs(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, user_id) -- Composite Primary Key (Implicit Index)
 );
 
 -- 5. Questions Table
 CREATE TABLE questions (
-    question_id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     question_type VARCHAR(50) NOT NULL, -- e.g., 'multiple_choice', 'text'
     -- Optimized: Use JSONB for multi-language support (English, Spanish, etc.)
     -- Example structure: {"en": "What is your name?", "es": "Cual es tu nombre?"}
@@ -42,9 +42,9 @@ CREATE TABLE questions (
 
 -- 6. Answers Table
 CREATE TABLE answers (
-    answer_id SERIAL PRIMARY KEY,
-    question_id INTEGER REFERENCES questions(question_id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES user_info(user_id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     answer_text TEXT NOT NULL,
     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -65,8 +65,8 @@ CREATE INDEX idx_answers_user_id ON answers(user_id);
 
 -- Permission Hardening
 -- Ensure the 'dev_user' owns these tables
-ALTER TABLE user_info OWNER TO dev_user;
-ALTER TABLE club_info OWNER TO dev_user;
+ALTER TABLE users OWNER TO dev_user;
+ALTER TABLE clubs OWNER TO dev_user;
 ALTER TABLE club_leaders OWNER TO dev_user;
 ALTER TABLE questions OWNER TO dev_user;
 ALTER TABLE answers OWNER TO dev_user;
