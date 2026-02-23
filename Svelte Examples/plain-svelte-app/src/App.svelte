@@ -3,15 +3,16 @@
   let club = ''
   let contact = ''
   let officer = ""
+  let email = ''
 
   function submit() {
-    console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}`)
+    console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}`)
     fetch('http://localhost:8080/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, club, contact, officer })
+      body: JSON.stringify({ name, club, contact, officer, email })
     })
     .then(response => response.json())
     .then(data => {
@@ -32,6 +33,9 @@
 
     <label for="club">Club:</label>
     <input id="club" type="text" bind:value={club} required />
+
+    <label for="email">Email:</label>
+    <input id="email" type="email" bind:value={email} required />
 
     <fieldset>
       <legend>Preferred contact</legend>
