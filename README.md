@@ -110,13 +110,26 @@ nvm use 24.0.0
 
 3. Database Setup
 
-PostgreSQL on Windows usually listens on localhost by default. To set up the user:
+PostgreSQL on Windows usually listens on localhost by default. First, set a password for the postgres superuser if you haven't already:
 
-Open the SQL Shell (psql) from the Start Menu.
+Open Command Prompt (not PowerShell) as Administrator and run:
+```
+"C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "ALTER USER postgres WITH PASSWORD 'postgres_password';"
+```
 
-Log in with the postgres superuser (password set during installation).
+If using PowerShell instead, run:
+```powershell
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "ALTER USER postgres WITH PASSWORD 'postgres_password';"
+```
 
-Run the following SQL commands:
+Then, open the SQL Shell (psql) from the Start Menu. When prompted:
+- **Server [localhost]**: Press Enter (default is fine)
+- **Database [postgres]**: Press Enter (default is fine)
+- **Port [5432]**: Press Enter (default is fine)
+- **Username [postgres]**: Press Enter (default is fine)
+- **Password**: Enter the password you just set (or the one set during installation)
+
+Then run the following SQL commands:
 ```SQL
 CREATE USER dev_user WITH PASSWORD 'testing';
 CREATE DATABASE dev_project_db OWNER dev_user;
