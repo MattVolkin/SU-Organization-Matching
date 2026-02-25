@@ -62,7 +62,8 @@ Node.js: 24+ (via NVM)
 Install the core dependencies using apt:
 ```
 sudo apt update
-sudo apt install golang-1.23-go golang-1.23-src postgresql nvm
+sudo apt install golang-1.23-go golang-1.23-src postgresql
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
 ```
 
 2. Configure Node.js
