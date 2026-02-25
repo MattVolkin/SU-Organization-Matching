@@ -26,7 +26,26 @@ Communication with other student orgs - Aidan and Tanner
 - [x] Finish form for club officers to fill out to give data about the individual organizations across campus (Tanner)
 - [ ] Create brand guidelines document that discusses what colors and logos to use, as to fit into the Southwestern image (all)
 
-## Prerequisites
+## SSH Setup
+
+### Setup Script
+In a command prompt run:
+
+Windows: `ssh_setup.bat`
+
+Linux: `bash ssh_setup.sh`
+
+These scripts will install and configure the necessary connector software. It will open a web browser and prompt for a login, simply enter your SU email, then the code it emails you, then grant access. 
+
+### Connecting 
+* Username is your name (lowercase). so for Ben, the username is `ben`. You can connect with `ssh ben@capstone` (replacing `ben` with your username)
+* first-time password should be `ubuntu`, it will prompt you to change this
+* `~/capstone` is a shared folder with much more storage than the home directory, try to keep shared files in there. 
+* I have the server set up to host localhost:8080 at [capstone.benmckallip.com](capstone.benmckallip.com), so we can run the server and visit that site to test any changes.
+
+
+## Installing
+### Prerequisites
 
 The project requires the following software versions:
 
