@@ -1,9 +1,12 @@
 <script>
-export let userType = $state("");
+ let {userType= user} = $props();
 </script>
 
-<header>
+<MainHeader>
   <h1>PLACEHOLDER	<!-- TODO: Replace with actual title --></h1>
+  <div class = "login_button">
+    <button type="button">Login</button> <-- put in div class login_button to style it with css -->
+  </div>
   <nav>
     <a href="/">Home</a>
     <a href="/about">About this Project</a>
@@ -16,4 +19,4 @@ export let userType = $state("");
     {/if}
     <!-- Add more links as needed -->
   </nav>
-</header>
+</MainHeader>
