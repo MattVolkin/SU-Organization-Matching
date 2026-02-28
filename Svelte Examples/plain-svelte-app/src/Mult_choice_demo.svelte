@@ -33,24 +33,24 @@
   <h1>Club Form</h1>
 
   <form on:submit|preventDefault={submit}>
-
+    
     <fieldset>
       <legend>Gender</legend>
       <label>
         <input type="radio" name="gender" value="Man" bind:group={gender} required />
-        Man
+        Man <br>
       </label>
       <label>
         <input type="radio" name="gender" value="Woman" bind:group={gender} required />
-        Woman
+        Woman <br>
       </label>
 			<label>
         <input type="radio" name="gender" value="Non-Binary" bind:group={gender} required />
-        Non-Binary
+        Non-Binary <br>
       </label>
 			<label>
         <input type="radio" name="gender" value="Other" bind:group={gender} required />
-        Other
+        Other <br>
       </label>
 			<label>
         <input type="radio" name="gender" value="Prefer not to say" bind:group={gender} required />
@@ -62,35 +62,35 @@
       <legend>Race/Ethnicity (Select all that apply)</legend>
       <label>
         <input type="checkbox" name="race" value="American Native/Alaska Native" bind:group={race} required />
-        American Native/Alaska Native
+        American Native/Alaska Native <br>
       </label>
 			<label>
         <input type="checkbox" name="race" value="Asian" bind:group={race} required />
-        Asian
+        Asian <br>
       </label>
 			<label>
         <input type="checkbox" name="race" value="Black or African American" bind:group={race} required />
-        Black or African American
+        Black or African American <br>
       </label>
       <label>
         <input type="checkbox" name="race" value="Hispanic or Latino" bind:group={race} required />
-        Hispanic or Latino
+        Hispanic or Latino <br>
       </label>
 			<label>
         <input type="checkbox" name="race" value="Middle Eastern or North African" bind:group={race} required />
-        Middle Eastern or North African
+        Middle Eastern or North African <br>
       </label>
 			<label>
         <input type="checkbox" name="race" value="Native Hawaiian or Pacific Islander" bind:group={race} required />
-        Native Hawaiian or Pacific Islander
+        Native Hawaiian or Pacific Islander <br>
       </label>
 			<label>
         <input type="checkbox" name="race" value="White" bind:group={race} required />
-        White
+        White <br>
       </label>
 			<label>
-        <input type="checkbox" name="race" value="Prefer not to say" bind:group={race} required />
-        Prefer not to say
+        <input type="radio" name="race" value="Prefer not to say" bind:group={race} required />
+        Prefer not to say <br>
       </label>
     </fieldset>
 
@@ -98,39 +98,39 @@
       <legend>Religion</legend>
       <label>
         <input type="radio" name="religion" value="Protestantism" bind:group={religion} required />
-        Protestantism
+        Protestantism <br>
       </label>
       <label>
         <input type="radio" name="religion" value="Catholocism" bind:group={religion} required />
-        Catholocism
+        Catholocism <br>
       </label>
 			<label>
         <input type="radio" name="religion" value="Judaism" bind:group={religion} required />
-        Judaism
+        Judaism <br>
       </label>
 				<label>
         <input type="radio" name="religion" value="Islam" bind:group={religion} required />
-        Islam
+        Islam <br>
 				</label>
 			<label>
         <input type="radio" name="religion" value="Buddhism" bind:group={religion} required />
-        Buddhism
+        Buddhism <br>
       </label>
 			<label>
         <input type="radio" name="religion" value="Hinduism" bind:group={religion} required />
-        Hinduism
+        Hinduism <br>
       </label>
 			<label>
         <input type="radio" name="religion" value="No religion" bind:group={religion} required />
-        No religion
+        No religion <br>
       </label>
 			<label>
         <input type="radio" name="religion" value="Other" bind:group={religion} required />
-        Other
+        Other <br>
       </label>
 			<label>
         <input type="radio" name="religion" value="Prefer not to say" bind:group={religion} required />
-        Prefer not to say
+        Prefer not to say <br>
       </label>
     </fieldset>
 
