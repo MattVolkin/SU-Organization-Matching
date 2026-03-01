@@ -1,47 +1,77 @@
 <script>
- let {userType= "user"} =$props() ;
+  export let userType = "user";
 </script>
-<div class="header">
-  <h1>SU Organization Matching Tool</h1>
-  <div class="login_button">
-    <button type="button">Login</button> 
+
+<header class="header">
+  <div class="header-content">
+    <h1>SU Organization Matching Tool</h1>
+    <button class="login-button" type="button">Login</button>
   </div>
-  <nav>
+  <nav class="nav">
     <a href="/">Home</a>
     <a href="/about">About this Project</a>
     <a href="/howto">How To Use this tool</a>
     {#if userType === 'admin'}
       <a href="/create">Create New Club</a>
-      <a href="/change-user-type">Change User Type</a> <!-- TODO: Implement change user type functionality -->
+      <a href="/change-user-type">Change User Type</a>
     {:else if userType === 'officer'}
-      <a href="/manage-club">Manage Club</a> <!-- TODO: Implement manage club functionality -->
+      <a href="/manage-club">Manage Club</a>
     {/if}
-    <!-- Add more links as needed -->
   </nav>
-</div>
+</header>
+
 <style>
   .header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
-    background-color: #f8f8f8;
+    margin-bottom: 1rem;
   }
 
-  nav a {
-    margin-right: 1rem;
-    text-decoration: none;
-    color: #333;
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
   }
 
-  nav a:hover {
-    text-decoration: underline;
-  }
-
-  .login_button button {
-    padding: 0.5rem 1rem;
+  .login-button {
+    padding: 0.6rem 1.5rem;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .login-button:hover {
+    background-color: #2980b9;
+  }
+
+  .nav {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+  }
+
+  .nav a:hover {
+    color: #3498db;
   }
 </style>
+
 
