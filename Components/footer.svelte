@@ -1,25 +1,18 @@
 <div class="footer">
-  <div class="content-links">
-    <p>Links</p>
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/about">About this Project</a></li>
-      <li><a href="/howto">How To Use this tool</a></li>
-    </ul>
-  </div>
 
   <div class="capstone-info">
-    <p>This tool was made as Computer Science Capstone at Southwestern University</p>
-    <p>By: Aidan Balakrishnan 26’, Tanner Klein 26’, Ben McKallip 26’ and Matthew Volkin 26’</p>
+    <p>This tool was made as Computer Science Capstone at Southwestern University<br>By: Aidan Balakrishnan 26’, Tanner Klein 26’, Ben McKallip 26’ and Matthew Volkin 26’</p>
+    <p></p>
   </div>
 </div>
 
 <style>
-  .footer {
+   .footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
+    box-sizing: border-box; /* fixes overflow with padding */
     background-color: #1f2937;
     color: #fff;
     padding: 0.75rem 1rem;
@@ -30,16 +23,15 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 2rem;
+    flex-wrap: wrap; /* lets content wrap instead of going off-screen */
   }
 
-  .content-links {
-    flex: 1;
-    text-align: left;
-  }
+
 
   .capstone-info {
-    flex: 1;
+    flex: 1 1 320px;
     text-align: right;
+    overflow-wrap: anywhere; /* wraps long lines safely */
   }
 
   .content-links ul {
