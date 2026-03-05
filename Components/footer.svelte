@@ -33,18 +33,4 @@
     text-align: right;
     overflow-wrap: anywhere; /* wraps long lines safely */
   }
-
-  .content-links ul {
-    margin: 0;
-    padding-left: 1rem;
-  }
-
-  .content-links a {
-    color: #fff;
-    text-decoration: none;
-  }
-
-  .content-links a:hover {
-    color: #93c5fd;
-  }
 </style>
