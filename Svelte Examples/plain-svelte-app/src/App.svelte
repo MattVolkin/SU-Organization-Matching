@@ -1,4 +1,6 @@
 <script>
+  import Header from '../../../Components/header.svelte'
+  import Footer from '../../../Components/footer.svelte'
   let name = ''
   let club = ''
   let contact = ''
@@ -24,6 +26,7 @@
   }
 </script>
 
+<Header />
 <main>
   <h1>Club Form</h1>
 
@@ -63,6 +66,7 @@
     <button type="submit">Submit</button>
   </form>
 </main>
+<Footer />
 
 <style>
   main {
