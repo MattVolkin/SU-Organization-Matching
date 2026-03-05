@@ -30,6 +30,7 @@
     padding: 1rem 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 		text-align: center;
+    /* width: 100%; */
   }
 
      .header-content {

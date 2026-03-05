@@ -71,7 +71,7 @@
 <style>
   main {
     padding-top: 140px;  
-    max-width: 100%;
+    width: 25rem;
     margin: 2rem auto 120px auto;
     font-family: system-ui, sans-serif;
   }
