@@ -70,8 +70,9 @@
 
 <style>
   main {
-    max-width: 420px;
-    margin: 2rem auto;
+    padding-top: 140px;  
+    max-width: 100%;
+    margin: 2rem auto 120px auto;
     font-family: system-ui, sans-serif;
   }
 
