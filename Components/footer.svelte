@@ -7,30 +7,46 @@
 </div>
 
 <style>
-   .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
+  .footer {
+    position: relative;
     width: 100%;
-    box-sizing: border-box; /* fixes overflow with padding */
+    box-sizing: border-box;
     background-color: #1f2937;
     color: #fff;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 2rem;
-    flex-wrap: wrap; /* lets content wrap instead of going off-screen */
+    margin-top: auto;
+    text-align: center;
   }
 
-
-
   .capstone-info {
-    flex: 1 1 320px;
-    text-align: right;
-    overflow-wrap: anywhere; /* wraps long lines safely */
+    overflow-wrap: anywhere;
+  }
+
+  .capstone-info p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Desktop styles */
+  @media (min-width: 768px) {
+    .footer {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+      text-align: left;
+    }
+
+    .capstone-info {
+      flex: 1 1 320px;
+      text-align: center;
+    }
+
+    .capstone-info p {
+      font-size: 1rem;
+    }
   }
 </style>

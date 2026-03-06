@@ -4,8 +4,9 @@
   let name = ''
   let club = ''
   let contact = ''
-  let officer = ""
+  let officer = ''
   let email = ''
+  let login = ''
 
   function submit() {
     console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}`)
@@ -59,6 +60,17 @@
       </label>
       <label>
         <input type="radio" name="officer" value="no" bind:group={officer} required />
+        No
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>Login</legend>
+      <label>
+        <input type="radio" name="login" value="yes" bind:group={login} required />
+        Yes
+      </label>
+      <label>
+        <input type="radio" name="login" value="no" bind:group={login} required />
         No
       </label>
     </fieldset>
