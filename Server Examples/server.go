@@ -13,6 +13,14 @@ import (
 
 //host=localhost port=5432 user=dev_user password=testing
 
+type UserPerms int
+
+const (
+	Admin UserPerms = iota
+	Officer
+	Member
+)
+
 func main() {
 	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	client, err := ent.Open("postgres", dsn)
@@ -34,10 +42,11 @@ func main() {
 			Club    string `json:"club"`
 			Contact string `json:"contact"`
 			Officer string `json:"officer"`
+			Login   string `json:"login"`
 		}
 		checkJson(w, r, &submission)
 
-		fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s, Email=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer, submission.Email)
+		fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s, Email=%s, Login=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer, submission.Email, submission.Login)
 		if submission.Officer == "yes" {
 			query := func() (any, error) {
 				return client.User.Create().
@@ -47,6 +56,7 @@ func main() {
 			}
 			databaseQuery(query, dbError)
 		}
+		
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Form submitted successfully!"})
@@ -72,7 +82,7 @@ func checkUserAuthMiddlware(next http.Handler) http.Handler {
 	})
 }
 
-func checkUserRoleMiddleware(next http.Handler) http.Handler {
+func checkUserRoleMiddleware(user string, role UserPerms, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if the user has the required role (this is just a placeholder)
 		hasRole := true // Replace with actual role-checking logic
