@@ -1,12 +1,13 @@
 <script>
+
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
-  
+  //setup for the questions
   let genderoptions = ["Man", "Woman", "Non-Binary", "Other", "Prefer not to say"]
   let raceoptions = ["American Native/Alaska Native", "Asian", "Black or African American", "Hispanic or Latino", "Middle Eastern or North African", "Native Hawaiian or Pacific Islander", "White", "Prefer not to say"]
   let religionoptions = ["Protestantism", "Catholocism", "Judaism", "Islam", "Buddhism", "Hinduism", "No religion", "Other", "Prefer not to say"]
   let majoroptions = ["Anthropology", "Applied Physics", "Art (Studio)", "Art History", "Biochemistry", "Biology", "Business", "Chemistry", "Classics", "Communication Studies", "Computational Mathematics", "Computer Science", "Pre-Dentistry", "Economics", "Education", "Pre-Engineering", "English", "Environmental Studies", "Feminist Studies", "French", "German", "Greek", "Health Professions", "History", "International Studies", "Kinesiology", "Latin", "Latin American & Border Studies", "Pre-Law", "Mathematics", "Pre-Med", "Pre-Ministry", "Music", "Pre-Nursing", "Pre-Occupational Therapy", "Philosophy", "Physics", "Political Science", "Psychology", "Pre-Physician Assistant", "Pre-Physical Therapy", "Religion", "Sociology", "Spanish", "Theatre", "Undecided"]
-  
+  //feilds in the form
   let name = ''
   let club = ''
   let contact = ''
@@ -16,15 +17,15 @@
   let race = ''
   let religion = ''
   let major = ''
-
+/**@function submit - Handles form submission */
   function submit() {
-    console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}, Gender: ${gender}, Race: ${race}, Religion: ${religion}, Major: ${major}`)
+    console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}, Gender: ${gender}, Race: ${race}, Religion: ${religion}, Major: ${major}`)//for debuging logs the form data
     fetch('http://localhost:8080/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, club, contact, officer, email, gender, race, religion, major })
+      body: JSON.stringify({ name, club, contact, officer, email, gender, race, religion, major })//sends the form data to the backend server as a JSON object
     })
     .then(response => response.json())
     .then(data => {
@@ -42,11 +43,11 @@
 
   <form on:submit|preventDefault={submit}>
     <label for="name">Name:</label>
-    <input id="name" type="text" bind:value={name} required />
+    <input id="name" type="text" bind:value={name} required /> <!-- Text input for the user's name, bound to the 'name' variable -->
 
     <fieldset>
       <legend>Gender</legend>
-      {#each genderoptions as option}
+      {#each genderoptions as option} <!-- Loop through gender options to create radio buttons -->
         <label>
           <input type="radio" name="gender" value={option} bind:group={gender} required />
           {option}
@@ -55,10 +56,10 @@
     </fieldset>
 
     <fieldset>
-      <legend>Race/Ethnicity (Select all that apply)</legend>
-      {#each raceoptions as option}
+      <legend>Race/Ethnicity (Select all that apply)</legend> <!-- Fieldset for race/ethnicity options -->
+      {#each raceoptions as option} <!-- Loop through race options to create checkboxes -->
         <label>
-          <input type="checkbox" name="race" value={option} bind:group={race} required />
+          <input type="checkbox" name="race" value={option} bind:group={race} required />     
           {option}
         </label>
       {/each}
@@ -68,7 +69,7 @@
       <legend>Intended Major(s)/Program of Study</legend>
       <select multiple bind:value={major} required>
         <option value="">Select a major...</option>
-        {#each majoroptions as option}
+        {#each majoroptions as option} <!-- Loop through major options to create dropdown options -->
           <option value={option}>{option}</option>
         {/each}
       </select>
@@ -76,7 +77,7 @@
 
     <fieldset>
       <legend>Religion</legend>
-      {#each religionoptions as option}
+      {#each religionoptions as option} <!-- Loop through religion options to create radio buttons -->
         <label>
           <input type="radio" name="religion" value={option} bind:group={religion} required />
           {option}
