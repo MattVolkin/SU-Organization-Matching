@@ -1,5 +1,15 @@
-<!-- creates a header for the pages with a login button and navigation links. The links shown depend on the user type (admin, officer, or regular user) -->
+<!-- @component 
+  creates a header for the pages with a login button and navigation links. The links shown depend on the user type (admin, officer, or regular user) 
+  **Notes** - defaults to normal user view if no user type is provided, 
+  **TODO** - login button is non-functional and just a placeholder for now, links are placeholders that will need to be updated once the actual pages are created
+ -->
 <script>
+/**
+ * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
+ * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
+ * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
+ * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
+ */
   let { userType = "user" } = $props();
   let isMenuOpen = $state(false);
 
@@ -18,6 +28,7 @@
     <!-- TODO :Work on login logic-->
     <button class="login-button" type="button">Login</button>
   </div>
+  <!-- Mobile hamburger menu toggle button -->
   <button
     class="menu-toggle"
     type="button"
@@ -32,8 +43,9 @@
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
     <a href="/" onclick={closeMenu}>Home</a>
-    <a href="/about" onclick={closeMenu}>About this Project</a>
-    <a href="/howto" onclick={closeMenu}>How To Use this tool</a>
+    <a href="/about" onclick={closeMenu}>About This Project</a>
+    <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
+    <!-- Show admin-only and officer-only links based on user type -->
     {#if userType === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>
       <a href="/change-user-type" onclick={closeMenu}>Change User Type</a>
@@ -44,6 +56,8 @@
 </header>
 
 <style>
+
+
   .header {
     background-color: #2c3e50;
     color: white;
@@ -123,24 +137,24 @@
     height: 2px;
     background-color: currentColor;
   }
-
+/*  adjust the position of the lines in the hamburger menu icon for better spacing and visual balance on mobile devices */
   .menu-icon::before {
     top: -0.35rem;
   }
-
+/*` Adjust the position of the bottom line of the hamburger menu icon to ensure proper spacing between the lines and maintain a visually balanced appearance on mobile devices. */
   .menu-icon::after {
     top: 0.35rem;
   }
 
   .nav {
-    display: flex;
+    display:   flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
     width: 100%;
     gap: 0;
   }
-
+  /* Style the navigation links to be evenly spaced and visually distinct, with a hover effect for better user experience */
   .nav a {
     color: white;
     text-decoration: none;
@@ -151,7 +165,7 @@
     padding: 0.5rem;
     border: none;
   }
-
+  /* Add a subtle hover effect to nav links to let the user know they are clickable */
   .nav a:hover {
     color: #3498db;
   }
