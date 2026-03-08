@@ -1,8 +1,14 @@
-<!-- @component 
-  creates a header for the pages with a login button and navigation links. The links shown depend on the user type (admin, officer, or regular user) 
-  **Notes** - defaults to normal user view if no user type is provided, 
-  **TODO** - login button is non-functional and just a placeholder for now, links are placeholders that will need to be updated once the actual pages are created
- -->
+<!-- @component
+  Creates a header for pages with a login button and navigation links.
+  The links shown depend on the user type (admin, officer, or regular user).
+
+  Notes:
+  - Defaults to normal user view if no user type is provided.
+
+  **TODO**:
+  - Login button is non-functional and currently a placeholder.
+  - Links are placeholders and should be updated once real pages are created.
+-->
 <script>
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
@@ -137,7 +143,7 @@
     height: 2px;
     background-color: currentColor;
   }
-/*  adjust the position of the lines in the hamburger menu icon for better spacing and visual balance on mobile devices */
+/* adjust the position of the lines in the hamburger menu icon for better spacing and visual balance on mobile devices */
   .menu-icon::before {
     top: -0.35rem;
   }
@@ -147,7 +153,7 @@
   }
 
   .nav {
-    display:   flex;
+    display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
