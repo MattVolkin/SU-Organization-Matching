@@ -2,7 +2,7 @@
   import{ onMount } from 'svelte';
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
-  let results = []
+  let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
 
   async function getResults() {
@@ -30,7 +30,22 @@
 </script>
   
 <Header />
-  <h1> Results</h1>
+  <h1>{results[pageNum-1]}</h1>
+  <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds </h2>
+
+  <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
+  <button onclick={nextPage}>Next</button>
+  <h3> Activities we do include</h3>
+  <ul>
+    <li>Playing games</li>
+    <li>Trivia nights </li>
+    <li>Presentation nights</li>
+    <li>Video game tournoments</li>
+    <li>Scavenger hunts</li>
+  </ul>
+  <h3>Meeting Information </h3>
+  <p> Every Thursday at 6:30 pm in FJS 310 (the CS lounge)</p>
+
 <Footer />
 <style>
   main {
