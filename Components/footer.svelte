@@ -1,12 +1,16 @@
+<!-- @component 
+  creates a footer for the pages with capstone information 
+ -->
 <div class="footer">
 
   <div class="capstone-info">
     <p>This tool was made as Computer Science Capstone at Southwestern University<br>By: Aidan Balakrishnan 26’, Tanner Klein 26’, Ben McKallip 26’ and Matthew Volkin 26’</p>
-    <p></p>
   </div>
 </div>
 
+<!-- Footer styles -->
 <style>
+/* Style the footer to be visually distinct and provide clear information about the project and its creators, with responsive design for different screen sizes */
   .footer {
     position: relative;
     width: 100%;
