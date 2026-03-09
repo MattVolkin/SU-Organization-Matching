@@ -6,7 +6,9 @@ type organization struct {
 	name                string
 	personality         []string
 	activities          []string
-	demographics        []string
+	genders             []string
+	ethnicities         []string
+	religions           []string
 	strict_demographics bool
 	dedicated_majors    []string
 	associated_majors   []string // this field will be blank for users
@@ -31,8 +33,8 @@ func main() {
 	var p4p organization
 	p4p.name = "Pirates for Pride"
 	p4p.personality = []string{"Welcoming", "Caring", "Outgoing", "Open Minded", "Enthusiastic", "Social"}
-	p4p.activities = []string{"Arts & Crafts", "Discussion"}
-	p4p.demographics = []string{"Non-Binary", "Other"}
+	p4p.activities = []string{"Social Justice", "Arts & Crafts", "Discussion"}
+	p4p.genders = []string{"Non Binary", "Other"}
 	p4p.other = []string{"Queer"}
 
 	// I am a part of the first three orgs, I am not a part of the ones below
@@ -42,26 +44,55 @@ func main() {
 	exercise_is_medicine.personality = []string{"Welcoming", "Hard Working", "Caring", "Collaborative"}
 	exercise_is_medicine.activities = []string{"Exercise", "Animal Care"}
 
+	var kdc organization
+	kdc.name = "Kappa Delta Chi"
+	kdc.personality = []string{"Hard Working", "Caring", "Eager to Learn", "A Leader", "Social"}
+	kdc.activities = []string{"Fundraising", "Social Justice", "Retreats"}
+	kdc.genders = []string{"Woman"}
+	kdc.ethnicities = []string{"Latino"}
+	kdc.other = []string{"Greek Life"}
+
+	var classics_club organization
+	classics_club.name = "Classics Club"
+	classics_club.personality = []string{"Outgoing", "Eager to Learn", "Enthusiastic", "Social", "Fun"}
+	classics_club.activities = []string{"Board Games", "Arts & Crafts", "Giving Presentations"}
+	classics_club.dedicated_majors = []string{"Classics"}
+
 	// using info I would put in for the sake of testing
 	var tanner organization
 	tanner.name = "Tanner Klein"
 	tanner.personality = []string{"Welcoming", "Hard Working", "Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "A Leader", "Enthusiastic"}
 	tanner.activities = []string{"Board Games", "Video Games", "Arts & Crafts", "Giving Presentations"}
-	tanner.demographics = []string{"Man", "White", "No Religion"}
+	tanner.genders = []string{"Man"}
+	tanner.ethnicities = []string{"White"}
+	tanner.religions = []string{"No Religion"}
 	tanner.dedicated_majors = []string{"Mathematics", "Computer Science"}
 	tanner.other = []string{"Queer"}
 
-	compare(tanner, cs_club)
-	compare(cs_club, cs_club)
+	// compare(tanner, cs_club)
+	// compare(cs_club, cs_club)
 
-	compare(tanner, su_tabletop)
-	compare(su_tabletop, su_tabletop)
+	// compare(tanner, su_tabletop)
+	// compare(su_tabletop, su_tabletop)
 
-	compare(tanner, p4p)
-	compare(p4p, p4p)
+	// compare(tanner, p4p)
+	// compare(p4p, p4p)
 
-	compare(tanner, exercise_is_medicine)
-	compare(exercise_is_medicine, exercise_is_medicine)
+	// compare(tanner, exercise_is_medicine)
+	// compare(exercise_is_medicine, exercise_is_medicine)
+
+	// compare(tanner, kdc)
+	// compare(kdc, kdc)
+
+	// compare(tanner, classics_club)
+	// compare(classics_club, classics_club)
+
+	// trying out comparing orgs to each other
+	// we might be able to make a "similar orgs" button
+	compare(cs_club, su_tabletop)
+	compare(cs_club, p4p)
+	compare(p4p, cs_club) // order matters right now (it probably shouldn't though)
+	compare(su_tabletop, p4p)
 
 	// the user's answers will be passed in and put into an organization struct.
 	// they will then be compared to and scored with every organization.
@@ -123,18 +154,33 @@ func activity_scoring(user organization, org organization) float32 {
 // Takes a user's answers and an organization's information and
 // returns a score based on how closely the demographics match
 func demographic_scoring(user organization, org organization) float32 { // TODO: Rework this it doesn't work with the multiple choice questions
-	if len(org.demographics) == 0 { // remove possibility of dividing by 0
+	var total_demographics int = len(org.genders) + len(org.ethnicities) + len(org.religions)
+	if total_demographics == 0 { // remove possibility of dividing by 0
 		return 0
 	}
 	var score float32 = 0
-	for i := 0; i < len(user.demographics); i++ {
-		for j := 0; j < len(org.demographics); j++ {
-			if user.demographics[i] == org.demographics[j] {
+	for i := 0; i < len(user.genders); i++ {
+		for j := 0; j < len(org.genders); j++ {
+			if user.genders[i] == org.genders[j] {
 				score++
 			}
 		}
 	}
-	score = score / float32(len(org.demographics))
+	for i := 0; i < len(user.ethnicities); i++ {
+		for j := 0; j < len(org.ethnicities); j++ {
+			if user.ethnicities[i] == org.ethnicities[j] {
+				score++
+			}
+		}
+	}
+	for i := 0; i < len(user.religions); i++ {
+		for j := 0; j < len(org.religions); j++ {
+			if user.religions[i] == org.religions[j] {
+				score++
+			}
+		}
+	}
+	score = score / float32(total_demographics)
 	return score
 }
 
