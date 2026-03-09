@@ -72,10 +72,27 @@ func main() {
 		sessions: make(map[string]*UserSession),
 	}
 
+	googleClientID := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
+	googleClientSecret := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_SECRET"))
+	googleRedirectURL := strings.TrimSpace(os.Getenv("GOOGLE_REDIRECT_URL"))
+	if googleRedirectURL == "" {
+		googleRedirectURL = "http://localhost:8080/auth/callback"
+	}
+
+	if googleClientID == "" {
+		log.Fatal("missing GOOGLE_CLIENT_ID environment variable")
+	}
+	if googleClientSecret == "" {
+		log.Fatal("missing GOOGLE_CLIENT_SECRET environment variable")
+	}
+
+	log.Printf("Google OAuth redirect URL: %s", googleRedirectURL)
+	log.Printf("Google OAuth client ID suffix: %s", redactSuffix(googleClientID, 10))
+
 	googleOAuth := &oauth2.Config{
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback",
+		ClientID:     googleClientID,
+		ClientSecret: googleClientSecret,
+		RedirectURL:  googleRedirectURL,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -481,4 +498,11 @@ func (sess *SessionStore) removeSession(token string) {
 	sess.mu.Lock()
 	defer sess.mu.Unlock()
 	delete(sess.sessions, token)
+}
+
+func redactSuffix(value string, keep int) string {
+	if keep <= 0 || len(value) <= keep {
+		return "[redacted]"
+	}
+	return "..." + value[len(value)-keep:]
 }
