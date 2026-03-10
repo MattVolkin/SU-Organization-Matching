@@ -61,7 +61,7 @@ func main() {
 	// using info I would put in for the sake of testing
 	var tanner organization
 	tanner.name = "Tanner Klein"
-	tanner.personality = []string{"Welcoming", "Hard Working", "Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "A Leader", "Enthusiastic"}
+	tanner.personality = []string{"Welcoming", "Hard Working", "Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "A Leader", "Enthusiastic", "Fun"}
 	tanner.activities = []string{"Board Games", "Video Games", "Arts & Crafts", "Giving Presentations"}
 	tanner.genders = []string{"Man"}
 	tanner.ethnicities = []string{"White"}
@@ -69,30 +69,77 @@ func main() {
 	tanner.dedicated_majors = []string{"Mathematics", "Computer Science"}
 	tanner.other = []string{"Queer"}
 
-	// compare(tanner, cs_club)
-	// compare(cs_club, cs_club)
+	var matt organization
+	matt.name = "Matthew Volkin"
+	matt.personality = []string{"Welcoming", "Hard Working", "Caring", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Collaborative", "Curious", "Social", "Fun"}
+	matt.activities = []string{"Board Games", "Movies", "Video Games", "Trivia", "Study Groups", "Group Meals"}
+	matt.genders = []string{"Man"}
+	matt.ethnicities = []string{"White"}
+	matt.religions = []string{"No Religion"}
+	matt.dedicated_majors = []string{"Computer Science"}
+	matt.other = []string{"Disability"}
 
-	// compare(tanner, su_tabletop)
-	// compare(su_tabletop, su_tabletop)
+	var aidan organization
+	aidan.name = "Aidan Balakrishnan"
+	aidan.personality = []string{"Hard Working", "Caring", "Creative", "Eager to Learn", "Nerdy", "Collaborative", "Social", "Fun"}
+	aidan.activities = []string{"Fundraising", "Social Justice", "Board Games", "Movies", "Video Games", "Arts & Crafts", "Music", "Professional Development", "Trivia", "Study Groups"}
+	aidan.genders = []string{"Man"}
+	aidan.ethnicities = []string{"Asian"}
+	aidan.religions = []string{"No Religion"}
+	aidan.dedicated_majors = []string{"Computer Science", "Theatre"}
+	aidan.other = []string{"Queer"}
 
-	// compare(tanner, p4p)
-	// compare(p4p, p4p)
+	var ben organization
+	ben.name = "Benjamin McKallip"
+	ben.personality = []string{"Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Curious", "Social", "Fun"}
+	ben.activities = []string{"Board Games", "Movies", "Video Games", "Music", "Trivia", "Group Meals", "Discussion"}
+	ben.genders = []string{"Man"}
+	ben.ethnicities = []string{"White"}
+	ben.religions = []string{"No Religion"}
+	ben.dedicated_majors = []string{"Physics", "Computer Science"}
 
-	// compare(tanner, exercise_is_medicine)
-	// compare(exercise_is_medicine, exercise_is_medicine)
+	compare(tanner, cs_club)
+	compare(matt, cs_club)
+	compare(aidan, cs_club)
+	compare(ben, cs_club)
+	compare(cs_club, cs_club)
 
-	// compare(tanner, kdc)
-	// compare(kdc, kdc)
+	compare(tanner, su_tabletop)
+	compare(matt, su_tabletop)
+	compare(aidan, su_tabletop)
+	compare(ben, su_tabletop)
+	compare(su_tabletop, su_tabletop)
 
-	// compare(tanner, classics_club)
-	// compare(classics_club, classics_club)
+	compare(tanner, p4p)
+	compare(matt, p4p)
+	compare(aidan, p4p)
+	compare(ben, p4p)
+	compare(p4p, p4p)
+
+	compare(tanner, exercise_is_medicine)
+	compare(matt, exercise_is_medicine)
+	compare(aidan, exercise_is_medicine)
+	compare(ben, exercise_is_medicine)
+	compare(exercise_is_medicine, exercise_is_medicine)
+
+	compare(tanner, kdc)
+	compare(matt, kdc)
+	compare(aidan, kdc)
+	compare(ben, kdc)
+	compare(kdc, kdc)
+
+	compare(tanner, classics_club)
+	compare(matt, classics_club)
+	compare(aidan, classics_club)
+	compare(ben, classics_club)
+	compare(classics_club, classics_club)
 
 	// trying out comparing orgs to each other
 	// we might be able to make a "similar orgs" button
-	compare(cs_club, su_tabletop)
-	compare(cs_club, p4p)
-	compare(p4p, cs_club) // order matters right now (it probably shouldn't though)
-	compare(su_tabletop, p4p)
+	// compare(cs_club, su_tabletop)
+	// compare(cs_club, p4p)
+	// compare(p4p, cs_club) // order matters right now (it probably shouldn't though)
+	// compare(su_tabletop, p4p)
 
 	// the user's answers will be passed in and put into an organization struct.
 	// they will then be compared to and scored with every organization.
