@@ -6,10 +6,10 @@
   - Defaults to normal user view if no user type is provided.
 
   **TODO**:
-  - Login button is non-functional and currently a placeholder.
   - Links are placeholders and should be updated once real pages are created.
 -->
 <script>
+  import { onMount, onDestroy } from 'svelte';
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
@@ -18,6 +18,81 @@
  */
   let { userType = "user" } = $props();
   let isMenuOpen = $state(false);
+  let userEmail = $state('');
+  let authToken = $state('');
+
+  async function refreshUser() {
+    const tokenFromStorage = localStorage.getItem('authToken') || '';
+    authToken = tokenFromStorage;
+    const headers = tokenFromStorage
+      ? { Authorization: `Bearer ${tokenFromStorage}` }
+      : {};
+
+    const res = await fetch('/api/user', {
+      method: 'GET',
+      credentials: 'include',
+      headers,
+    });
+
+    if (!res.ok) {
+      userEmail = '';
+      authToken = '';
+      localStorage.removeItem('authToken');
+      return;
+    }
+
+    const data = await res.json();
+    userEmail = data.email || '';
+  }
+
+  function loginWithGooglePopup() {
+    const popup = window.open(
+      '/login?popup=1',
+      'google-login',
+      'width=520,height=640,menubar=no,toolbar=no,location=yes,resizable=yes,scrollbars=yes,status=no'
+    );
+    if (!popup) {
+      alert('Popup blocked. Please allow popups for this site and try again.');
+    }
+  }
+
+  async function logout() {
+    const headers = authToken
+      ? { Authorization: `Bearer ${authToken}` }
+      : {};
+    await fetch('/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+    });
+    userEmail = '';
+    authToken = '';
+    localStorage.removeItem('authToken');
+  }
+
+  function onAuthMessage(event) {
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+    if (event.data?.type !== 'google-auth-success') {
+      return;
+    }
+
+    if (event.data.token) {
+      authToken = event.data.token;
+      localStorage.setItem('authToken', event.data.token);
+    }
+    userEmail = event.data.email || '';
+  }
+
+  onMount(() => {
+    window.addEventListener('message', onAuthMessage);
+    refreshUser();
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('message', onAuthMessage);
+  });
 
   function toggleMenu() {
     isMenuOpen = !isMenuOpen;
@@ -31,8 +106,12 @@
 <header class="header">
   <div class="header-content">
     <h1>SU Organization Matching Tool</h1>
-    <!-- TODO :Work on login logic-->
-    <button class="login-button" type="button">Login</button>
+    {#if userEmail}
+      <button class="login-button" type="button" onclick={logout}>Logout</button>
+      <span class="user-email" title={userEmail}>{userEmail}</span>
+    {:else}
+      <button class="login-button" type="button" onclick={loginWithGooglePopup}>Login</button>
+    {/if}
   </div>
   <!-- Mobile hamburger menu toggle button -->
   <button
@@ -110,6 +189,18 @@
 
   .login-button:hover {
     background-color: #2980b9;
+  }
+
+  .user-email {
+    position: absolute;
+    right: 6rem;
+    top: 0.9rem;
+    font-size: 0.8rem;
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.9;
   }
 
   .menu-toggle {
@@ -190,6 +281,13 @@
         clamp(0.75rem, 0.55rem + 0.5vw, 1.3rem);
       border-radius: clamp(4px, 3px + 0.2vw, 8px);
     }
+
+    .user-email {
+      right: clamp(5.6rem, 4.9rem + 1.6vw, 8.5rem);
+      top: clamp(0.65rem, 0.5rem + 0.3vw, 0.95rem);
+      font-size: clamp(0.75rem, 0.68rem + 0.2vw, 0.92rem);
+      max-width: min(46vw, 26rem);
+    }
   }
 
   /* Mobile-only hamburger nav */
@@ -220,6 +318,13 @@
       gap: 0.35rem;
       margin-bottom: 0;
       z-index: 2;
+    }
+
+    .user-email {
+      right: 4.9rem;
+      top: 0.62rem;
+      max-width: 42vw;
+      font-size: 0.72rem;
     }
 
     .menu-icon,
