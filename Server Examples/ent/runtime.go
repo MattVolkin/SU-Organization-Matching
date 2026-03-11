@@ -24,11 +24,11 @@ func init() {
 	clubFields := schema.Club{}.Fields()
 	_ = clubFields
 	// clubDescIncludeOfficerEmails is the schema descriptor for include_officer_emails field.
-	clubDescIncludeOfficerEmails := clubFields[5].Descriptor()
+	clubDescIncludeOfficerEmails := clubFields[6].Descriptor()
 	// club.DefaultIncludeOfficerEmails holds the default value on creation for the include_officer_emails field.
 	club.DefaultIncludeOfficerEmails = clubDescIncludeOfficerEmails.Default.(bool)
 	// clubDescUpdatedAt is the schema descriptor for updated_at field.
-	clubDescUpdatedAt := clubFields[6].Descriptor()
+	clubDescUpdatedAt := clubFields[7].Descriptor()
 	// club.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	club.DefaultUpdatedAt = clubDescUpdatedAt.Default.(func() time.Time)
 	// club.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

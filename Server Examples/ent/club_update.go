@@ -63,6 +63,26 @@ func (_u *ClubUpdate) ClearDescription() *ClubUpdate {
 	return _u
 }
 
+// SetMeetingTime sets the "meeting_time" field.
+func (_u *ClubUpdate) SetMeetingTime(v string) *ClubUpdate {
+	_u.mutation.SetMeetingTime(v)
+	return _u
+}
+
+// SetNillableMeetingTime sets the "meeting_time" field if the given value is not nil.
+func (_u *ClubUpdate) SetNillableMeetingTime(v *string) *ClubUpdate {
+	if v != nil {
+		_u.SetMeetingTime(*v)
+	}
+	return _u
+}
+
+// ClearMeetingTime clears the value of the "meeting_time" field.
+func (_u *ClubUpdate) ClearMeetingTime() *ClubUpdate {
+	_u.mutation.ClearMeetingTime()
+	return _u
+}
+
 // SetImagePath sets the "image_path" field.
 func (_u *ClubUpdate) SetImagePath(v string) *ClubUpdate {
 	_u.mutation.SetImagePath(v)
@@ -238,6 +258,12 @@ func (_u *ClubUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(club.FieldDescription, field.TypeString)
 	}
+	if value, ok := _u.mutation.MeetingTime(); ok {
+		_spec.SetField(club.FieldMeetingTime, field.TypeString, value)
+	}
+	if _u.mutation.MeetingTimeCleared() {
+		_spec.ClearField(club.FieldMeetingTime, field.TypeString)
+	}
 	if value, ok := _u.mutation.ImagePath(); ok {
 		_spec.SetField(club.FieldImagePath, field.TypeString, value)
 	}
@@ -358,6 +384,26 @@ func (_u *ClubUpdateOne) SetNillableDescription(v *string) *ClubUpdateOne {
 // ClearDescription clears the value of the "description" field.
 func (_u *ClubUpdateOne) ClearDescription() *ClubUpdateOne {
 	_u.mutation.ClearDescription()
+	return _u
+}
+
+// SetMeetingTime sets the "meeting_time" field.
+func (_u *ClubUpdateOne) SetMeetingTime(v string) *ClubUpdateOne {
+	_u.mutation.SetMeetingTime(v)
+	return _u
+}
+
+// SetNillableMeetingTime sets the "meeting_time" field if the given value is not nil.
+func (_u *ClubUpdateOne) SetNillableMeetingTime(v *string) *ClubUpdateOne {
+	if v != nil {
+		_u.SetMeetingTime(*v)
+	}
+	return _u
+}
+
+// ClearMeetingTime clears the value of the "meeting_time" field.
+func (_u *ClubUpdateOne) ClearMeetingTime() *ClubUpdateOne {
+	_u.mutation.ClearMeetingTime()
 	return _u
 }
 
@@ -565,6 +611,12 @@ func (_u *ClubUpdateOne) sqlSave(ctx context.Context) (_node *Club, err error) {
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(club.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.MeetingTime(); ok {
+		_spec.SetField(club.FieldMeetingTime, field.TypeString, value)
+	}
+	if _u.mutation.MeetingTimeCleared() {
+		_spec.ClearField(club.FieldMeetingTime, field.TypeString)
 	}
 	if value, ok := _u.mutation.ImagePath(); ok {
 		_spec.SetField(club.FieldImagePath, field.TypeString, value)

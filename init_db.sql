@@ -16,12 +16,16 @@ CREATE TABLE clubs (
     id SERIAL PRIMARY KEY,
     club_name VARCHAR(255) NOT NULL,
     description TEXT,
+    meeting_time VARCHAR(255),
     image_path VARCHAR(512), -- Store the path, not the file
     external_link VARCHAR(512),
     contact_info TEXT, -- Flexible for GroupMe, advisor emails, etc.
     include_officer_emails BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Keep existing databases in sync when re-running this script.
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS meeting_time VARCHAR(255);
 
 -- 4. Club Leaders (Join Table for Many-to-Many)
 CREATE TABLE club_leaders (

@@ -41,6 +41,20 @@ func (_c *ClubCreate) SetNillableDescription(v *string) *ClubCreate {
 	return _c
 }
 
+// SetMeetingTime sets the "meeting_time" field.
+func (_c *ClubCreate) SetMeetingTime(v string) *ClubCreate {
+	_c.mutation.SetMeetingTime(v)
+	return _c
+}
+
+// SetNillableMeetingTime sets the "meeting_time" field if the given value is not nil.
+func (_c *ClubCreate) SetNillableMeetingTime(v *string) *ClubCreate {
+	if v != nil {
+		_c.SetMeetingTime(*v)
+	}
+	return _c
+}
+
 // SetImagePath sets the "image_path" field.
 func (_c *ClubCreate) SetImagePath(v string) *ClubCreate {
 	_c.mutation.SetImagePath(v)
@@ -215,6 +229,10 @@ func (_c *ClubCreate) createSpec() (*Club, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(club.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := _c.mutation.MeetingTime(); ok {
+		_spec.SetField(club.FieldMeetingTime, field.TypeString, value)
+		_node.MeetingTime = value
 	}
 	if value, ok := _c.mutation.ImagePath(); ok {
 		_spec.SetField(club.FieldImagePath, field.TypeString, value)

@@ -65,6 +65,11 @@ func Description(v string) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldDescription, v))
 }
 
+// MeetingTime applies equality check predicate on the "meeting_time" field. It's identical to MeetingTimeEQ.
+func MeetingTime(v string) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldMeetingTime, v))
+}
+
 // ImagePath applies equality check predicate on the "image_path" field. It's identical to ImagePathEQ.
 func ImagePath(v string) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldImagePath, v))
@@ -228,6 +233,81 @@ func DescriptionEqualFold(v string) predicate.Club {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.Club {
 	return predicate.Club(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// MeetingTimeEQ applies the EQ predicate on the "meeting_time" field.
+func MeetingTimeEQ(v string) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldMeetingTime, v))
+}
+
+// MeetingTimeNEQ applies the NEQ predicate on the "meeting_time" field.
+func MeetingTimeNEQ(v string) predicate.Club {
+	return predicate.Club(sql.FieldNEQ(FieldMeetingTime, v))
+}
+
+// MeetingTimeIn applies the In predicate on the "meeting_time" field.
+func MeetingTimeIn(vs ...string) predicate.Club {
+	return predicate.Club(sql.FieldIn(FieldMeetingTime, vs...))
+}
+
+// MeetingTimeNotIn applies the NotIn predicate on the "meeting_time" field.
+func MeetingTimeNotIn(vs ...string) predicate.Club {
+	return predicate.Club(sql.FieldNotIn(FieldMeetingTime, vs...))
+}
+
+// MeetingTimeGT applies the GT predicate on the "meeting_time" field.
+func MeetingTimeGT(v string) predicate.Club {
+	return predicate.Club(sql.FieldGT(FieldMeetingTime, v))
+}
+
+// MeetingTimeGTE applies the GTE predicate on the "meeting_time" field.
+func MeetingTimeGTE(v string) predicate.Club {
+	return predicate.Club(sql.FieldGTE(FieldMeetingTime, v))
+}
+
+// MeetingTimeLT applies the LT predicate on the "meeting_time" field.
+func MeetingTimeLT(v string) predicate.Club {
+	return predicate.Club(sql.FieldLT(FieldMeetingTime, v))
+}
+
+// MeetingTimeLTE applies the LTE predicate on the "meeting_time" field.
+func MeetingTimeLTE(v string) predicate.Club {
+	return predicate.Club(sql.FieldLTE(FieldMeetingTime, v))
+}
+
+// MeetingTimeContains applies the Contains predicate on the "meeting_time" field.
+func MeetingTimeContains(v string) predicate.Club {
+	return predicate.Club(sql.FieldContains(FieldMeetingTime, v))
+}
+
+// MeetingTimeHasPrefix applies the HasPrefix predicate on the "meeting_time" field.
+func MeetingTimeHasPrefix(v string) predicate.Club {
+	return predicate.Club(sql.FieldHasPrefix(FieldMeetingTime, v))
+}
+
+// MeetingTimeHasSuffix applies the HasSuffix predicate on the "meeting_time" field.
+func MeetingTimeHasSuffix(v string) predicate.Club {
+	return predicate.Club(sql.FieldHasSuffix(FieldMeetingTime, v))
+}
+
+// MeetingTimeIsNil applies the IsNil predicate on the "meeting_time" field.
+func MeetingTimeIsNil() predicate.Club {
+	return predicate.Club(sql.FieldIsNull(FieldMeetingTime))
+}
+
+// MeetingTimeNotNil applies the NotNil predicate on the "meeting_time" field.
+func MeetingTimeNotNil() predicate.Club {
+	return predicate.Club(sql.FieldNotNull(FieldMeetingTime))
+}
+
+// MeetingTimeEqualFold applies the EqualFold predicate on the "meeting_time" field.
+func MeetingTimeEqualFold(v string) predicate.Club {
+	return predicate.Club(sql.FieldEqualFold(FieldMeetingTime, v))
+}
+
+// MeetingTimeContainsFold applies the ContainsFold predicate on the "meeting_time" field.
+func MeetingTimeContainsFold(v string) predicate.Club {
+	return predicate.Club(sql.FieldContainsFold(FieldMeetingTime, v))
 }
 
 // ImagePathEQ applies the EQ predicate on the "image_path" field.

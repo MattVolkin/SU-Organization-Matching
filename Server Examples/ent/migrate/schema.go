@@ -41,6 +41,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "club_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "meeting_time", Type: field.TypeString, Nullable: true},
 		{Name: "image_path", Type: field.TypeString, Nullable: true},
 		{Name: "external_link", Type: field.TypeString, Nullable: true},
 		{Name: "contact_info", Type: field.TypeString, Nullable: true, Size: 2147483647},

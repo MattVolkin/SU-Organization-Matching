@@ -21,6 +21,8 @@ type Club struct {
 	ClubName string `json:"club_name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
+	// MeetingTime holds the value of the "meeting_time" field.
+	MeetingTime string `json:"meeting_time,omitempty"`
 	// ImagePath holds the value of the "image_path" field.
 	ImagePath string `json:"image_path,omitempty"`
 	// ExternalLink holds the value of the "external_link" field.
@@ -64,7 +66,7 @@ func (*Club) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case club.FieldID:
 			values[i] = new(sql.NullInt64)
-		case club.FieldClubName, club.FieldDescription, club.FieldImagePath, club.FieldExternalLink, club.FieldContactInfo:
+		case club.FieldClubName, club.FieldDescription, club.FieldMeetingTime, club.FieldImagePath, club.FieldExternalLink, club.FieldContactInfo:
 			values[i] = new(sql.NullString)
 		case club.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -100,6 +102,12 @@ func (_m *Club) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				_m.Description = value.String
+			}
+		case club.FieldMeetingTime:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field meeting_time", values[i])
+			} else if value.Valid {
+				_m.MeetingTime = value.String
 			}
 		case club.FieldImagePath:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -177,6 +185,9 @@ func (_m *Club) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
+	builder.WriteString(", ")
+	builder.WriteString("meeting_time=")
+	builder.WriteString(_m.MeetingTime)
 	builder.WriteString(", ")
 	builder.WriteString("image_path=")
 	builder.WriteString(_m.ImagePath)

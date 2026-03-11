@@ -18,6 +18,8 @@ const (
 	FieldClubName = "club_name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldMeetingTime holds the string denoting the meeting_time field in the database.
+	FieldMeetingTime = "meeting_time"
 	// FieldImagePath holds the string denoting the image_path field in the database.
 	FieldImagePath = "image_path"
 	// FieldExternalLink holds the string denoting the external_link field in the database.
@@ -44,6 +46,7 @@ var Columns = []string{
 	FieldID,
 	FieldClubName,
 	FieldDescription,
+	FieldMeetingTime,
 	FieldImagePath,
 	FieldExternalLink,
 	FieldContactInfo,
@@ -92,6 +95,11 @@ func ByClubName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByMeetingTime orders the results by the meeting_time field.
+func ByMeetingTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMeetingTime, opts...).ToFunc()
 }
 
 // ByImagePath orders the results by the image_path field.

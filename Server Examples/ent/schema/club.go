@@ -16,6 +16,7 @@ func (Club) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("club_name"),
 		field.Text("description").Optional(),
+		field.String("meeting_time").Optional(),
 		field.String("image_path").Optional(),
 		field.String("external_link").Optional(),
 		field.Text("contact_info").Optional(),

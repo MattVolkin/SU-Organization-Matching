@@ -547,6 +547,7 @@ type ClubMutation struct {
 	id                     *int
 	club_name              *string
 	description            *string
+	meeting_time           *string
 	image_path             *string
 	external_link          *string
 	contact_info           *string
@@ -742,6 +743,55 @@ func (m *ClubMutation) DescriptionCleared() bool {
 func (m *ClubMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, club.FieldDescription)
+}
+
+// SetMeetingTime sets the "meeting_time" field.
+func (m *ClubMutation) SetMeetingTime(s string) {
+	m.meeting_time = &s
+}
+
+// MeetingTime returns the value of the "meeting_time" field in the mutation.
+func (m *ClubMutation) MeetingTime() (r string, exists bool) {
+	v := m.meeting_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMeetingTime returns the old "meeting_time" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldMeetingTime(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMeetingTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMeetingTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMeetingTime: %w", err)
+	}
+	return oldValue.MeetingTime, nil
+}
+
+// ClearMeetingTime clears the value of the "meeting_time" field.
+func (m *ClubMutation) ClearMeetingTime() {
+	m.meeting_time = nil
+	m.clearedFields[club.FieldMeetingTime] = struct{}{}
+}
+
+// MeetingTimeCleared returns if the "meeting_time" field was cleared in this mutation.
+func (m *ClubMutation) MeetingTimeCleared() bool {
+	_, ok := m.clearedFields[club.FieldMeetingTime]
+	return ok
+}
+
+// ResetMeetingTime resets all changes to the "meeting_time" field.
+func (m *ClubMutation) ResetMeetingTime() {
+	m.meeting_time = nil
+	delete(m.clearedFields, club.FieldMeetingTime)
 }
 
 // SetImagePath sets the "image_path" field.
@@ -1051,12 +1101,15 @@ func (m *ClubMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ClubMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.club_name != nil {
 		fields = append(fields, club.FieldClubName)
 	}
 	if m.description != nil {
 		fields = append(fields, club.FieldDescription)
+	}
+	if m.meeting_time != nil {
+		fields = append(fields, club.FieldMeetingTime)
 	}
 	if m.image_path != nil {
 		fields = append(fields, club.FieldImagePath)
@@ -1085,6 +1138,8 @@ func (m *ClubMutation) Field(name string) (ent.Value, bool) {
 		return m.ClubName()
 	case club.FieldDescription:
 		return m.Description()
+	case club.FieldMeetingTime:
+		return m.MeetingTime()
 	case club.FieldImagePath:
 		return m.ImagePath()
 	case club.FieldExternalLink:
@@ -1108,6 +1163,8 @@ func (m *ClubMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldClubName(ctx)
 	case club.FieldDescription:
 		return m.OldDescription(ctx)
+	case club.FieldMeetingTime:
+		return m.OldMeetingTime(ctx)
 	case club.FieldImagePath:
 		return m.OldImagePath(ctx)
 	case club.FieldExternalLink:
@@ -1140,6 +1197,13 @@ func (m *ClubMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case club.FieldMeetingTime:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMeetingTime(v)
 		return nil
 	case club.FieldImagePath:
 		v, ok := value.(string)
@@ -1209,6 +1273,9 @@ func (m *ClubMutation) ClearedFields() []string {
 	if m.FieldCleared(club.FieldDescription) {
 		fields = append(fields, club.FieldDescription)
 	}
+	if m.FieldCleared(club.FieldMeetingTime) {
+		fields = append(fields, club.FieldMeetingTime)
+	}
 	if m.FieldCleared(club.FieldImagePath) {
 		fields = append(fields, club.FieldImagePath)
 	}
@@ -1235,6 +1302,9 @@ func (m *ClubMutation) ClearField(name string) error {
 	case club.FieldDescription:
 		m.ClearDescription()
 		return nil
+	case club.FieldMeetingTime:
+		m.ClearMeetingTime()
+		return nil
 	case club.FieldImagePath:
 		m.ClearImagePath()
 		return nil
@@ -1257,6 +1327,9 @@ func (m *ClubMutation) ResetField(name string) error {
 		return nil
 	case club.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case club.FieldMeetingTime:
+		m.ResetMeetingTime()
 		return nil
 	case club.FieldImagePath:
 		m.ResetImagePath()
