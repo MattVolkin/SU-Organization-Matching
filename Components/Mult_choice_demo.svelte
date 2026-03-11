@@ -12,7 +12,7 @@
 
   function submit() {
     console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}`)
-    fetch('http://localhost:8080/submit', {
+    fetch('/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

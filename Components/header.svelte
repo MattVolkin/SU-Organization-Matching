@@ -107,8 +107,10 @@
   <div class="header-content">
     <h1>SU Organization Matching Tool</h1>
     {#if userEmail}
-      <button class="login-button" type="button" onclick={logout}>Logout</button>
-      <span class="user-email" title={userEmail}>{userEmail}</span>
+      <div class="user-info">
+        <span class="user-email" title={userEmail}>{userEmail}</span>
+        <button class="login-button logout-btn" type="button" onclick={logout}>Logout</button>
+      </div>
     {:else}
       <button class="login-button" type="button" onclick={loginWithGooglePopup}>Login</button>
     {/if}
@@ -169,11 +171,27 @@
     width: 100%;
   }
 
-  .login-button {
+  .user-info {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    transform: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 2;
+  }
+
+  .user-email {
+    font-size: 0.8rem;
+    max-width: 30vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.95;
+    min-width: 0;
+  }
+
+  .login-button {
     width: auto;
     padding: 0.35rem 0.75rem;
     background-color: #3498db;
@@ -184,23 +202,16 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     touch-action: manipulation;
-    z-index: 2;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .login-button:hover {
     background-color: #2980b9;
   }
 
-  .user-email {
-    position: absolute;
-    right: 6rem;
-    top: 0.9rem;
-    font-size: 0.8rem;
-    max-width: 40vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: 0.9;
+  .logout-btn {
+    position: static;
   }
 
   .menu-toggle {
@@ -273,9 +284,13 @@
       margin-bottom: 1rem;
     }
 
-    .login-button {
+    .user-info {
       top: clamp(0.5rem, 0.35rem + 0.35vw, 0.9rem);
       right: clamp(0.5rem, 0.25rem + 0.7vw, 1.25rem);
+      gap: clamp(0.5rem, 0.3rem + 0.5vw, 1rem);
+    }
+
+    .login-button {
       font-size: clamp(0.85rem, 0.72rem + 0.35vw, 1.1rem);
       padding: clamp(0.35rem, 0.25rem + 0.2vw, 0.55rem)
         clamp(0.75rem, 0.55rem + 0.5vw, 1.3rem);
@@ -283,10 +298,8 @@
     }
 
     .user-email {
-      right: clamp(5.6rem, 4.9rem + 1.6vw, 8.5rem);
-      top: clamp(0.65rem, 0.5rem + 0.3vw, 0.95rem);
       font-size: clamp(0.75rem, 0.68rem + 0.2vw, 0.92rem);
-      max-width: min(46vw, 26rem);
+      max-width: clamp(20vw, 18rem, 45vw);
     }
   }
 
@@ -307,6 +320,24 @@
       font-size: 1.25rem;
     }
 
+    .user-info {
+      top: 0.4rem;
+      right: 0.4rem;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.35rem;
+    }
+
+    .user-email {
+      font-size: 0.65rem;
+      max-width: 35vw;
+    }
+
+    .login-button {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+
     .menu-toggle {
       position: absolute;
       top: 0.5rem;
@@ -318,13 +349,6 @@
       gap: 0.35rem;
       margin-bottom: 0;
       z-index: 2;
-    }
-
-    .user-email {
-      right: 4.9rem;
-      top: 0.62rem;
-      max-width: 42vw;
-      font-size: 0.72rem;
     }
 
     .menu-icon,

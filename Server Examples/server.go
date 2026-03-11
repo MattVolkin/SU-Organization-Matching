@@ -47,6 +47,7 @@ type UserSession struct {
 	Token        string
 	Created      time.Time
 	LastActivity time.Time
+	ProfileFields map[string]string
 }
 
 type SessionStore struct {
@@ -60,7 +61,16 @@ type ResponsePayload struct {
 }
 
 type GoogleUserInfo struct {
-	Email string `json:"email"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+}
+
+type DemographicsSubmission struct {
+	Name     string   `json:"name"`
+	Gender   string   `json:"gender"`
+	Race     []string `json:"race"`
+	Religion string   `json:"religion"`
+	Major    []string `json:"major"`
 }
 
 var sessionStore *SessionStore
@@ -114,6 +124,9 @@ func main() {
 	}
 	defer client.Close()
 
+	submitRequiresAuth := boolFromEnv("SUBMIT_REQUIRES_AUTH", true)
+	log.Printf("Submit auth required: %t", submitRequiresAuth)
+
 	if err := os.Chdir("../Svelte Examples/plain-svelte-app/dist"); err != nil {
 		log.Printf("warning: failed to switch static directory: %v", err)
 	}
@@ -123,40 +136,16 @@ func main() {
 	mux.HandleFunc("/login", makeLoginHandler(oauthCfg))
 	mux.HandleFunc("/auth/callback", makeCallbackHandler(oauthCfg))
 	mux.HandleFunc("/api/user", makeGetUserHandler())
+	mux.HandleFunc("/api/prefill", makeGetPrefillHandler())
 	mux.HandleFunc("/logout", makeLogoutHandler())
 
 	mux.Handle("/response", checkUserAuthMiddleware(http.HandlerFunc(handleResponseSubmission)))
-	mux.Handle("/submit", checkSubmissionDataMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		dbError := makeGenericDBError(w)
 
-		var submission struct {
-			Name    string `json:"name"`
-			Email   string `json:"email"`
-			Club    string `json:"club"`
-			Contact string `json:"contact"`
-			Officer string `json:"officer"`
-			Login   string `json:"login"`
-		}
-
-		if !checkJSON(w, r, &submission) {
-			return
-		}
-
-		fmt.Printf("Received submission: Name=%s, Club=%s, Contact=%s, Officer=%s, Email=%s, Login=%s\n", submission.Name, submission.Club, submission.Contact, submission.Officer, submission.Email, submission.Login)
-		if submission.Officer == "yes" {
-			query := func() (any, error) {
-				return client.User.Create().
-					SetGoogleID(submission.Name).
-					SetEmail(submission.Email).
-					Save(r.Context())
-			}
-			databaseQuery(query, dbError)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Form submitted successfully!"})
-	})))
+	submitHandler := checkSubmissionDataMiddleware(http.HandlerFunc(handleDemographicsSubmission))
+	if submitRequiresAuth {
+		submitHandler = checkUserAuthMiddleware(submitHandler)
+	}
+	mux.Handle("/submit", submitHandler)
 
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
@@ -237,6 +226,36 @@ func handleResponseSubmission(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
+	var submission DemographicsSubmission
+	if !checkJSON(w, r, &submission) {
+		return
+	}
+
+	if strings.TrimSpace(submission.Name) == "" ||
+		strings.TrimSpace(submission.Gender) == "" ||
+		strings.TrimSpace(submission.Religion) == "" ||
+		len(submission.Race) == 0 ||
+		len(submission.Major) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Missing one or more required demographics fields"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":  "Demographics submitted successfully",
+		"name":     submission.Name,
+		"gender":   submission.Gender,
+		"race":     submission.Race,
+		"religion": submission.Religion,
+		"major":    submission.Major,
+		"email":    r.Header.Get("X-User-Email"),
+	})
+}
+
 func makeGenericDBError(w http.ResponseWriter) func(error) {
 	return func(err error) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -306,6 +325,7 @@ func makeCallbackHandler(cfg *OAuthConfig) http.HandlerFunc {
 			Token:        sessionToken,
 			Created:      time.Now(),
 			LastActivity: time.Now(),
+			ProfileFields: buildProfileFields(userInfo),
 		}
 		sessionStore.addSession(sessionToken, session)
 		fmt.Printf("User logged in: %s\n", userInfo.Email)
@@ -395,6 +415,28 @@ func makeLogoutHandler() http.HandlerFunc {
 	}
 }
 
+func makeGetPrefillHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := tokenFromRequest(r)
+		if token == "" {
+			http.Error(w, "Missing authorization token", http.StatusUnauthorized)
+			return
+		}
+
+		session, ok := sessionStore.getSession(token)
+		if !ok {
+			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"fields": session.ProfileFields,
+		})
+	}
+}
+
 func getGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*GoogleUserInfo, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
@@ -421,6 +463,25 @@ func getGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*GoogleUserInf
 	}
 
 	return &userInfo, nil
+}
+
+func buildProfileFields(userInfo *GoogleUserInfo) map[string]string {
+	fields := map[string]string{}
+	setIfNotEmpty(fields, "email", userInfo.Email)
+	setIfNotEmpty(fields, "name", userInfo.Name)
+	setIfNotEmpty(fields, "firstName", userInfo.GivenName)
+	setIfNotEmpty(fields, "lastName", userInfo.FamilyName)
+	setIfNotEmpty(fields, "avatarUrl", userInfo.Picture)
+	setIfNotEmpty(fields, "locale", userInfo.Locale)
+	return fields
+}
+
+func setIfNotEmpty(target map[string]string, key string, value string) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return
+	}
+	target[key] = trimmed
 }
 
 func tokenFromRequest(r *http.Request) string {
@@ -505,4 +566,19 @@ func redactSuffix(value string, keep int) string {
 		return "[redacted]"
 	}
 	return "..." + value[len(value)-keep:]
+}
+
+func boolFromEnv(key string, defaultValue bool) bool {
+	raw := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	if raw == "" {
+		return defaultValue
+	}
+	switch raw {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	default:
+		return defaultValue
+	}
 }
