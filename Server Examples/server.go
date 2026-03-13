@@ -77,6 +77,8 @@ var sessionStore *SessionStore
 
 const sessionInactivityTimeout = 30 * time.Minute
 
+var db *ent.Client
+
 func main() {
 	sessionStore = &SessionStore{
 		sessions: make(map[string]*UserSession),
@@ -118,11 +120,11 @@ func main() {
 	}
 
 	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
-	client, err := ent.Open("postgres", dsn)
+	db, err = ent.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}
-	defer client.Close()
+	defer db.Close()
 
 	submitRequiresAuth := boolFromEnv("SUBMIT_REQUIRES_AUTH", true)
 	log.Printf("Submit auth required: %t", submitRequiresAuth)
@@ -312,11 +314,16 @@ func makeCallbackHandler(cfg *OAuthConfig) http.HandlerFunc {
 			return
 		}
 
-		userInfo, err := getGoogleUserInfo(r.Context(), token)
+		userInfo, err := getUserInfoFromDB(r.Context(), token)
 		if err != nil {
-			http.Error(w, "Failed to get user info", http.StatusInternalServerError)
-			fmt.Println("User info error:", err)
-			return
+			fmt.Println("User not found in DB, fetching from Google:", err)
+			userInfo, err = getGoogleUserInfo(r.Context(), token)
+			if err != nil {
+				http.Error(w, "Failed to get user info", http.StatusInternalServerError)
+				fmt.Println("User info error:", err)
+				return
+			}
+			setUserInfoInDB(r.Context(), userInfo, token)
 		}
 
 		sessionToken := generateSessionToken()
@@ -437,6 +444,16 @@ func makeGetPrefillHandler() http.HandlerFunc {
 	}
 }
 
+func getUserInfoFromDB(ctx context.Context, token *oauth2.Token) (*GoogleUserInfo, error) {
+	if db == nil {
+		return nil, fmt.Errorf("database not initialized")
+	}
+
+	// Placeholder for actual database query logic.
+
+	return nil, fmt.Errorf("user not found in database")
+}
+
 func getGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*GoogleUserInfo, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
@@ -469,10 +486,6 @@ func buildProfileFields(userInfo *GoogleUserInfo) map[string]string {
 	fields := map[string]string{}
 	setIfNotEmpty(fields, "email", userInfo.Email)
 	setIfNotEmpty(fields, "name", userInfo.Name)
-	setIfNotEmpty(fields, "firstName", userInfo.GivenName)
-	setIfNotEmpty(fields, "lastName", userInfo.FamilyName)
-	setIfNotEmpty(fields, "avatarUrl", userInfo.Picture)
-	setIfNotEmpty(fields, "locale", userInfo.Locale)
 	return fields
 }
 

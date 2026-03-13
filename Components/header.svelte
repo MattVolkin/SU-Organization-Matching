@@ -45,6 +45,7 @@
     userEmail = data.email || '';
   }
 
+  /*
   function loginWithGooglePopup() {
     const popup = window.open(
       '/login?popup=1',
@@ -55,6 +56,7 @@
       alert('Popup blocked. Please allow popups for this site and try again.');
     }
   }
+  */
 
   async function logout() {
     const headers = authToken
@@ -112,7 +114,9 @@
         <button class="login-button logout-btn" type="button" onclick={logout}>Logout</button>
       </div>
     {:else}
+      <!--
       <button class="login-button" type="button" onclick={loginWithGooglePopup}>Login</button>
+      -->
     {/if}
   </div>
   <!-- Mobile hamburger menu toggle button -->

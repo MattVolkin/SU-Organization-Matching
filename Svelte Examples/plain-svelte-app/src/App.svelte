@@ -49,7 +49,7 @@
   let submitError = $state('')
   const showSubmitError = true // Set to false to hide submit/auth errors for testing.
 
-  const getFieldValues = {
+  const getDemographics = {
     name: () => name,
     gender: () => gender,
     religion: () => religion,
@@ -57,7 +57,7 @@
     major: () => major,
   }
 
-  const setFieldValues = {
+  const setDemographicsFields = {
     name: (value) => { name = value },
     gender: (value) => { gender = value },
     religion: (value) => { religion = value },
@@ -73,9 +73,10 @@
   }
 
   function applyPrefillFields(fields) {
+    console.log('Applying prefill fields:', fields)
     for (const [key, value] of Object.entries(fields || {})) {
-      const getCurrent = getFieldValues[key]
-      const setValue = setFieldValues[key]
+      const getCurrent = getDemographics[key]
+      const setValue = setDemographicsFields[key]
       if (!getCurrent || !setValue) {
         continue
       }
@@ -159,7 +160,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ name, gender, race, religion, major, })//sends the form data to the backend server as a JSON object
+        body: JSON.stringify({ name, gender, race, religion, major})//sends the form data to the backend server as a JSON object
       })
 
       const data = await response.json().catch(() => ({}))
@@ -195,7 +196,7 @@
 <main>
   <h1>Demographic Form</h1>
 
-  <form on:submit|preventDefault={submitDemographics}>
+  <form onsubmit={submitDemographics}>
     <label for="name">Name:</label>
     <input id="name" type="text" bind:value={name} aria-invalid={nameError ? 'true' : 'false'} /> <!-- Text input for the user's name, bound to the 'name' variable -->
     {#if nameError}
