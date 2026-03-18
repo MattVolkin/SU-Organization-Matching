@@ -3,32 +3,6 @@
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
 
-  let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
-  let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
-
-  async function getResults() {
-    const response = await fetch('/results')
-    results = await response.json() // in backend please make the list of results an array of clubs (sorted in decending order of match percentage) with each club having a name, description and match percentage field
-  }
-
-  async function nextPage() {
-    pageNum += 1
-    await getResults() // for future implementation when we have more results than we want to show on one page, this will fetch the next page of results from the backend
-  }
-
-  async function prevPage() {
-    if (pageNum > 1) {
-      pageNum -= 1
-      await getResults() // for future implementation when we have more results than we want to show on one page, this will fetch the previous page of results from the backend
-    }
-  }
-  
-  async function getClubInfo(club) {
-
-    
-  }
-    
-
 
   //setup for the questions
   let genderoptions = ["Man", "Woman", "Non-Binary", "Other", "Prefer not to say"]
@@ -155,13 +129,13 @@
 
     try {
       const response = await fetch('/submit', {
-        method: 'POST',
+      method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+      headers: {
+        'Content-Type': 'application/json'
+      },
         body: JSON.stringify({ name, gender, race, religion, major})//sends the form data to the backend server as a JSON object
-      })
+    })
 
       const data = await response.json().catch(() => ({}))
 
@@ -344,12 +318,6 @@
     text-align: left;
   }
 
-  @media (prefers-color-scheme: dark) {
-    legend {
-      color: #e0e0e0;
-    }
-  }
-
   fieldset label {
     display: flex;
     align-items: center;
@@ -369,54 +337,6 @@
     width: 1.25rem;
     height: 1.25rem;
     cursor: pointer;
-  }
-
-  .field-help {
-    margin: 0 0 0.75rem;
-    color: #555;
-    font-size: 0.95rem;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .field-help {
-      color: #aaa;
-    }
-  }
-
-  .multi-select-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    max-height: 18rem;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .multi-select-grid {
-      border-color: #444;
-    }
-  }
-
-  .error-message {
-    margin: 0.75rem 0 0;
-    padding: 0.75rem 1rem;
-    background-color: #ffebee;
-    color: #b00020;
-    font-size: 0.92rem;
-    border-radius: 20px;
-    border: 1px solid #ffcdd2;
-    display: inline-block;
-    font-weight: 500;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .error-message {
-      background-color: #3a1a1a;
-      color: #ff6b6b;
-      border-color: #662222;
-    }
   }
 
   button {
@@ -454,10 +374,6 @@
     button {
       width: fit-content;
       min-width: 200px;
-    }
-
-    .multi-select-grid {
-      grid-template-columns: 1fr 1fr;
     }
   }
 </style>

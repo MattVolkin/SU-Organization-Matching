@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
-  import Header from '../../../Components/header.svelte'
-  import Footer from '../../../Components/footer.svelte'
-  import LoginPopup from '../../../Components/login_popup.svelte'
+  import Header from './header.svelte'
+  import Footer from './footer.svelte'
+  import LoginPopup from './login_popup.svelte'
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
@@ -25,6 +25,7 @@
       isAuthenticated = true;
       isAuthChecking = false;
       shouldPromptLogin = false;
+      await getResults();
       return;
     }
 
@@ -40,20 +41,25 @@
     isAuthenticated = true;
     isAuthChecking = false;
     shouldPromptLogin = false;
+    getResults();
   }
 
   function handleLoginBlocked() {
-    window.location.assign('/login');
+    shouldPromptLogin = true;
   }
 
   async function getResults() {
-    const response = await fetch('http://localhost:8080/results')
-    results = await response.json() // in backend please make the list of results an array of clubs (sorted in decending order of match percentage) with each club having a name, description and match percentage field
+    const response = await fetch('/results')
+    const payload = await response.json().catch(() => [])
+    results = Array.isArray(payload) && payload.length > 0
+      ? payload
+      : ["Computer Science Club"]
   }
 
   async function nextPage() {
-    pageNum += 1
-    await getResults() // for future implementation when we have more results than we want to show on one page, this will fetch the next page of results from the backend
+    if (pageNum < results.length) {
+      pageNum += 1
+    }
   }
 
   async function prevPage() {
@@ -85,7 +91,7 @@
     <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds </h2>
 
     <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
-    <button onclick={nextPage}>Next</button>
+    <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
     <h3> Activities we do include</h3>
     <ul>
       <li>Playing games</li>
