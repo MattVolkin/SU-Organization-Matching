@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"server-example/ent"
+	"server-example/ent/user"
 	"strings"
 	"sync"
 	"time"
@@ -120,6 +122,7 @@ func main() {
 	}
 
 	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
+	var err error
 	db, err = ent.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
@@ -314,7 +317,14 @@ func makeCallbackHandler(cfg *OAuthConfig) http.HandlerFunc {
 			return
 		}
 
-		userInfo, err := getUserInfoFromDB(r.Context(), token)
+		googleID, err := googleSubjectFromToken(token)
+		if err != nil {
+			http.Error(w, "Failed to identify user", http.StatusUnauthorized)
+			fmt.Println("Google token subject error:", err)
+			return
+		}
+
+		userInfo, err := getUserInfoFromDB(r.Context(), googleID)
 		if err != nil {
 			fmt.Println("User not found in DB, fetching from Google:", err)
 			userInfo, err = getGoogleUserInfo(r.Context(), token)
@@ -323,7 +333,11 @@ func makeCallbackHandler(cfg *OAuthConfig) http.HandlerFunc {
 				fmt.Println("User info error:", err)
 				return
 			}
-			setUserInfoInDB(r.Context(), userInfo, token)
+			if err := setUserInfoInDB(r.Context(), googleID, userInfo); err != nil {
+				http.Error(w, "Failed to persist user info", http.StatusInternalServerError)
+				fmt.Println("Persist user info error:", err)
+				return
+			}
 		}
 
 		sessionToken := generateSessionToken()
@@ -444,17 +458,69 @@ func makeGetPrefillHandler() http.HandlerFunc {
 	}
 }
 
-func getUserInfoFromDB(ctx context.Context, token *oauth2.Token) (*GoogleUserInfo, error) {
+func getUserInfoFromDB(ctx context.Context, googleID string) (*GoogleUserInfo, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
+	googleID = strings.TrimSpace(googleID)
+	if googleID == "" {
+		return nil, fmt.Errorf("google id is required")
+	}
 
-	// Placeholder for actual database query logic.
+	storedUser, err := db.User.Query().Where(user.GoogleIDEQ(googleID)).Only(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, fmt.Errorf("user not found in database")
+	return &GoogleUserInfo{
+		Email: storedUser.Email,
+		Name:  extractNameFromTags(storedUser.Tags),
+	}, nil
+}
+
+func setUserInfoInDB(ctx context.Context, googleID string, userInfo *GoogleUserInfo) error {
+	println("saving user info to database")
+	if db == nil {
+		return fmt.Errorf("database not initialized")
+	}
+	if userInfo == nil {
+		return fmt.Errorf("user info is required")
+	}
+
+	googleID = strings.TrimSpace(googleID)
+	email := strings.TrimSpace(userInfo.Email)
+	if googleID == "" {
+		return fmt.Errorf("google id is required")
+	}
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+
+	tags := mergeProfileTags(nil, userInfo.Name)
+
+	existing, err := db.User.Query().Where(user.GoogleIDEQ(googleID)).Only(ctx)
+	if err == nil {
+		tags = mergeProfileTags(existing.Tags, userInfo.Name)
+		return db.User.UpdateOneID(existing.ID).
+			SetEmail(email).
+			SetTags(tags).
+			Exec(ctx)
+	}
+
+	if !ent.IsNotFound(err) {
+		return err
+	}
+
+	_, createErr := db.User.Create().
+		SetGoogleID(googleID).
+		SetEmail(email).
+		SetTags(tags).
+		Save(ctx)
+	return createErr
 }
 
 func getGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*GoogleUserInfo, error) {
+	println("Fetching user info from Google API")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://www.googleapis.com/oauth2/v2/userinfo", nil)
 	if err != nil {
 		return nil, err
@@ -487,6 +553,65 @@ func buildProfileFields(userInfo *GoogleUserInfo) map[string]string {
 	setIfNotEmpty(fields, "email", userInfo.Email)
 	setIfNotEmpty(fields, "name", userInfo.Name)
 	return fields
+}
+
+func googleSubjectFromToken(token *oauth2.Token) (string, error) {
+	if token == nil {
+		return "", fmt.Errorf("token is nil")
+	}
+	idTokenRaw, ok := token.Extra("id_token").(string)
+	if !ok || strings.TrimSpace(idTokenRaw) == "" {
+		return "", fmt.Errorf("id_token missing from oauth token")
+	}
+
+	parts := strings.Split(idTokenRaw, ".")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid id_token format")
+	}
+
+	payloadJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", fmt.Errorf("invalid id_token payload: %w", err)
+	}
+
+	var claims struct {
+		Sub string `json:"sub"`
+	}
+	if err := json.Unmarshal(payloadJSON, &claims); err != nil {
+		return "", fmt.Errorf("unable to parse id_token claims: %w", err)
+	}
+
+	claims.Sub = strings.TrimSpace(claims.Sub)
+	if claims.Sub == "" {
+		return "", fmt.Errorf("id_token missing sub claim")
+	}
+
+	return claims.Sub, nil
+}
+
+func extractNameFromTags(tags []string) string {
+	const prefix = "profile_name="
+	for _, tag := range tags {
+		if strings.HasPrefix(tag, prefix) {
+			return strings.TrimSpace(strings.TrimPrefix(tag, prefix))
+		}
+	}
+	return ""
+}
+
+func mergeProfileTags(existing []string, name string) []string {
+	const prefix = "profile_name="
+	filtered := make([]string, 0, len(existing)+1)
+	for _, tag := range existing {
+		if strings.HasPrefix(tag, prefix) {
+			continue
+		}
+		filtered = append(filtered, tag)
+	}
+	if trimmed := strings.TrimSpace(name); trimmed != "" {
+		filtered = append(filtered, prefix+trimmed)
+	}
+	return filtered
 }
 
 func setIfNotEmpty(target map[string]string, key string, value string) {
