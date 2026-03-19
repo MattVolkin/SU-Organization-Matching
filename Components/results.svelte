@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import Header from './header.svelte'
   import Footer from './footer.svelte'
   import LoginPopup from './login_popup.svelte'
@@ -48,6 +48,12 @@
     shouldPromptLogin = true;
   }
 
+  function handleAuthLogout() {
+    shouldPromptLogin = true;
+    isAuthenticated = false;
+    isAuthChecking = false;
+  }
+
   async function getResults() {
     const response = await fetch('/results')
     const payload = await response.json().catch(() => [])
@@ -75,7 +81,12 @@
   }
 
   onMount(() => {
+    window.addEventListener('auth-logout', handleAuthLogout);
     promptLoginIfNeeded();
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('auth-logout', handleAuthLogout);
   });
     
 </script>

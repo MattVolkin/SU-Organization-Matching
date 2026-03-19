@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
+  import LoginPopup from '../../../Components/login_popup.svelte'
 
 
   //setup for the questions
@@ -21,7 +22,58 @@
   let majorError = $state('')
   let religionError = $state('')
   let submitError = $state('')
+  let shouldPromptLogin = $state(false)
+  let isAuthenticated = $state(false)
   const showSubmitError = true // Set to false to hide submit/auth errors for testing.
+
+  async function checkAuthStatus() {
+    const tokenFromStorage = localStorage.getItem('authToken') || ''
+    const headers = tokenFromStorage
+      ? { Authorization: `Bearer ${tokenFromStorage}` }
+      : {}
+
+    const response = await fetch('/api/user', {
+      method: 'GET',
+      credentials: 'include',
+      headers,
+    })
+
+    isAuthenticated = response.ok
+    shouldPromptLogin = !response.ok
+  }
+
+  function handleLoginSuccess(data) {
+    if (data?.token) {
+      localStorage.setItem('authToken', data.token)
+    }
+    isAuthenticated = true
+    shouldPromptLogin = false
+    loadPrefillFields()
+  }
+
+  function handleLoginBlocked() {
+    shouldPromptLogin = true
+  }
+
+  function clearDemographicsForm() {
+    name = ''
+    gender = ''
+    race = []
+    religion = ''
+    major = []
+    nameError = ''
+    genderError = ''
+    raceError = ''
+    majorError = ''
+    religionError = ''
+    submitError = ''
+  }
+
+  function handleAuthLogout() {
+    clearDemographicsForm()
+    shouldPromptLogin = true
+    isAuthenticated = false
+  }
 
   const getDemographics = {
     name: () => name,
@@ -83,15 +135,6 @@
     }
   }
 
-  function onAuthMessage(event) {
-    if (event.origin !== window.location.origin) {
-      return
-    }
-    if (event.data?.type !== 'google-auth-success') {
-      return
-    }
-    loadPrefillFields()
-  }
 /**@function submit - Handles form submission */
   async function submitDemographics() {
     nameError = ''
@@ -142,6 +185,8 @@
       if (!response.ok) {
         if (response.status === 401) {
           submitError = 'Please log in with Google before submitting this form.'
+          shouldPromptLogin = true
+          isAuthenticated = false
           return
         }
         submitError = data?.error || 'Unable to submit the form right now. Please try again.'
@@ -156,17 +201,18 @@
   }
 
   onMount(() => {
-    window.addEventListener('message', onAuthMessage)
+    window.addEventListener('auth-logout', handleAuthLogout)
+    checkAuthStatus()
     loadPrefillFields()
   })
 
   onDestroy(() => {
-    window.removeEventListener('message', onAuthMessage)
+    window.removeEventListener('auth-logout', handleAuthLogout)
   })
 </script>
 
 <Header />
-
+<LoginPopup autoOpen={shouldPromptLogin} onSuccess={handleLoginSuccess} onBlocked={handleLoginBlocked} />
 <main>
   <h1>Demographic Form</h1>
 

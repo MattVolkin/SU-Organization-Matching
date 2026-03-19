@@ -8,7 +8,6 @@
     onBlocked = () => {},
   } = $props();
 
-  let hasAutoOpened = $state(false);
   let popupBlocked = $state(false);
 
   function openLoginPopup() {
@@ -46,13 +45,8 @@
   }
 
   $effect(() => {
-    if (autoOpen && !hasAutoOpened) {
-      hasAutoOpened = true;
-      openLoginPopup();
-    }
-
     if (!autoOpen) {
-      hasAutoOpened = false;
+      popupBlocked = false;
     }
   });
 

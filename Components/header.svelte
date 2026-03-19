@@ -70,6 +70,7 @@
     userEmail = '';
     authToken = '';
     localStorage.removeItem('authToken');
+    window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
   function onAuthMessage(event) {
