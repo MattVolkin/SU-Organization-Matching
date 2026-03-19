@@ -41,6 +41,13 @@
       token: event.data.token || '',
     });
 
+    window.dispatchEvent(new CustomEvent('auth-login', {
+      detail: {
+        email: event.data.email || '',
+        token: event.data.token || '',
+      },
+    }));
+
     popupBlocked = false;
   }
 

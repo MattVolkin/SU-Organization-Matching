@@ -3,423 +3,280 @@
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
   import LoginPopup from '../../../Components/login_popup.svelte'
-
-
-  //setup for the questions
-  let genderoptions = ["Man", "Woman", "Non-Binary", "Other", "Prefer not to say"]
-  let raceoptions = ["American Native/Alaska Native", "Asian", "Black or African American", "Hispanic or Latino", "Middle Eastern or North African", "Native Hawaiian or Pacific Islander", "White", "Prefer not to say"]
-  let religionoptions = ["Protestantism", "Catholocism", "Judaism", "Islam", "Buddhism", "Hinduism", "No religion", "Other", "Prefer not to say"]
-  let majoroptions = ["Anthropology", "Applied Physics", "Art (Studio)", "Art History", "Biochemistry", "Biology", "Business", "Chemistry", "Classics", "Communication Studies", "Computational Mathematics", "Computer Science", "Pre-Dentistry", "Economics", "Education", "Pre-Engineering", "English", "Environmental Studies", "Feminist Studies", "French", "German", "Greek", "Health Professions", "History", "International Studies", "Kinesiology", "Latin", "Latin American & Border Studies", "Pre-Law", "Mathematics", "Pre-Med", "Pre-Ministry", "Music", "Pre-Nursing", "Pre-Occupational Therapy", "Philosophy", "Physics", "Political Science", "Psychology", "Pre-Physician Assistant", "Pre-Physical Therapy", "Religion", "Sociology", "Spanish", "Theatre", "Undecided"]
-  //feilds in the form
-  let name = $state('')
-  let gender = $state('')
-  let race = $state([])
-  let religion = $state('')
-  let major = $state([])
-  let nameError = $state('')
-  let genderError = $state('')
-  let raceError = $state('')
-  let majorError = $state('')
-  let religionError = $state('')
-  let submitError = $state('')
-  let shouldPromptLogin = $state(false)
+  let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
+  let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
+  let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
-  const showSubmitError = true // Set to false to hide submit/auth errors for testing.
 
-  async function checkAuthStatus() {
-    const tokenFromStorage = localStorage.getItem('authToken') || ''
+  async function promptLoginIfNeeded() {
+    const tokenFromStorage = localStorage.getItem('authToken') || '';
     const headers = tokenFromStorage
       ? { Authorization: `Bearer ${tokenFromStorage}` }
-      : {}
+      : {};
 
     const response = await fetch('/api/user', {
       method: 'GET',
       credentials: 'include',
       headers,
-    })
+    });
 
-    isAuthenticated = response.ok
-    shouldPromptLogin = !response.ok
-  }
-
-  function handleLoginSuccess(data) {
-    if (data?.token) {
-      localStorage.setItem('authToken', data.token)
+    if (response.ok) {
+      isAuthenticated = true;
+      isAuthChecking = false;
+      await getResults();
+      return;
     }
-    isAuthenticated = true
-    shouldPromptLogin = false
-    loadPrefillFields()
-  }
 
-  function handleLoginBlocked() {
-    shouldPromptLogin = true
-  }
-
-  function clearDemographicsForm() {
-    name = ''
-    gender = ''
-    race = []
-    religion = ''
-    major = []
-    nameError = ''
-    genderError = ''
-    raceError = ''
-    majorError = ''
-    religionError = ''
-    submitError = ''
+    isAuthenticated = false;
+    isAuthChecking = false;
   }
 
   function handleAuthLogout() {
-    clearDemographicsForm()
-    shouldPromptLogin = true
-    isAuthenticated = false
+    isAuthenticated = false;
+    isAuthChecking = false;
   }
 
-  const getDemographics = {
-    name: () => name,
-    gender: () => gender,
-    religion: () => religion,
-    race: () => race,
-    major: () => major,
+  function handleAuthLogin() {
+    promptLoginIfNeeded();
   }
 
-  const setDemographicsFields = {
-    name: (value) => { name = value },
-    gender: (value) => { gender = value },
-    religion: (value) => { religion = value },
-    race: (value) => { race = Array.isArray(value) ? value : race },
-    major: (value) => { major = Array.isArray(value) ? value : major },
+  async function getResults() {
+    const response = await fetch('/results')
+    const payload = await response.json().catch(() => [])
+    results = Array.isArray(payload) && payload.length > 0
+      ? payload
+      : ["Computer Science Club"]
   }
 
-  function isFieldEmpty(value) {
-    if (Array.isArray(value)) {
-      return value.length === 0
-    }
-    return !String(value ?? '').trim()
-  }
-
-  function applyPrefillFields(fields) {
-    console.log('Applying prefill fields:', fields)
-    for (const [key, value] of Object.entries(fields || {})) {
-      const getCurrent = getDemographics[key]
-      const setValue = setDemographicsFields[key]
-      if (!getCurrent || !setValue) {
-        continue
-      }
-      if (!isFieldEmpty(getCurrent())) {
-        continue
-      }
-      setValue(value)
+  async function nextPage() {
+    if (pageNum < results.length) {
+      pageNum += 1
     }
   }
 
-  async function loadPrefillFields() {
-    try {
-      const tokenFromStorage = localStorage.getItem('authToken') || ''
-      const headers = tokenFromStorage
-        ? { Authorization: `Bearer ${tokenFromStorage}` }
-        : {}
-
-      const response = await fetch('/api/prefill', {
-        method: 'GET',
-        credentials: 'include',
-        headers,
-      })
-      if (!response.ok) {
-        return
-      }
-      const data = await response.json().catch(() => ({}))
-      applyPrefillFields(data?.fields || {})
-    } catch (error) {
-      console.error('Prefill fetch failed:', error)
+  async function prevPage() {
+    if (pageNum > 1) {
+      pageNum -= 1
+      await getResults() // for future implementation when we have more results than we want to show on one page, this will fetch the previous page of results from the backend
     }
   }
+  
+  async function getClubInfo(club) {
 
-/**@function submit - Handles form submission */
-  async function submitDemographics() {
-    nameError = ''
-    genderError = ''
-    raceError = ''
-    majorError = ''
-    religionError = ''
-    submitError = ''
-
-    if (!name.trim()) {
-      nameError = 'Please enter your name.'
-    }
-
-    if (!gender) {
-      genderError = 'Please select a gender option.'
-    }
-
-    if (race.length === 0) {
-      raceError = 'Please select at least one race/ethnicity option.'
-    }
     
-    if (major.length === 0) {
-      majorError = 'Please select at least one intended major.'
-    }
-
-    if (!religion) {
-      religionError = 'Please select a religion option.'
-    }
-
-    if (nameError || genderError || raceError || majorError || religionError) {
-      return
-    }
-
-    console.log(`Name: ${name}, Gender: ${gender}, Race: ${race}, Religion: ${religion}, Major: ${major}`)//for debuging logs the form data
-
-    try {
-      const response = await fetch('/submit', {
-      method: 'POST',
-        credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-        body: JSON.stringify({ name, gender, race, religion, major})//sends the form data to the backend server as a JSON object
-    })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          submitError = 'Please log in with Google before submitting this form.'
-          shouldPromptLogin = true
-          isAuthenticated = false
-          return
-        }
-        submitError = data?.error || 'Unable to submit the form right now. Please try again.'
-        return
-      }
-
-      console.log('Success:', data)
-    } catch (error) {
-      console.error('Error:', error)
-      submitError = 'Network error while submitting. Please try again.'
-    }
   }
 
   onMount(() => {
-    window.addEventListener('auth-logout', handleAuthLogout)
-    checkAuthStatus()
-    loadPrefillFields()
-  })
+    window.addEventListener('auth-login', handleAuthLogin);
+    window.addEventListener('auth-logout', handleAuthLogout);
+    promptLoginIfNeeded();
+  });
 
   onDestroy(() => {
-    window.removeEventListener('auth-logout', handleAuthLogout)
-  })
+    window.removeEventListener('auth-login', handleAuthLogin);
+    window.removeEventListener('auth-logout', handleAuthLogout);
+  });
+    
 </script>
-
+  
 <Header />
-<LoginPopup autoOpen={shouldPromptLogin} onSuccess={handleLoginSuccess} onBlocked={handleLoginBlocked} />
-<main>
-  <h1>Demographic Form</h1>
+<LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
-  <form onsubmit={submitDemographics}>
-    <label for="name">Name:</label>
-    <input id="name" type="text" bind:value={name} aria-invalid={nameError ? 'true' : 'false'} /> <!-- Text input for the user's name, bound to the 'name' variable -->
-    {#if nameError}
-      <p class="error-message">{nameError}</p>
-    {/if}
+<main class="results-page">
+  {#if isAuthChecking}
+    <section class="status-card">
+      <p>Checking sign-in status...</p>
+    </section>
+  {:else if !isAuthenticated}
+    <section class="status-card">
+      <p>Please complete sign-in to view organization information.</p>
+    </section>
+  {:else}
+    <section class="result-card">
+      <h1>{results[pageNum-1]}</h1>
+      <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds </h2>
 
-    <fieldset>
-      <legend>Gender</legend>
-      {#each genderoptions as option} <!-- Loop through gender options to create radio buttons -->
-        <label>
-          <input type="radio" name="gender" value={option} bind:group={gender} />
-          {option}
-        </label>
-      {/each}
-      {#if genderError}
-        <p class="error-message">{genderError}</p>
-      {/if}
-    </fieldset>
+    
 
-    <fieldset>
-      <legend>Race/Ethnicity (Select all that apply)</legend> <!-- Fieldset for race/ethnicity options -->
-      {#each raceoptions as option} <!-- Loop through race options to create checkboxes -->
-        <label>
-          <input
-            type="checkbox"
-            name="race"
-            value={option}
-            bind:group={race}
-          />
-          {option}
-        </label>
-      {/each}
-      {#if raceError}
-        <p class="error-message">{raceError}</p>
-      {/if}
-    </fieldset>
-
-    <fieldset>
-      <legend>Intended Major(s)/Program of Study</legend>
-      <p class="field-help">Select all that apply.</p>
-      <div class="multi-select-grid">
-        {#each majoroptions as option}
-          <label>
-            <input type="checkbox" name="major" value={option} bind:group={major} />
-            {option}
-          </label>
-        {/each}
+      <h3> Activities we do include</h3>
+      <ul>
+        <li>Playing games</li>
+        <li>Trivia nights </li>
+        <li>Presentation nights</li>
+        <li>Video game tournoments</li>
+        <li>Scavenger hunts</li>
+      </ul>
+      <h3>Meeting Information </h3>
+      <p> Every Thursday at 6:30 pm in FJS 310 (the CS lounge)</p>
+          <div class="pager">
+        <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
+        <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
       </div>
-      {#if majorError}
-        <p class="error-message">{majorError}</p>
-      {/if}
-    </fieldset>
-
-    <fieldset>
-      <legend>Religion</legend>
-      {#each religionoptions as option} <!-- Loop through religion options to create radio buttons -->
-        <label>
-          <input type="radio" name="religion" value={option} bind:group={religion} />
-          {option}
-        </label>
-      {/each}
-      {#if religionError}
-        <p class="error-message">{religionError}</p>
-      {/if}
-    </fieldset>
-
-
-
-
-    <button type="submit">Submit</button>
-    {#if showSubmitError && submitError}
-      <p class="error-message">{submitError}</p>
-    {/if}
-  </form>
+    </section>
+  {/if}
 </main>
 
 <Footer />
 
 <style>
-  main {
-    flex: 1;
-    max-width: 100%;
+  .results-page {
+    --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+    --card-bg: #ffffff;
+    --card-border: #dbe7f3;
+    --text-main: #10243a;
+    --text-subtle: #31506e;
+    --action: #1f6f8b;
+    --action-hover: #195d76;
+    --focus-ring: #60a5fa;
+
+    min-height: calc(100vh - 220px);
+    padding: 1rem;
+    background: var(--page-bg);
+    color: var(--text-main);
+  }
+
+  .status-card,
+  .result-card {
+    width: min(100%, 860px);
+    margin: 0 auto;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    box-shadow: 0 10px 22px rgba(16, 36, 58, 0.1);
+    padding: 1rem;
+  }
+
+  .status-card p {
     margin: 0;
-    padding: 0.5rem 1rem;
-    font-family: system-ui, sans-serif;
-    text-align: left;
+    font-size: 1rem;
   }
 
   h1 {
-    font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    text-align: left;
-    color: inherit;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    h1 {
-      color: #e0e0e0;
-    }
-  }
-
-  form {
-    display: grid;
-    gap: 1rem;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: left;
-  }
-
-  label {
-    font-weight: 500;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    display: block;
-    text-align: left;
-    color: inherit;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    label {
-      color: #e0e0e0;
-    }
-  }
-
-  fieldset {
-    border: none;
-    border-top: 1px solid #ddd;
-    padding: 1.5rem 0;
     margin: 0;
+    font-size: clamp(1.3rem, 2vw + 0.9rem, 2rem);
+    line-height: 1.15;
   }
 
-  @media (prefers-color-scheme: dark) {
-    fieldset {
-      border-top-color: #444;
-    }
+  h2 {
+    margin: 0.75rem 0 1rem 0;
+    font-size: clamp(1rem, 1vw + 0.85rem, 1.25rem);
+    font-weight: 500;
+    color: var(--text-subtle);
+    line-height: 1.45;
   }
 
-  legend {
-    font-weight: 600;
+  h3 {
+    margin: 1rem 0 0.5rem 0;
     font-size: 1rem;
-    padding: 0;
-    margin-bottom: 1rem;
-    color: #333;
-    text-align: left;
+    letter-spacing: 0.01em;
   }
 
-  fieldset label {
+  p,
+  li {
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  li::marker {
+    color: var(--action);
+  }
+
+  ul {
+    margin: 0 0 0.75rem 0;
+    padding-left: 1.2rem;
+  }
+
+  .pager {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0.75rem 0;
-    font-weight: normal;
-    cursor: pointer;
-  }
-
-  input[type="radio"] {
-    width: 1.25rem;
-    height: 1.25rem;
-    cursor: pointer;
-  }
-
-  input[type="checkbox"] {
-    width: 1.25rem;
-    height: 1.25rem;
-    cursor: pointer;
+    gap: 0.65rem;
+    margin: 0.25rem 0 0.9rem 0;
   }
 
   button {
-    width: 100%;
-    padding: 1rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    background-color: #3498db;
-    color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--action);
     cursor: pointer;
-    touch-action: manipulation;
+    transition: background-color 0.2s ease, transform 0.2s ease;
   }
 
-  button:hover {
-    background-color: #2980b9;
+  button:hover:not(:disabled) {
+    background: var(--action-hover);
+    transform: translateY(-1px);
   }
 
-  button:active {
-    transform: scale(0.98);
+  button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
-  /* Desktop styles */
-  @media (min-width: 768px) {
-    main {
-      margin: 0 auto;
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+
+  @media (min-width: 900px) {
+    .results-page {
       padding: 2rem;
     }
 
-    h1 {
-      font-size: 2rem;
+    .status-card,
+    .result-card {
+      padding: 1.75rem;
+      border-radius: 1.1rem;
+    }
+
+    .pager {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .results-page {
+      padding: 0.85rem;
+    }
+
+    .status-card,
+    .result-card {
+      padding: 0.9rem;
+      border-radius: 0.85rem;
+    }
+
+    .pager {
+      flex-direction: column;
     }
 
     button {
-      width: fit-content;
-      min-width: 200px;
+      width: 100%;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .results-page {
+      --page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+      --card-bg: #0f172a;
+      --card-border: #273449;
+      --text-main: #e5edf8;
+      --text-subtle: #b6c7df;
+      --action: #2b8fb5;
+      --action-hover: #3aa3cb;
+      --focus-ring: #93c5fd;
+    }
+
+    .status-card,
+    .result-card {
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      background: #355268;
+      color: #cbd5e1;
     }
   }
 </style>

@@ -135,6 +135,7 @@
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
     <a href="/" onclick={closeMenu}>Home</a>
+     <a href="/Results" onclick={closeMenu}>Results</a>
     <a href="/about" onclick={closeMenu}>About This Project</a>
     <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
