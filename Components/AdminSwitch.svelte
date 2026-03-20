@@ -50,14 +50,18 @@
 
 <style>
 	.admin-banner {
+		position: sticky;
+		top: 0;
+		z-index: 60;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
 		padding: 0.55rem 0.85rem;
-		background: #f2f7ff;
-		border-bottom: 1px solid #c8dbf7;
+		background: linear-gradient(90deg, #f2f7ff 0%, #e5f0ff 100%);
+		border-bottom: 1px solid #9fbff0;
 		color: #1d334d;
+		box-shadow: 0 2px 10px rgba(31, 53, 84, 0.12);
 	}
 
 	.label {

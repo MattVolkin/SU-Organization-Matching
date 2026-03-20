@@ -1,8 +1,10 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
+  import AdminSwitch from '../../../Components/AdminSwitch.svelte'
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
   import LoginPopup from '../../../Components/login_popup.svelte'
+  let adminPreviewType = $state('admin')
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
@@ -79,7 +81,8 @@
     
 </script>
   
-<Header />
+<AdminSwitch enabled={true} value={adminPreviewType} onChange={(nextUserType) => (adminPreviewType = nextUserType)} />
+<Header userType="admin" previewAs={adminPreviewType} />
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page">
@@ -94,7 +97,7 @@
   {:else}
     <section class="result-card">
       <h1>{results[pageNum-1]}</h1>
-      <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds </h2>
+      <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds. </h2> 
 
     
 

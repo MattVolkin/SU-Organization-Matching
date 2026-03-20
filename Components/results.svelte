@@ -1,8 +1,10 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
+  import AdminSwitch from './AdminSwitch.svelte'
   import Header from './header.svelte'
   import Footer from './footer.svelte'
   import LoginPopup from './login_popup.svelte'
+  let adminPreviewType = $state('admin')
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
@@ -79,7 +81,8 @@
     
 </script>
   
-<Header />
+<AdminSwitch enabled={true} value={adminPreviewType} onChange={(nextUserType) => (adminPreviewType = nextUserType)} />
+<Header userType="admin" previewAs={adminPreviewType} />
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page">

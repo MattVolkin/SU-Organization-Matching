@@ -10,29 +10,17 @@
 -->
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import AdminSwitch from './AdminSwitch.svelte';
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
  */
-  let { userType = "admin" } = $props();
-  // Temporary testing toggle: set to false when you want to use real userType behavior.
-  const forceAdminView = true;
-  const getEffectiveUserType = () => (forceAdminView ? 'admin' : userType);
+  let { userType = "admin", previewAs = '' } = $props();
+  const getNavUserType = () => (previewAs || userType);
   let isMenuOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
-  let previewUserType = $state('user');
-
-  $effect(() => {
-    previewUserType = getEffectiveUserType();
-  });
-
-  function handlePreviewChange(nextUserType) {
-    previewUserType = nextUserType;
-  }
 
   async function refreshUser() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
@@ -119,8 +107,6 @@
   }
 </script>
 
-<AdminSwitch enabled={getEffectiveUserType() === 'admin'} value={previewUserType} onChange={handlePreviewChange} />
-
 <header class="header">
   <div class="header-content">
     <h1>SU Organization Matching Tool</h1>
@@ -154,10 +140,9 @@
     <a href="/about" onclick={closeMenu}>About This Project</a>
     <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
-    {#if previewUserType === 'admin'}
+    {#if getNavUserType() === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>
-      <a href="/change-user-type" onclick={closeMenu}>Change User Type</a>
-    {:else if previewUserType === 'officer'}
+    {:else if getNavUserType() === 'officer'}
       <a href="/manage-club" onclick={closeMenu}>Manage Club</a>
     {/if}
   </nav>
