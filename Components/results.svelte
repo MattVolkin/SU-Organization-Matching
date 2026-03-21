@@ -1,9 +1,9 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
-  import AdminSwitch from './AdminSwitch.svelte'
-  import Header from './header.svelte'
-  import Footer from './footer.svelte'
-  import LoginPopup from './login_popup.svelte'
+  import AdminSwitch from '../../../Components/AdminSwitch.svelte'
+  import Header from '../../../Components/header.svelte'
+  import Footer from '../../../Components/footer.svelte'
+  import LoginPopup from '../../../Components/login_popup.svelte'
   let adminPreviewType = $state('admin')
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
@@ -97,12 +97,9 @@
   {:else}
     <section class="result-card">
       <h1>{results[pageNum-1]}</h1>
-      <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds </h2>
+      <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds. </h2> 
 
-      <div class="pager">
-        <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
-        <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
-      </div>
+    
 
       <h3> Activities we do include</h3>
       <ul>
@@ -114,6 +111,10 @@
       </ul>
       <h3>Meeting Information </h3>
       <p> Every Thursday at 6:30 pm in FJS 310 (the CS lounge)</p>
+          <div class="pager">
+        <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
+        <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
+      </div>
     </section>
   {/if}
 </main>
@@ -129,6 +130,7 @@
     --text-subtle: #31506e;
     --action: #1f6f8b;
     --action-hover: #195d76;
+    --focus-ring: #60a5fa;
 
     min-height: calc(100vh - 220px);
     padding: 1rem;
@@ -178,6 +180,10 @@
     line-height: 1.55;
   }
 
+  li::marker {
+    color: var(--action);
+  }
+
   ul {
     margin: 0 0 0.75rem 0;
     padding-left: 1.2rem;
@@ -204,6 +210,11 @@
   button:hover:not(:disabled) {
     background: var(--action-hover);
     transform: translateY(-1px);
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   button:disabled {
@@ -245,6 +256,30 @@
 
     button {
       width: 100%;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .results-page {
+      --page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+      --card-bg: #0f172a;
+      --card-border: #273449;
+      --text-main: #e5edf8;
+      --text-subtle: #b6c7df;
+      --action: #2b8fb5;
+      --action-hover: #3aa3cb;
+      --focus-ring: #93c5fd;
+    }
+
+    .status-card,
+    .result-card {
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      background: #355268;
+      color: #cbd5e1;
     }
   }
 </style>
