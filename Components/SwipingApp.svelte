@@ -4,9 +4,11 @@
 	// https://svelte.dev/playground/f696ca27e6374f2cab1691727409a31d?version=5.53.2
 	// https://svelte.dev/docs/svelte/animate
 
-	import { useSwipe , type SwipeCustomEvent, typeGestureCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
+	import { useSwipe , type SwipeCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
 	import Card from './Card.svelte'; // import the Card Component and it's relevant method (advanceCard) to display the details of a word and its description
-	import { advanceCard } from './Card.svelte'
+	import advanceCard from './Card.svelte'
+	import Header from './header.svelte'
+    import Footer from './footer.svelte'
 
 	let cardObject = $state({}); //create this object as a blank version of the Card class so that we can refer to one object that can internally track its data
 	
@@ -74,29 +76,30 @@
 </script>
 
 
-
+<!-- 
 <h1>Hello {name}!</h1>
 
 <input bind:value={name} />
 <button onclick={() => count += 1}>
 	clicks: {count}
 </button>
-
-
+ -->
+<Header />
 <section
-	{...useSwipe(swipeHandler, () => ({ timeframe: 300, minSwipeDistance: 25, touchAction: 'none' }), {
+	{...useSwipe(swipeHandler, () => ({ timeframe: 300, minSwipeDistance: 25, touchAction: 'none' }), { // bound swipe function to work given a specific bounds of a section element
 		onswipemove: moveHandler
 	})}
 	class="box"
 >
 	<div class="content">
-		<h2>Swipe Handler</h2>
+
+		<!-- <h2>Swipe Handler</h2>
 		<div>swipe direction: {direction}</div>
 		<div>pointerType {pointerType}</div>
 		<div>target: {target?.tagName}</div>
 		<h2>move</h2>
 		<div>x: {mx}</div>
-		<div>y: {my}</div>
+		<div>y: {my}</div> -->
 
 
 		<!-- https://www.youtube.com/watch?v=5oEo98BrRqs -->
@@ -119,11 +122,12 @@
 	</div>
 {/if}
 -->
-
+<!-- 
 <h2> lets see how the animationBooleanWorks: {left} : {right} : {directionInt} </h2>
 <h1>Transition Demo</h1>
-<Card left/>
+<Card left/> -->
 
+<Footer />
 
 <style>
 	.content {

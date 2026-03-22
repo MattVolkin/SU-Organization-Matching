@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "@react-spring/web": "^10.0.3",
-    "@use-gesture/react": "^10.3.1"
+    "@use-gesture/react": "^10.3.1",
+    "svelte-gestures": "^5.2.2"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
