@@ -16,7 +16,8 @@
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
  */
-  let { userType = "user" } = $props();
+  let { userType = "admin", previewAs = '' } = $props();
+  const getNavUserType = () => (previewAs || userType);
   let isMenuOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
@@ -70,6 +71,7 @@
     userEmail = '';
     authToken = '';
     localStorage.removeItem('authToken');
+    window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
   function onAuthMessage(event) {
@@ -134,13 +136,13 @@
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
     <a href="/" onclick={closeMenu}>Home</a>
+     <a href="/Results" onclick={closeMenu}>Results</a>
     <a href="/about" onclick={closeMenu}>About This Project</a>
     <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
-    {#if userType === 'admin'}
+    {#if getNavUserType() === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>
-      <a href="/change-user-type" onclick={closeMenu}>Change User Type</a>
-    {:else if userType === 'officer'}
+    {:else if getNavUserType() === 'officer'}
       <a href="/manage-club" onclick={closeMenu}>Manage Club</a>
     {/if}
   </nav>
