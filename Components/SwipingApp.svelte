@@ -4,17 +4,18 @@
 	// https://svelte.dev/playground/f696ca27e6374f2cab1691727409a31d?version=5.53.2
 	// https://svelte.dev/docs/svelte/animate
 
-	import { useSwipe , type SwipeCustomEvent, tyoeGestureCustomEvent } from 'svelte-gestures';
-	import Card from './Card.svelte';
+	import { useSwipe , type SwipeCustomEvent, tyoeGestureCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
+	import Card from './Card.svelte'; // import the Card Component and it's relevant method (advanceCard) to display the details of a word and its description
 	import { advanceCard } from './Card.svelte'
 
-	let cardObject = $state({});
+	let cardObject = $state({}); //create this object as a blank version of the Card class so that we can refer to one object that can internally track its data
 	
-  import { fade, fly, scale } from 'svelte/transition';
-  let left = $state(true);
+  import { fade, fly, scale } from 'svelte/transition'; // import transitons
+
+  let left = $state(true); // if we swipe left or right, augment given booleans to make sure the card is able to come back into frame/know what direction to move card
 	let right = $state(true);
 
-	let activities = ['testActivities']
+	let activities = ['testActivities'] // for
 	let personality = ['testPersonalities']
 
 	let direction = $state("none yet");
