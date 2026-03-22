@@ -8,9 +8,44 @@
 	// list of items
 	//https://svelte.dev/playground/805300f5895f4ea89b73ba75de393db8?version=5.53.6
 	let items = $state([ // terms that will be included in the cards shown to the user
-		{id: 0, term: "Likable", def: "someone who is an enjoyable person to be around"},
-		{id: 1, term: "Tired", def: "someone who has a lack of sleep"},
-		{id: 2, term: "Happy", def: "State of euphoria"}
+		{id:	0	, tag: "	tag	", term: "	word	", def: "	desc	"},
+{id:	1	, tag: "	activities	", term: "	Community Service/Fundraising:	", def: "	Voluntary work/raising funds intended to help people in a particular area.	"},
+{id:	2	, tag: "	activities	", term: "	Social Justice:	", def: "	Advocating for the fair treatment and equitable status of all individuals and social groups within a society	"},
+{id:	3	, tag: "	activities	", term: "	Retreats:	", def: "	Planned off-campus getaway or sleepover for organization members designed to bond, foster unity, and align on organizational goals	"},
+{id:	4	, tag: "	activities	", term: "	Dance:	", def: "	Moving rhythmically to music, typically following a set sequence of steps	"},
+{id:	5	, tag: "	activities	", term: "	Board Games:	", def: "	Playing games that involves the movement of counters or other pieces on a marked board, often with the use of other components such as dice or cards	"},
+{id:	6	, tag: "	activities	", term: "	Movies:	", def: "	Watching a story or event recorded by a camera as a set of moving images and shown in a theater or on television; a motion picture	"},
+{id:	7	, tag: "	activities	", term: "	Video Games:	", def: "	Playing games by electronically manipulating images produced by a computer program on a television screen or other display screen.	"},
+{id:	8	, tag: "	activities	", term: "	Arts & Crafts:	", def: "	Making objects, such as decorations, toys, furniture, and pottery by hand	"},
+{id:	9	, tag: "	activities	", term: "	Music:	", def: "	N/A	"},
+{id:	10	, tag: "	activities	", term: "	Exercise:	", def: "	N/A	"},
+{id:	11	, tag: "	activities	", term: "	Writing:	", def: "	N/A	"},
+{id:	12	, tag: "	activities	", term: "	Professional Development:	", def: "	N/A	"},
+{id:	13	, tag: "	activities	", term: "	Caring for Animals:	", def: "	N/A	"},
+{id:	14	, tag: "	activities	", term: "	Giving Presentations:	", def: "	N/A	"},
+{id:	15	, tag: "	activities	", term: "	Trivia:	", def: "	N/A	"},
+{id:	16	, tag: "	activities	", term: "	Literary Analysis:	", def: "	N/A	"},
+{id:	17	, tag: "	activities	", term: "	Study Groups:	", def: "	N/A	"},
+{id:	18	, tag: "	activities	", term: "	Guest Speakers:	", def: "	N/A	"},
+{id:	19	, tag: "	activities	", term: "	Group Lunch/Dinner:	", def: "	N/A	"},
+{id:	20	, tag: "	activities	", term: "	Discussion:	", def: "	N/A	"},
+{id:	21	, tag: "	personality	", term: "	Welcoming	", def: "	N/A	"},
+{id:	22	, tag: "	personality	", term: "	Hard Working	", def: "	N/A	"},
+{id:	23	, tag: "	personality	", term: "	Caring	", def: "	N/A	"},
+{id:	24	, tag: "	personality	", term: "	Creative	", def: "	N/A	"},
+{id:	25	, tag: "	personality	", term: "	Outgoing	", def: "	N/A	"},
+{id:	26	, tag: "	personality	", term: "	Open Minded	", def: "	N/A	"},
+{id:	27	, tag: "	personality	", term: "	Eager to Learn	", def: "	N/A	"},
+{id:	28	, tag: "	personality	", term: "	Confident	", def: "	N/A	"},
+{id:	29	, tag: "	personality	", term: "	Nerdy	", def: "	N/A	"},
+{id:	30	, tag: "	personality	", term: "	A Leader	", def: "	N/A	"},
+{id:	31	, tag: "	personality	", term: "	Enthusiastic	", def: "	N/A	"},
+{id:	32	, tag: "	personality	", term: "	Collaborative	", def: "	N/A	"},
+{id:	33	, tag: "	personality	", term: "	Curious	", def: "	N/A	"},
+{id:	34	, tag: "	personality	", term: "	Organized	", def: "	N/A	"},
+{id:	35	, tag: "	personality	", term: "	Social	", def: "	N/A	"},
+{id:	36	, tag: "	personality	", term: "	Fun	", def: "	N/A	"}
+								
 
 	]);
 
