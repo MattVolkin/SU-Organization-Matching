@@ -1,10 +1,27 @@
+<!-- @component this creates the result page template 
+  **TODO**:
+  - Replace placeholder data with actual API calls 
+  -->
 <script>
+  /**
+   * @type {state} results - an array of club names that match the user's interests and demographics, fetched from the backend server when the page loads, currently initialized with a placeholder value
+   * @type {state} pageNum - keeps track of what page of results the user is on, initialized to 1, not currently being used but will be helpful for future implementation when we have more results than we want to show on one page
+   * @type {state} isAuthChecking - boolean to track whether we are currently checking the user's authentication status, initialized to true, used to conditionally render the UI while we check if the user is signed in
+   * @type {state} isAuthenticated - boolean to track whether the user is authenticated or not, initialized to false, used to conditionally render the UI based on whether the user is signed in or not
+   * @function promptLoginIfNeeded - an async function that checks if the user is authenticated by making a request to the backend server with the token from localStorage, updates isAuthenticated and isAuthChecking based on the response, and calls getResults if the user is authenticated
+   * @function handleAuthLogout - an event handler function that sets isAuthenticated to false and isAuthChecking to false when the user logs out, used to update the UI accordingly
+   * @function handleAuthLogin - an event handler function that calls promptLoginIfNeeded when the user logs in, used to check the user's authentication status and update the UI accordingly
+   * @function getResults - an async function that fetches the club results from the backend server and updates the results state, currently uses a placeholder implementation that sets results to a static array if the fetch fails or returns an invalid response
+   * @function nextPage - an async function that increments pageNum to show the next page of results, currently not fully implemented as it does not fetch new results from the backend but will be helpful for future implementation when we have more results than we want to show on one page
+   * @function prevPage - an async function that decrements pageNum to show the previous page of results, currently not fully implemented as it does not fetch new results from the backend but will be helpful for future implementation when we have more results than we want to show on one page
+   * @function getClubInfo - a placeholder function that can be used to fetch and display more detailed information about a specific club when the user clicks on a club in the results, currently does not have an implementation but can be expanded in the future to show a modal or navigate to a club details page with more information about the club
+   * @lifecycle onMount - adds event listeners for 'auth-login' and 'auth-logout' events to handle changes in authentication status, and calls promptLoginIfNeeded to check the user's authentication status when the component is mounted
+   * @lifecycle onDestroy - removes the event listeners for 'auth-login' and 'auth-logout' events when the component is destroyed to prevent memory leaks
+    */    
   import { onDestroy, onMount } from 'svelte';
-  import AdminSwitch from '../../../Components/AdminSwitch.svelte'
   import Header from '../../../Components/header.svelte'
   import Footer from '../../../Components/footer.svelte'
   import LoginPopup from '../../../Components/login_popup.svelte'
-  let adminPreviewType = $state('admin')
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
@@ -80,9 +97,8 @@
   });
     
 </script>
-  
-<AdminSwitch enabled={true} value={adminPreviewType} onChange={(nextUserType) => (adminPreviewType = nextUserType)} />
-<Header userType="admin" previewAs={adminPreviewType} />
+
+<Header/>
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page">

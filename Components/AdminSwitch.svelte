@@ -1,4 +1,12 @@
+<!-- @component Creates a component for toggling between different admin preview modes. that the admin can use to preview the site as different user types. -->
 <script>
+/**
+ * @type {props} enabled - boolean to control whether the admin switch is shown or not, defaults to false
+ * @type {props} value - the current preview mode, can be 'admin', 'officer' or 'user', defaults to 'admin'
+ * @type {props} onChange - callback function that is called when the preview mode is changed, receives the next view as an argument
+ * @function setView - helper function to change the preview mode when a button is clicked, calls the onChange callback with the next view if it is different from the current value
+ */
+
 	let {
 		enabled = false,
 		value = 'admin',
@@ -12,9 +20,9 @@
 		onChange(nextView);
 	}
 </script>
-
+<!-- only if enabled  it creates the admin banner that when clicked calls the set view function to view the page as the selected user type -->
 {#if enabled}
-	<section class="admin-banner" aria-label="Admin view selector">
+	<section class="admin-banner" aria-label="Admin view selector"> <!-- aria-label="Admin view selector" is for accessibility -->
 		<p class="label">Admin preview mode</p>
 		<div class="options" role="tablist" aria-label="Preview as">
 			<button

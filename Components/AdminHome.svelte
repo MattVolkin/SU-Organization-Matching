@@ -1,4 +1,21 @@
+<!-- @component
+ Creates the admin home page 
+ 
+ **TODO**:
+  - Replace edit and delete actions with actual API calls -->
 <script>
+/**
+ * @type {statew} adminPreviewType - Allows admin to preview the page as a regular user, officer or admin. Defaults to admin view. FOR TESTING PURPOSES ONLY
+ * @type {state} maxClubsPerPage - Number of clubs to show per page in the club management table
+ * @type {state} pageNum - Current page number for club management pagination
+ * @type {state} clubs - List of clubs to display in the club management table, should be fetched from the API in a real implementation
+ * @function getAllClubs - Placeholder function to fetch all clubs from the API and store in state
+ * @function nextPage - Increments pageNum to show the next page of clubs, disabled if on the last page 
+ * @function prevPage - Decrements pageNum to show the previous page of clubs, disabled if on the first page
+ * @function getClubName - Helper function to get the club name from a club object or string, returns 'Unknown Club' if name is not available 
+ * @function editClub - Placeholder function to handle editing a club, should be replaced with actual implementation to edit club details
+ * @function deleteClub - Placeholder function to handle deleting a club, should be replaced with actual implementation to delete the club from the database and update the UI
+ */
     import AdminSwitch from './AdminSwitch.svelte'
     import Header from './header.svelte'
     import Footer from './footer.svelte'
@@ -41,6 +58,7 @@
     <h1>Admin Home</h1>
     <div class="club-management">
         <p>Welcome to the Admin Home! Here you can manage clubs and what they post on the website.</p>
+        <!-- Create the club management table  EX CS Club        Edit    Delete-->
         <table>
             <colgroup>
                 <col class="col-name" />

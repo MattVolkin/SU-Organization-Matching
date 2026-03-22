@@ -1,5 +1,16 @@
-
+<!-- @component Creates a login popup that appears when the user needs to sign in. -->
 <script>
+/**
+ * @type {props} autoOpen - boolean to control whether the login popup should automatically open when the component is rendered, defaults to false
+ * @type {props} onSuccess - callback function that is called when the user successfully logs in, receives an object with the user's email and token as an argument
+ * @type {props} onBlocked - callback function that is called when the login popup is blocked by the browser, defaults to an empty function
+ * @type {state} popupBlocked - boolean to track whether the login popup was blocked by the browser, used to conditionally render a warning message in the UI
+ * @function openLoginPopup - function that opens the login popup window and sets popupBlocked to true if the popup was blocked by the browser
+ * @function onAuthMessage - event handler function that listens for messages from the login popup window, checks if the message is a successful authentication message, and if so, stores the token in localStorage, calls the onSuccess callback with the user's email and token, and dispatches a custom 'auth-login' event on the window with the user's email and token as the detail
+ * @effect - an effect that resets popupBlocked to false whenever autoOpen changes
+ * @lifecycle onMount - adds the onAuthMessage event listener to the window when the component is mounted
+ * @lifecycle onDestroy - removes the onAuthMessage event listener from the window when the component is destroyed
+ */
   import { onMount, onDestroy } from 'svelte';
 
   let {
