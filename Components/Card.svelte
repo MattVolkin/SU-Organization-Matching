@@ -5,7 +5,7 @@
 // TODO centered on page
 // TODO make general progress bar (new file that can be added for other parts)
 // TODO let arrowkeys work for swiping
-  import { fade, fly, scale } from 'svelte/transition'; //import transition animations
+  import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
 
   let { show = true } = $props();
 	let counter = $state(0); // count what term we are on to stay on the list
@@ -14,7 +14,7 @@
 	// list of items
 	//https://svelte.dev/playground/805300f5895f4ea89b73ba75de393db8?version=5.53.6
 	let items = $state([ // terms that will be included in the cards shown to the user
-    
+
 {id:0, tag: "activities", term: "Community Service/Fundraising", def: "Voluntary work/raising funds intended to help people in a particular area."},
 {id:1, tag: "activities", term: "Social Justice", def: "Advocating for the fair treatment and equitable status of all individuals and social groups within a society"},
 {id:2, tag: "activities", term: "Retreats", def: "Planned off-campus getaway or sleepover for organization members designed to bond, foster unity, and align on organizational goals"},
@@ -91,11 +91,11 @@
 
 {#key term} <!-- This key term allows for the cards to file in one after another and change propperly without weird graphical issues -->
 <div class="Card"
-        in:fly={{ y: (directionInt)*(-100), duration: 700}}
-		out:fly={{ x: (directionInt)*(100), duration: 1000}} 
-		onoutroend={() => console.log('tried to update contents of text')}> <!-- -(negative) is to the left, + (positive) is to the right -->
-    <h1> {term} </h1>
-		<p in:typewriter={{ speed: 10 }}> {def}</p>
+        in:fade = {{delay: 1000, duration: 1000}}
+		out:fly={{ x: (directionInt)*(100), duration: 1000}} > <!-- -(negative) is to the left, + (positive) is to the right -->
+    
+    <h1 in:fade = {{delay: 1000, duration: 1000}}> {term} </h1>
+		<p in:fade={{delay:1000, speed: 1000 }}> {def}</p>
 
 </div>
 {/key}
@@ -117,8 +117,8 @@
 
 
         color: #91ff00;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 30vw;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -128,164 +128,6 @@
         box-sizing: border-box;
     }
 
-    .col-name {
-        width: 68%;
-    }
-
-    .col-actions {
-        width: 32%;
-    }
-
-    th {
-        background: #f5f9ff;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        font-size: 0.8rem;
-        color: #2f4a66;
-    }
-
-    th:nth-child(2) {
-        text-align: right;
-    }
-
-    tbody tr:hover {
-        background: #f9fcff;
-    }
-
-    td:nth-child(2) {
-        display: flex;
-        gap: 0.65rem;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-    }
-
-    button {
-        border: none;
-        border-radius: 0.55rem;
-        padding: 0.42rem 0.78rem;
-        font-size: 0.84rem;
-        font-weight: 700;
-        color: #fff;
-        background: var(--accent);
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    td button:last-child {
-        background: var(--danger);
-    }
-
-    button:hover {
-        background: var(--accent-hover);
-    }
-
-    td button:last-child:hover {
-        background: var(--danger-hover);
-    }
-
-    button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-
-    .pager {
-        margin-top: 0.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.6rem;
-    }
-
-    .pager span {
-        color: var(--muted);
-        font-weight: 600;
-    }
-
-    @media (max-width: 760px) {
-        .admin-home h1,
-        .club-management {
-            width: calc(100% - 1rem);
-        }
-
-        .club-management {
-            padding: 0.8rem;
-            border-radius: 0.85rem;
-        }
-
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-            display: block;
-            width: 100%;
-        }
-
-        thead {
-            display: none;
-        }
-
-        tr {
-            border-bottom: 1px solid #e6edf5;
-            padding: 0.45rem 0;
-        }
-
-        td {
-            border: none;
-            padding: 0.35rem 0.2rem;
-        }
-
-        td:nth-child(2) {
-            justify-content: flex-start;
-        }
-
-        .pager {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .pager button {
-            width: 100%;
-        }
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .admin-home {
-            --bg: linear-gradient(180deg, #0c1725 0%, #0a111b 100%);
-            --card: #0f1c2d;
-            --text: #deebfb;
-            --muted: #b2c6df;
-            --border: #2a3b53;
-            --accent: #2b8fb5;
-            --accent-hover: #3ca3cb;
-            --danger: #b84267;
-            --danger-hover: #d05079;
-        }
-
-        .club-management {
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-        }
-
-        table {
-            background: #102133;
-            border-color: #2a3b53;
-        }
-
-        th {
-            background: #13273e;
-            color: #c9d9ef;
-        }
-
-        td,
-        tr {
-            border-bottom-color: #253952;
-        }
-
-        tbody tr:hover {
-            background: #14263d;
-        }
-    }
 </style>
 <!-- 
 <style>

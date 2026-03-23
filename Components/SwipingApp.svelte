@@ -149,20 +149,13 @@
 
 	.swipedContainer {
 
-		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		width: 100vw;
+		height: 100vw;
 	}
 
-	.box {
-		border: 1px solid;
-		color: red;
-	  	width: 100%;
-
-
-	}
 
 
 	
