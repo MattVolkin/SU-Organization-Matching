@@ -1,8 +1,6 @@
 <script>
 
 // TODO make it look like its somthing that can be swipable
-// TODO make it look pretty
-// TODO centered on page
 // TODO make general progress bar (new file that can be added for other parts)
 // TODO let arrowkeys work for swiping
   import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
