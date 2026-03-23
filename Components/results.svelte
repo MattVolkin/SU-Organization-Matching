@@ -26,6 +26,18 @@
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
+  let selectedImageByClub = $state({})
+  const selectedImageStorageKey = 'selectedClubResultImages'
+
+  function loadSelectedClubImages() {
+    try {
+      const savedSelection = localStorage.getItem(selectedImageStorageKey)
+      selectedImageByClub = savedSelection ? JSON.parse(savedSelection) : {}
+    } catch (error) {
+      console.error('Unable to load selected club image', error)
+      selectedImageByClub = {}
+    }
+  }
 
   async function promptLoginIfNeeded() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
@@ -88,6 +100,7 @@
   onMount(() => {
     window.addEventListener('auth-login', handleAuthLogin);
     window.addEventListener('auth-logout', handleAuthLogout);
+    loadSelectedClubImages();
     promptLoginIfNeeded();
   });
 
@@ -113,6 +126,15 @@
   {:else}
     <section class="result-card">
       <h1>{results[pageNum-1]}</h1>
+
+      {#if selectedImageByClub[results[pageNum - 1]]}
+        <img
+          class="club-hero-image"
+          src={selectedImageByClub[results[pageNum - 1]]}
+          alt={`Selected club image for ${results[pageNum - 1]}`}
+        />
+      {/if}
+
       <h2>Hi we are {results[pageNum-1]} and we are commited to to provide a safe space to play games and hang out with other computer nerds. </h2> 
 
     
@@ -182,6 +204,15 @@
     font-weight: 500;
     color: var(--text-subtle);
     line-height: 1.45;
+  }
+
+  .club-hero-image {
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 0.8rem;
+    margin: 0.9rem 0;
+    border: 1px solid var(--card-border);
   }
 
   h3 {

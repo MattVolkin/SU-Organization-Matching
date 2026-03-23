@@ -17,8 +17,8 @@
   let left = $state(true); // if we swipe left or right, augment given booleans to make sure the card is able to come back into frame/know what direction to move card
 	let right = $state(true);
 
-	let activities = ['testActivities'] // track the activities that the user likes doing to be fed into the fitness function
-	let personality = ['testPersonalities'] // track personality traits that the user likes doing (to feed into fitness function)
+	let activities = $state(['testActivities']) // track the activities that the user likes doing to be fed into the fitness function
+	let personality = $state(['testPersonalities']) // track personality traits that the user likes doing (to feed into fitness function)
 
 	let direction = $state("none yet"); // track direction swiping goes to determine which direction elements move
 	let directionInt = $state(-1); // represent direction as an integer for calculations of speed and position
@@ -85,6 +85,11 @@
 </button>
  -->
 <Header />
+
+<div class="swipedContainer">
+	<h1>Swipe left if you don't like the activity, swipe right if you do! </h1>
+	<h2>Activities you like: {activities} </h2>
+	<h2>Personality traits you like: {personality} </h2>
 <section
 	{...useSwipe(swipeHandler, () => ({ timeframe: 300, minSwipeDistance: 25, touchAction: 'none' }), { // bound swipe function to work given a specific bounds of a section element
 		onswipemove: moveHandler
@@ -115,6 +120,8 @@
 	
 </section>	
 
+</div>
+
 <!--
 {#if right}
 	<div transition:fly={{ x: 100, duration: 700 }}>
@@ -132,16 +139,27 @@
 <style>
 	.content {
 		user-select: none;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.swipedContainer {
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 100vw;
 	}
 
 	.box {
 		border: 1px solid;
-		padding:0.5rem;
-		height: 75%;
-	  width: 75%;
+		color: red;
+	  	width: 100%;
 
 
 	}
+
 
 	
 </style>

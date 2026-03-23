@@ -5,4 +5,15 @@
    import SwipingApp from '../../../Components/SwipingApp.svelte';
 </script>
  <!-- <AdminHome />  -->
+
+ <div class="parent">
 <SwipingApp />
+</div>
+<style>
+
+.parent {
+  align-items: center; /* Center horizontally */
+  justify-content: center; /* Center vertically */
+}
+
+</style>

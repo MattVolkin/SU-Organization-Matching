@@ -1,4 +1,6 @@
 <script lang="ts">
+import { onMount } from 'svelte';
+
 function getAllAdjectives() {
   // Placeholder function - replace with API call to fetch adjectives from the backend to help with the scalibilty
   return ["Creative", "Friendly", "Organized", "Passionate", "Innovative", "Collaborative", "Supportive", "Ambitious", "Inclusive", "Dynamic"];}
@@ -18,12 +20,85 @@ function saveNewOfficers(club, officersEmails) {
     // Placeholder function - replace with API call to save the given officers for the given club in the backend database
     console.log(`Saving officers for ${club}: ${officersEmails.join(", ")}`);
 }
+
 const allAdjectives = getAllAdjectives();
 let selectedAdjectives = [];
+let clubImageLibrary: Record<string, string[]> = {};
+let selectedImageByClub: Record<string, string> = {};
+
+const uploadedImagesStorageKey = 'clubUploadedImagesByClub';
+const selectedImageStorageKey = 'selectedClubResultImages';
+
+function loadSavedClubMedia() {
+  try {
+    const savedUploadedImages = localStorage.getItem(uploadedImagesStorageKey);
+    const savedSelectedImages = localStorage.getItem(selectedImageStorageKey);
+
+    clubImageLibrary = savedUploadedImages ? JSON.parse(savedUploadedImages) : {};
+    selectedImageByClub = savedSelectedImages ? JSON.parse(savedSelectedImages) : {};
+  } catch (error) {
+    console.error('Unable to load saved club images', error);
+    clubImageLibrary = {};
+    selectedImageByClub = {};
+  }
+}
+
+function saveClubMedia() {
+  localStorage.setItem(uploadedImagesStorageKey, JSON.stringify(clubImageLibrary));
+  localStorage.setItem(selectedImageStorageKey, JSON.stringify(selectedImageByClub));
+}
+
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageUpload(club: string, event: Event) {
+  const input = event.currentTarget as HTMLInputElement;
+
+  if (!input.files || input.files.length === 0) {
+    return;
+  }
+
+  const encodedImages = await Promise.all(Array.from(input.files).map(toDataUrl));
+  const existingImages = clubImageLibrary[club] || [];
+
+  clubImageLibrary = {
+    ...clubImageLibrary,
+    [club]: [...existingImages, ...encodedImages],
+  };
+
+  if (!selectedImageByClub[club] && encodedImages.length > 0) {
+    selectedImageByClub = {
+      ...selectedImageByClub,
+      [club]: encodedImages[0],
+    };
+  }
+
+  saveClubMedia();
+  input.value = '';
+}
+
+function chooseResultImage(club: string, imageUrl: string) {
+  selectedImageByClub = {
+    ...selectedImageByClub,
+    [club]: imageUrl,
+  };
+  saveClubMedia();
+}
+
+onMount(() => {
+  loadSavedClubMedia();
+});
 
 </script>   
-
+<h2> WARNING all of these changes will be saved immediately </h2>
 {#each getAllClubsByOfficer("currentUser") as club}
+    <section class="club-settings-card">
     <p>{club} Settings</p>
     <p>Change adjectives to describe the club:</p>
   <select multiple bind:value={selectedAdjectives}>
@@ -33,6 +108,64 @@ let selectedAdjectives = [];
   </select>
   <button on:click={() => saveClubAdjectives(club, selectedAdjectives)}>Save Adjectives</button>
 
-  <p>Selected: {selectedAdjectives.join(", ") || "None"}</p>
+  <h3>Upload club images for results page</h3>
+  <input type="file" accept="image/*" multiple on:change={(event) => handleImageUpload(club, event)} />
+
+  {#if (clubImageLibrary[club] || []).length > 0}
+    <p>Select one image to use on the results page:</p>
+    <div class="image-grid">
+      {#each clubImageLibrary[club] as imageUrl}
+        <button
+          class:selected={selectedImageByClub[club] === imageUrl}
+          class="image-choice"
+          on:click={() => chooseResultImage(club, imageUrl)}
+          type="button"
+        >
+          <img src={imageUrl} alt={`Uploaded image for ${club}`} />
+        </button>
+      {/each}
+    </div>
+  {/if}
+  </section>
+
+
 
 {/each}
+
+<style>
+  .club-settings-card {
+    border: 1px solid #d7dee8;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #fafcff;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .image-choice {
+    border: 2px solid #d1d5db;
+    border-radius: 0.6rem;
+    padding: 0.2rem;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .image-choice.selected {
+    border-color: #1f6f8b;
+    box-shadow: 0 0 0 2px rgba(31, 111, 139, 0.2);
+  }
+
+  .image-choice img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    display: block;
+  }
+</style>
