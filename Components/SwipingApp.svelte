@@ -46,9 +46,13 @@
 		}
 		else if (direction === 'right') { // move card right when mouse is swiped right
 
-			activities = [...activities, cardObject.getTerm()]; // because right is considered an accept/agree, we add the term to our list
-			
-			
+			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
+				activities = [...activities, cardObject.getTerm()];
+			} else {
+				personality = [...personality, cardObject.getTerm()];
+			}
+
+
 			right = !right;
 			directionInt = 1;
 			setTimeout(() => {
