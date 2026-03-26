@@ -409,7 +409,7 @@ func makeCurrentUserHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
 			"email": session.Email,
-			"role":  dbClient.Query().getUserRole(session.Email).String(),
+			"role":  dbClient.Query().getUserRole(r.Context(), session.Email).String(),
 		})
 	}
 }

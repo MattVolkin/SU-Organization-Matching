@@ -147,12 +147,20 @@ func main() {
 
 	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
 
+	officerRouter.Handle("/orgs", handleOfficerOrgsRequest)
+
+	// officerRouter.Handle("/update", handleOfficerUpdateRequest)
+
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
 	// Start HTTP server.
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {

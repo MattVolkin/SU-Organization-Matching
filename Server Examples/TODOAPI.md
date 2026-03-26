@@ -8,5 +8,5 @@ User:
 
 
 Officer:
-TODO: add API to fetch all clubs for an officer: /api/officer/orgs
-TODO: add API to update officer's club: /api/officer/update
+ - [ ] TODO: add API to fetch all clubs for an officer: /api/officer/orgs
+ - [ ] TODO: add API to update officer's club: /api/officer/update

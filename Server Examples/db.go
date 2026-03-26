@@ -156,8 +156,40 @@ func (db *DatabaseClient) Close() error {
 	return db.client.Close()
 }
 
-func (db *DatabaseClient) getUserRole(email string) UserRole {
-	// Placeholder implementation, replace with actual role fetching logic.
+func (db *DatabaseClient) getUserRole(ctx context.Context, email string) UserRole {
+	next := db.clone()
+	//here we assume that a user exists with the provided email, and that the email is unique across users.
+	if next.lastErr != nil {
+		return Member
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return Member
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+
+	_, isStudentLife, err := next.IsUserStudentLifeByEmail(ctx, lookupEmail)
+	if err != nil {
+		next.lastErr = err
+		return Member
+	}
+
+	if isStudentLife {
+		return Admin
+	}
+
+	_, isOfficer, err := next.IsUserOfficerByEmail(ctx, email)
+
+	if err != nil {
+		next.lastErr = err
+		return Member
+	}
+
+	if isOfficer {
+		return Officer
+	}
+
 	return Member
 }
 
@@ -357,6 +389,96 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	clubs, err := next.client.Club.Query().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
+}
+
+// FetchOfficerClubsByUserEmail returns all clubs where the given user is listed
+// as a leader/officer. The user is identified by email.
+func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, nil, next.lastErr
+	}
+
+	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).All(ctx)
+	next.userEmail = lookupEmail
+	next.lastErr = err
+	return next, clubs, err
+}
+
+func (db *DatabaseClient) IsUserStudentLifeByEmail(ctx context.Context, email string) (*DatabaseClient, bool, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, false, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, false, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, false, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, false, err
+	}
+
+	for _, tag := range storedUser.Tags {
+		if strings.EqualFold(strings.TrimSpace(tag), "student_life") {
+			next.userEmail = lookupEmail
+			return next, true, nil
+		}
+	}
+
+	next.userEmail = lookupEmail
+	return next, false, nil
+}
+
+// IsUserOfficerByEmail efficiently checks whether a user (identified by email)
+// is an officer/leader of at least one club.
+func (db *DatabaseClient) IsUserOfficerByEmail(ctx context.Context, email string) (*DatabaseClient, bool, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, false, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, false, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, false, next.lastErr
+	}
+
+	isOfficer, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).Exist(ctx)
+	next.userEmail = lookupEmail
+	next.lastErr = err
+	return next, isOfficer, err
 }
 
 // FetchAnswerByID returns one answer by primary key.
