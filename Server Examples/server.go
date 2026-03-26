@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -120,30 +121,38 @@ func main() {
 	}
 
 	// Register API routes and static site handler.
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
-	mux.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg))
-	mux.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg))
-	mux.HandleFunc("/api/user", makeCurrentUserHandler())
-	mux.HandleFunc("/api/prefill", makePrefillFieldsHandler())
-	mux.HandleFunc("/logout", makeLogoutHandler())
+	router.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg))
+	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg))
+	router.HandleFunc("/api/user", makeCurrentUserHandler())
+	router.HandleFunc("/logout", makeLogoutHandler())
 
-	mux.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission)))
+	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission)))
 
 	submitHandler := requirePostMethod(http.HandlerFunc(handleDemographicsSubmission))
 	if submitRequiresAuth {
 		submitHandler = requireAuthenticatedSession(submitHandler)
 	}
-	mux.Handle("/submit", submitHandler)
+	router.Handle("/submit", submitHandler)
 
-	mux.Handle("/api/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+	apiRouter := router.PathPrefix("/api/").Subrouter()
+	apiRouter.Use(requireAuthenticatedSession)
 
-	mux.Handle("/", http.FileServer(http.Dir(".")))
+	apiRouter.HandleFunc("/api/prefill", makePrefillFieldsHandler())
+
+	apiRouter.Handle("/api/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+
+	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
+
+	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
+
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
 	// Start HTTP server.
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
-	log.Fatal(http.ListenAndServe(port, mux))
+	log.Fatal(http.ListenAndServe(port, router))
 }
 
 func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
@@ -181,22 +190,25 @@ func requireAuthenticatedSession(next http.Handler) http.Handler {
 	})
 }
 
-// requireUserRole is a placeholder for role-based authorization.
-// It currently always allows access.
-func requireUserRole(userEmail string, requiredRole UserRole, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = userEmail
-		_ = requiredRole
+// makeRequireUserRoleHandlerMiddleware returns middleware that enforces a minimum
+// user role for access to an endpoint, returning 403 Forbidden when the user's
+// role is insufficient.
+func makeRequireUserRoleHandlerMiddleware(requiredRole UserRole) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = requiredRole
 
-		// TODO: Implement real role checks based on database records
-		hasRole := true
-		if !hasRole {
-			w.WriteHeader(http.StatusForbidden)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden"})
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+			userEmail := r.Header.Get("X-User-Email")
+
+			hasRole := dbClient.Query().getUserRole(userEmail) == requiredRole
+			if !hasRole {
+				w.WriteHeader(http.StatusForbidden)
+				json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden"})
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // requirePostMethod enforces POST-only semantics for endpoints
