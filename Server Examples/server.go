@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"server-example/ent"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
@@ -55,6 +58,20 @@ type DemographicsPayload struct {
 	Race     []string `json:"race"`
 	Religion string   `json:"religion"`
 	Major    []string `json:"major"`
+}
+
+// OfficerOrgJSON defines the reusable wire format for officer organization data.
+// This can be marshaled to JSON for responses and decoded from JSON in requests.
+type OfficerOrgJSON struct {
+	ID                   int       `json:"id"`
+	ClubName             string    `json:"clubName"`
+	Description          string    `json:"description"`
+	MeetingTime          string    `json:"meetingTime"`
+	ImagePath            string    `json:"imagePath"`
+	ExternalLink         string    `json:"externalLink"`
+	ContactInfo          string    `json:"contactInfo"`
+	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 var dbClient *DatabaseClient
@@ -149,7 +166,7 @@ func main() {
 
 	officerRouter.Handle("/orgs", handleOfficerOrgsRequest)
 
-	// officerRouter.Handle("/update", handleOfficerUpdateRequest)
+	officerRouter.Handle("/update", handleOfficerUpdateRequest)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -157,6 +174,21 @@ func main() {
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func handleOfficerUpdateRequest(w http.ResponseWriter, r *http.Request) {
+	var payload OfficerOrgJSON
+	if !decodeJSONBody(w, r, &payload) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
+		return
+	}
+
+	dbClient.Query().UpdateClubFromOfficerOrgJSON(r.Context(), payload)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
 
 func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -168,27 +200,46 @@ func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonClubs := make([]map[string]any, 0, len(clubs))
+	jsonClubs := clubsToOfficerOrgJSON(clubs)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonClubs)
+}
+
+// clubsToOfficerOrgJSON converts Ent club models into the shared JSON wire format.
+func clubsToOfficerOrgJSON(clubs []*ent.Club) []OfficerOrgJSON {
+	result := make([]OfficerOrgJSON, 0, len(clubs))
 	for _, club := range clubs {
 		if club == nil {
 			continue
 		}
-
-		jsonClubs = append(jsonClubs, map[string]any{
-			"id":                   club.ID,
-			"clubName":             club.ClubName,
-			"description":          club.Description,
-			"meetingTime":          club.MeetingTime,
-			"imagePath":            club.ImagePath,
-			"externalLink":         club.ExternalLink,
-			"contactInfo":          club.ContactInfo,
-			"includeOfficerEmails": club.IncludeOfficerEmails,
-			"updatedAt":            club.UpdatedAt,
-		})
+		result = append(result, officerOrgJSONFromEntClub(club))
 	}
+	return result
+}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jsonClubs)
+func officerOrgJSONFromEntClub(club *ent.Club) OfficerOrgJSON {
+	return OfficerOrgJSON{
+		ID:                   club.ID,
+		ClubName:             club.ClubName,
+		Description:          club.Description,
+		MeetingTime:          club.MeetingTime,
+		ImagePath:            club.ImagePath,
+		ExternalLink:         club.ExternalLink,
+		ContactInfo:          club.ContactInfo,
+		IncludeOfficerEmails: club.IncludeOfficerEmails,
+		UpdatedAt:            club.UpdatedAt,
+	}
+}
+
+// decodeOfficerOrgJSONs decodes a request body with the same JSON format used
+// by OfficerOrgJSON responses so read/write paths can share one contract.
+func decodeOfficerOrgJSONs(w http.ResponseWriter, r *http.Request) ([]OfficerOrgJSON, bool) {
+	var payload []OfficerOrgJSON
+	if !decodeJSONBody(w, r, &payload) {
+		return nil, false
+	}
+	return payload, true
 }
 
 func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
