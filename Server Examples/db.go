@@ -24,6 +24,7 @@ type DatabaseClient struct {
 
 	userGoogleID string
 	userEmail    string
+	resultRows   []map[string]any
 	lastErr      error
 }
 
@@ -101,8 +102,67 @@ func (db *DatabaseClient) Query() *DatabaseClient {
 	next := db.clone()
 	next.userGoogleID = ""
 	next.userEmail = ""
+	next.resultRows = nil
 	next.lastErr = nil
 	return next
+}
+
+// AppendResults appends one result set onto the in-flight accumulated results.
+// This is useful for composing results from multiple requests into one payload.
+func (db *DatabaseClient) AppendResults(rows []map[string]any) *DatabaseClient {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next
+	}
+
+	if len(rows) == 0 {
+		return next
+	}
+
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		rowCopy := make(map[string]any, len(row))
+		for k, v := range row {
+			rowCopy[k] = v
+		}
+		next.resultRows = append(next.resultRows, rowCopy)
+	}
+
+	return next
+}
+
+// Results returns a defensive copy of accumulated result rows.
+func (db *DatabaseClient) Results() []map[string]any {
+	if db == nil || len(db.resultRows) == 0 {
+		return []map[string]any{}
+	}
+
+	out := make([]map[string]any, 0, len(db.resultRows))
+	for _, row := range db.resultRows {
+		if row == nil {
+			continue
+		}
+		rowCopy := make(map[string]any, len(row))
+		for k, v := range row {
+			rowCopy[k] = v
+		}
+		out = append(out, rowCopy)
+	}
+	return out
+}
+
+// FetchQuestionsByTypeAndAppend runs FetchQuestionsByType and appends the
+// returned rows to accumulated chain results for fluent composition.
+func (db *DatabaseClient) FetchQuestionsByTypeAndAppend(ctx context.Context, questionType string) *DatabaseClient {
+	next, rows, err := db.FetchQuestionsByType(ctx, questionType)
+	if err != nil {
+		next.lastErr = err
+		return next
+	}
+
+	return next.AppendResults(rows)
 }
 
 // Filter applies a simple key/value filter to the chain state.
@@ -179,8 +239,7 @@ func (db *DatabaseClient) getUserRole(ctx context.Context, email string) UserRol
 		return Admin
 	}
 
-	_, isOfficer, err := next.IsUserOfficerByEmail(ctx, email)
-
+	_, isOfficer, err := next.IsUserOfficerByEmail(ctx, lookupEmail)
 	if err != nil {
 		next.lastErr = err
 		return Member
@@ -320,8 +379,9 @@ func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType
 			continue
 		}
 
-		questionPayload := make(map[string]any, len(q.Translations)+1)
+		questionPayload := make(map[string]any, len(q.Translations)+2)
 		questionPayload["id"] = q.ID
+		questionPayload["question_type"] = q.QuestionType
 
 		if q.Translations == nil {
 			contents = append(contents, questionPayload)
@@ -353,15 +413,12 @@ func (db *DatabaseClient) FetchAllQuestions(ctx context.Context) (*DatabaseClien
 	return next, questions, err
 }
 
-// FetchAdjectiveQuestionContents returns question IDs plus translation payloads
-// for all adjective questions.
-func (db *DatabaseClient) FetchAdjectiveQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]any, error) {
-	next, questions, err := db.FetchQuestionsByType(ctx, "adjective")
-	if err != nil {
-		return next, nil, err
-	}
+// FetchSwipeQuestionContents returns question IDs plus translation payloads
+// for all adjective and personality traits questions.
+func (db *DatabaseClient) FetchSwipeQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]any, error) {
+	questions := db.FetchQuestionsByTypeAndAppend(ctx, "adjective").FetchQuestionsByTypeAndAppend(ctx, "personality_traits").Results()
 
-	return next, questions, nil
+	return db, questions, nil
 }
 
 // FetchClubByID returns one club by primary key.
@@ -672,5 +729,19 @@ func (db *DatabaseClient) clone() *DatabaseClient {
 		return &DatabaseClient{lastErr: fmt.Errorf("database client is nil")}
 	}
 	cp := *db
+	if len(db.resultRows) > 0 {
+		cp.resultRows = make([]map[string]any, 0, len(db.resultRows))
+		for _, row := range db.resultRows {
+			if row == nil {
+				cp.resultRows = append(cp.resultRows, nil)
+				continue
+			}
+			rowCopy := make(map[string]any, len(row))
+			for k, v := range row {
+				rowCopy[k] = v
+			}
+			cp.resultRows = append(cp.resultRows, rowCopy)
+		}
+	}
 	return &cp
 }

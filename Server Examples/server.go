@@ -161,20 +161,22 @@ func main() {
 
 	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest))
 
+	apiRouter.HandleFunc("/results", getUserOrgsHandler)
+
 	// Officer-only endpoints are nested under /api/officer/ and use additional role-checking middleware.
 	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
 
 	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
 
-	officerRouter.Handle("/orgs", handleOfficerOrgsRequest)
+	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest)
 
-	officerRouter.Handle("/update", handleOfficerUpdateRequest)
+	officerRouter.HandleFunc("/update", handleOfficerUpdateRequest)
 
 	// Admin-only endpoints are nested under /api/admin/ and use additional role-checking middleware.
 	adminRouter := apiRouter.PathPrefix("/admin/").Subrouter()
 	adminRouter.Use(makeRequireUserRoleHandlerMiddleware(Admin))
 
-	adminRouter.Handle("/orgs", handleAdminOrgsRequest)
+	adminRouter.HandleFunc("/orgs", handleAdminOrgsRequest)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -182,6 +184,47 @@ func main() {
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
+	// email := r.Header.Get("X-User-Email")
+	// _, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+	// 	return
+	// }
+
+	// clubs := getClubsFromAnswers(answers) // use the algorithm made by @TannerK7 here to get a list of clubs!
+
+	// jsonClubs := Map(clubs, getOrgInfoFromName)
+	jsonClubs := [2]OrgJSON{
+		{
+			ID:                   0,
+			ClubName:             "CS Club",
+			Description:          "placeholder description yay!",
+			MeetingTime:          "Thursdays at 6:30",
+			ImagePath:            "",
+			ExternalLink:         "",
+			ContactInfo:          "",
+			IncludeOfficerEmails: false,
+			UpdatedAt:            time.Now(),
+		},
+		{
+			ID:                   1,
+			ClubName:             "Physics Club",
+			Description:          "placeholder description yay! This is a longer one to show how text wrapping looks in the frontend.more words to make it even longer and see if it breaks or not! sorry Matt lol",
+			MeetingTime:          "random",
+			ImagePath:            "",
+			ExternalLink:         "",
+			ContactInfo:          "",
+			IncludeOfficerEmails: false,
+			UpdatedAt:            time.Now(),
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonClubs)
 }
 
 func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -265,7 +308,7 @@ func decodeOrgJSONs(w http.ResponseWriter, r *http.Request) ([]OrgJSON, bool) {
 }
 
 func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
-	_, adjectives, err := dbClient.Query().FetchAdjectiveQuestionContents(r.Context())
+	_, adjectives, err := dbClient.Query().FetchSwipeQuestionContents(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch adjectives"})
@@ -423,4 +466,16 @@ func readBoolEnv(key string, defaultValue bool) bool {
 	default:
 		return defaultValue
 	}
+}
+
+// Source - https://stackoverflow.com/a/72498530
+// Posted by mtkopone, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-03-26, License - CC BY-SA 4.0
+
+func Map[T, V any](ts []T, fn func(T) V) []V {
+	result := make([]V, len(ts))
+	for i, t := range ts {
+		result[i] = fn(t)
+	}
+	return result
 }
