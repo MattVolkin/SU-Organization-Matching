@@ -293,8 +293,9 @@ func (db *DatabaseClient) FetchQuestionByID(ctx context.Context, id int) (*Datab
 	return next, q, err
 }
 
-// FetchQuestionsByType returns all questions matching a given question_type.
-func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType string) (*DatabaseClient, []map[string]string, error) {
+// FetchQuestionsByType returns all questions matching a given question_type,
+// including each question's ID alongside its translation payload.
+func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType string) (*DatabaseClient, []map[string]any, error) {
 	next := db.clone()
 	if next.lastErr != nil {
 		return next, nil, next.lastErr
@@ -313,18 +314,25 @@ func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType
 	questions, err := next.client.Question.Query().Where(question.QuestionTypeEQ(trimmedType)).All(ctx)
 	next.lastErr = err
 
-	contents := make([]map[string]string, 0, len(questions))
+	contents := make([]map[string]any, 0, len(questions))
 	for _, q := range questions {
-		if q == nil || q.Translations == nil {
-			contents = append(contents, map[string]string{})
+		if q == nil {
 			continue
 		}
 
-		copyMap := make(map[string]string, len(q.Translations))
-		for k, v := range q.Translations {
-			copyMap[k] = v
+		questionPayload := make(map[string]any, len(q.Translations)+1)
+		questionPayload["id"] = q.ID
+
+		if q.Translations == nil {
+			contents = append(contents, questionPayload)
+			continue
 		}
-		contents = append(contents, copyMap)
+
+		for k, v := range q.Translations {
+			questionPayload[k] = v
+		}
+
+		contents = append(contents, questionPayload)
 	}
 	return next, contents, err
 }
@@ -345,8 +353,9 @@ func (db *DatabaseClient) FetchAllQuestions(ctx context.Context) (*DatabaseClien
 	return next, questions, err
 }
 
-// FetchAdjectiveQuestionContents returns translation payloads for all adjective questions.
-func (db *DatabaseClient) FetchAdjectiveQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]string, error) {
+// FetchAdjectiveQuestionContents returns question IDs plus translation payloads
+// for all adjective questions.
+func (db *DatabaseClient) FetchAdjectiveQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]any, error) {
 	next, questions, err := db.FetchQuestionsByType(ctx, "adjective")
 	if err != nil {
 		return next, nil, err

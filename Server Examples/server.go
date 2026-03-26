@@ -309,7 +309,7 @@ func makeRequireUserRoleHandlerMiddleware(requiredRole UserRole) func(next http.
 
 			userEmail := r.Header.Get("X-User-Email")
 
-			hasRole := dbClient.Query().getUserRole(userEmail) == requiredRole
+			hasRole := dbClient.Query().getUserRole(r.Context(), userEmail) == requiredRole
 			if !hasRole {
 				w.WriteHeader(http.StatusForbidden)
 				json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden"})
