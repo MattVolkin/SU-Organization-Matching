@@ -60,9 +60,9 @@ type DemographicsPayload struct {
 	Major    []string `json:"major"`
 }
 
-// OfficerOrgJSON defines the reusable wire format for officer organization data.
+// OrgJSON defines the reusable wire format for officer organization data.
 // This can be marshaled to JSON for responses and decoded from JSON in requests.
-type OfficerOrgJSON struct {
+type OrgJSON struct {
 	ID                   int       `json:"id"`
 	ClubName             string    `json:"clubName"`
 	Description          string    `json:"description"`
@@ -153,13 +153,15 @@ func main() {
 	}
 	router.Handle("/submit", submitHandler)
 
+	// All /api/ endpoints require an authenticated session, but only some require specific roles.
 	apiRouter := router.PathPrefix("/api/").Subrouter()
 	apiRouter.Use(requireAuthenticatedSession)
 
-	apiRouter.HandleFunc("/api/prefill", makePrefillFieldsHandler())
+	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler())
 
-	apiRouter.Handle("/api/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest))
 
+	// Officer-only endpoints are nested under /api/officer/ and use additional role-checking middleware.
 	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
 
 	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
@@ -167,6 +169,12 @@ func main() {
 	officerRouter.Handle("/orgs", handleOfficerOrgsRequest)
 
 	officerRouter.Handle("/update", handleOfficerUpdateRequest)
+
+	// Admin-only endpoints are nested under /api/admin/ and use additional role-checking middleware.
+	adminRouter := apiRouter.PathPrefix("/admin/").Subrouter()
+	adminRouter.Use(makeRequireUserRoleHandlerMiddleware(Admin))
+
+	adminRouter.Handle("/orgs", handleAdminOrgsRequest)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -176,8 +184,22 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, router))
 }
 
+func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
+	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch orgs"})
+		return
+	}
+
+	jsonClubs := orgStructToJSON(clubs)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonClubs)
+}
+
 func handleOfficerUpdateRequest(w http.ResponseWriter, r *http.Request) {
-	var payload OfficerOrgJSON
+	var payload OrgJSON
 	if !decodeJSONBody(w, r, &payload) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -200,26 +222,26 @@ func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonClubs := clubsToOfficerOrgJSON(clubs)
+	jsonClubs := orgStructToJSON(clubs)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jsonClubs)
 }
 
-// clubsToOfficerOrgJSON converts Ent club models into the shared JSON wire format.
-func clubsToOfficerOrgJSON(clubs []*ent.Club) []OfficerOrgJSON {
-	result := make([]OfficerOrgJSON, 0, len(clubs))
+// orgStructToJSON converts Ent club models into the shared JSON wire format.
+func orgStructToJSON(clubs []*ent.Club) []OrgJSON {
+	result := make([]OrgJSON, 0, len(clubs))
 	for _, club := range clubs {
 		if club == nil {
 			continue
 		}
-		result = append(result, officerOrgJSONFromEntClub(club))
+		result = append(result, orgJSONFromEntClub(club))
 	}
 	return result
 }
 
-func officerOrgJSONFromEntClub(club *ent.Club) OfficerOrgJSON {
-	return OfficerOrgJSON{
+func orgJSONFromEntClub(club *ent.Club) OrgJSON {
+	return OrgJSON{
 		ID:                   club.ID,
 		ClubName:             club.ClubName,
 		Description:          club.Description,
@@ -232,10 +254,10 @@ func officerOrgJSONFromEntClub(club *ent.Club) OfficerOrgJSON {
 	}
 }
 
-// decodeOfficerOrgJSONs decodes a request body with the same JSON format used
-// by OfficerOrgJSON responses so read/write paths can share one contract.
-func decodeOfficerOrgJSONs(w http.ResponseWriter, r *http.Request) ([]OfficerOrgJSON, bool) {
-	var payload []OfficerOrgJSON
+// decodeOrgJSONs decodes a request body with the same JSON format used
+// by OrgJSON responses so read/write paths can share one contract.
+func decodeOrgJSONs(w http.ResponseWriter, r *http.Request) ([]OrgJSON, bool) {
+	var payload []OrgJSON
 	if !decodeJSONBody(w, r, &payload) {
 		return nil, false
 	}

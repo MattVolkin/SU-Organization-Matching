@@ -391,7 +391,7 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	return next, clubs, err
 }
 
-func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OfficerOrgJSON) (*DatabaseClient, error) {
+func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, error) {
 	next := db.clone()
 	if next.lastErr != nil {
 		return next, next.lastErr
