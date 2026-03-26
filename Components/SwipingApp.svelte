@@ -29,11 +29,7 @@
 
 	let target: HTMLElement | null; // what kind of element is being interacted with as well as 
 
-	function swipeHandler(event: SwipeCustomEvent) { // method that captures the swipe motion and records the given data, as well as performs some variable assignments to help with the motion of the animations
-		direction = event.detail.direction; 
-		pointerType = event.detail.pointerType;
-		target = event.detail.target as HTMLElement;
-		if (direction === 'left') { // we want to make sure that when the user swipes left, the animation of the card moves in the corresponding direction
+	function swipeLeft() { // method to swipe left, this is broke out into a function so that it can be called by both the swipe gesture and arrow keys
 			left = !left;
 			directionInt = -1;
 			setTimeout(() => {
@@ -43,9 +39,10 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
-		}
-		else if (direction === 'right') { // move card right when mouse is swiped right
+	}
 
+	function swipeRight() {// method to swipe right, this is broke out into a function so that it can be called by both the swipe gesture and arrow keys
+		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, cardObject.getTerm()];
 			} else {
@@ -62,6 +59,21 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
+
+		
+	}
+
+
+	function swipeHandler(event: SwipeCustomEvent) { // method that captures the swipe motion and records the given data, as well as performs some variable assignments to help with the motion of the animations
+		direction = event.detail.direction; 
+		pointerType = event.detail.pointerType;
+		target = event.detail.target as HTMLElement;
+		if (direction === 'left') { // we want to make sure that when the user swipes left, the animation of the card moves in the corresponding direction
+			swipeLeft();
+		}
+		else if (direction === 'right') { // move card right when mouse is swiped right
+
+			swipeRight();
 		}
 
 		else if (direction === 'top') { // DEBUG; when we swipe up print the activities list to the console
@@ -70,7 +82,16 @@
 		
 	}
 
-	
+	function keyboardHandler(event: KeyboardEvent) { // method to capture the left and right arrow keys to perform the same function as swiping left and right, this is for accessibility reasons
+		console.log(event.key);
+
+		if (event.key === 'ArrowLeft') {
+			swipeLeft();
+		}
+		else if (event.key === 'ArrowRight') {
+			swipeRight();
+		}
+	}
 
 	function moveHandler(event: GestureCustomEvent) { // get the x y value of mouse
 		mx = event.detail.x;
@@ -78,6 +99,8 @@
 	}
 	
 </script>
+
+<svelte:window onkeydown={keyboardHandler} />
 
 
 <!-- 

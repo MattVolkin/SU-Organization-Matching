@@ -1,8 +1,7 @@
 <script>
 
-// TODO make it look like its somthing that can be swipable
+// TODO make it look like its something that can be swipeable
 // TODO make general progress bar (new file that can be added for other parts)
-// TODO let arrowkeys work for swiping
   import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
 
   let { show = true } = $props();
@@ -87,7 +86,7 @@
   Toggle Elements
 </button> -->
 
-{#key term} <!-- This key term allows for the cards to file in one after another and change propperly without weird graphical issues -->
+{#key term} <!-- This key term allows for the cards to file in one after another and change properly without weird graphical issues -->
 <div class="Card"
         in:fade = {{delay: 1000, duration: 1000}}
 		out:fly={{ x: (directionInt)*(100), duration: 1000}} > <!-- -(negative) is to the left, + (positive) is to the right -->
