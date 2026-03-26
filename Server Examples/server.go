@@ -160,7 +160,35 @@ func main() {
 }
 
 func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
+	email := r.Header.Get("X-User-Email")
+	_, clubs, err := dbClient.Query().FetchOfficerClubsByUserEmail(r.Context(), email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch officer orgs"})
+		return
+	}
 
+	jsonClubs := make([]map[string]any, 0, len(clubs))
+	for _, club := range clubs {
+		if club == nil {
+			continue
+		}
+
+		jsonClubs = append(jsonClubs, map[string]any{
+			"id":                   club.ID,
+			"clubName":             club.ClubName,
+			"description":          club.Description,
+			"meetingTime":          club.MeetingTime,
+			"imagePath":            club.ImagePath,
+			"externalLink":         club.ExternalLink,
+			"contactInfo":          club.ContactInfo,
+			"includeOfficerEmails": club.IncludeOfficerEmails,
+			"updatedAt":            club.UpdatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonClubs)
 }
 
 func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
