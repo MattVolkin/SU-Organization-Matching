@@ -22,6 +22,25 @@ const (
 	Member
 )
 
+// String converts a UserRole enum value into a stable network-safe label.
+func (role UserRole) String() string {
+	switch role {
+	case Admin:
+		return "admin"
+	case Officer:
+		return "officer"
+	case Member:
+		return "member"
+	default:
+		return "unknown"
+	}
+}
+
+// MarshalJSON serializes UserRole as a string instead of its integer value.
+func (role UserRole) MarshalJSON() ([]byte, error) {
+	return json.Marshal(role.String())
+}
+
 // SurveyResponsePayload is the request body accepted by the /response endpoint.
 type SurveyResponsePayload struct {
 	QuestionID int  `json:"questionId"`
@@ -117,12 +136,25 @@ func main() {
 	}
 	mux.Handle("/submit", submitHandler)
 
+	mux.Handle("/api/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	// Start HTTP server.
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, mux))
+}
+
+func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
+	_, adjectives, err := dbClient.Query().FetchAdjectiveQuestionContents(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch adjectives"})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(adjectives)
 }
 
 // requireAuthenticatedSession rejects requests that do not carry a valid session

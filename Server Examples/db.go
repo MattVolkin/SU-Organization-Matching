@@ -7,6 +7,9 @@ import (
 	"sync"
 
 	"server-example/ent"
+	"server-example/ent/answer"
+	"server-example/ent/club"
+	"server-example/ent/question"
 	"server-example/ent/user"
 
 	_ "github.com/lib/pq"
@@ -153,6 +156,11 @@ func (db *DatabaseClient) Close() error {
 	return db.client.Close()
 }
 
+func (db *DatabaseClient) getUserRole(email string) UserRole {
+	// Placeholder implementation, replace with actual role fetching logic.
+	return Member
+}
+
 // FetchUserProfileByGoogleID reads one user profile by Google subject id.
 func (db *DatabaseClient) FetchUserProfileByGoogleID(ctx context.Context, googleID string) (*DatabaseClient, *GoogleProfile, error) {
 	next := db.clone()
@@ -194,6 +202,242 @@ func (db *DatabaseClient) FetchUserProfileByGoogleID(ctx context.Context, google
 		Email: storedUser.Email,
 		Name:  extractProfileNameTag(storedUser.Tags),
 	}, nil
+}
+
+// FetchUserProfileByEmail reads one user profile by email address.
+func (db *DatabaseClient) FetchUserProfileByEmail(ctx context.Context, email string) (*DatabaseClient, *GoogleProfile, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, nil, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	next.userGoogleID = strings.TrimSpace(storedUser.GoogleID)
+	next.userEmail = strings.TrimSpace(storedUser.Email)
+	next.lastErr = nil
+
+	return next, &GoogleProfile{
+		Email: storedUser.Email,
+		Name:  extractProfileNameTag(storedUser.Tags),
+	}, nil
+}
+
+// FetchQuestionByID returns one question by primary key.
+func (db *DatabaseClient) FetchQuestionByID(ctx context.Context, id int) (*DatabaseClient, *ent.Question, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if id <= 0 {
+		next.lastErr = fmt.Errorf("question id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	q, err := next.client.Question.Query().Where(question.IDEQ(id)).Only(ctx)
+	next.lastErr = err
+	return next, q, err
+}
+
+// FetchQuestionsByType returns all questions matching a given question_type.
+func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType string) (*DatabaseClient, []map[string]string, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	trimmedType := strings.TrimSpace(questionType)
+	if trimmedType == "" {
+		next.lastErr = fmt.Errorf("question type is required")
+		return next, nil, next.lastErr
+	}
+
+	questions, err := next.client.Question.Query().Where(question.QuestionTypeEQ(trimmedType)).All(ctx)
+	next.lastErr = err
+
+	contents := make([]map[string]string, 0, len(questions))
+	for _, q := range questions {
+		if q == nil || q.Translations == nil {
+			contents = append(contents, map[string]string{})
+			continue
+		}
+
+		copyMap := make(map[string]string, len(q.Translations))
+		for k, v := range q.Translations {
+			copyMap[k] = v
+		}
+		contents = append(contents, copyMap)
+	}
+	return next, contents, err
+}
+
+// FetchAllQuestions returns all question records.
+func (db *DatabaseClient) FetchAllQuestions(ctx context.Context) (*DatabaseClient, []*ent.Question, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	questions, err := next.client.Question.Query().All(ctx)
+	next.lastErr = err
+	return next, questions, err
+}
+
+// FetchAdjectiveQuestionContents returns translation payloads for all adjective questions.
+func (db *DatabaseClient) FetchAdjectiveQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]string, error) {
+	next, questions, err := db.FetchQuestionsByType(ctx, "adjective")
+	if err != nil {
+		return next, nil, err
+	}
+
+	return next, questions, nil
+}
+
+// FetchClubByID returns one club by primary key.
+func (db *DatabaseClient) FetchClubByID(ctx context.Context, id int) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if id <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	c, err := next.client.Club.Query().Where(club.IDEQ(id)).Only(ctx)
+	next.lastErr = err
+	return next, c, err
+}
+
+// FetchAllClubs returns all club records.
+func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, []*ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	clubs, err := next.client.Club.Query().All(ctx)
+	next.lastErr = err
+	return next, clubs, err
+}
+
+// FetchAnswerByID returns one answer by primary key.
+func (db *DatabaseClient) FetchAnswerByID(ctx context.Context, id int) (*DatabaseClient, *ent.Answer, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if id <= 0 {
+		next.lastErr = fmt.Errorf("answer id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	a, err := next.client.Answer.Query().Where(answer.IDEQ(id)).Only(ctx)
+	next.lastErr = err
+	return next, a, err
+}
+
+// FetchAnswersByQuestionID returns all answers belonging to one question.
+func (db *DatabaseClient) FetchAnswersByQuestionID(ctx context.Context, questionID int) (*DatabaseClient, []*ent.Answer, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if questionID <= 0 {
+		next.lastErr = fmt.Errorf("question id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	answers, err := next.client.Answer.Query().Where(answer.HasQuestionWith(question.IDEQ(questionID))).All(ctx)
+	next.lastErr = err
+	return next, answers, err
+}
+
+// FetchAnswersByUserEmail returns all answers submitted by one user email.
+func (db *DatabaseClient) FetchAnswersByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Answer, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, nil, next.lastErr
+	}
+
+	answers, err := next.client.Answer.Query().Where(answer.HasUserWith(user.EmailEQ(lookupEmail))).All(ctx)
+	next.lastErr = err
+	return next, answers, err
+}
+
+// FetchAllAnswers returns all answer records.
+func (db *DatabaseClient) FetchAllAnswers(ctx context.Context) (*DatabaseClient, []*ent.Answer, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	answers, err := next.client.Answer.Query().All(ctx)
+	next.lastErr = err
+	return next, answers, err
 }
 
 // UpsertUserProfileByGoogleID upserts user information using Google subject ID.

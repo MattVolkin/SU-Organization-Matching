@@ -105,7 +105,7 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
 		}
 
 		// Prefer existing database data; otherwise bootstrap from Google userinfo.
-		dbState, userInfo, err := dbClient.Query().Filter("google_id", googleID).FetchUserProfileByGoogleID(r.Context(), "")
+		dbState, userInfo, err := dbClient.Query().FetchUserProfileByGoogleID(r.Context(), googleID)
 		if err != nil {
 			fmt.Println("User not found in DB, fetching from Google:", err)
 			userInfo, err = fetchGoogleProfile(r.Context(), token)
@@ -409,6 +409,7 @@ func makeCurrentUserHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
 			"email": session.Email,
+			"role":  dbClient.Query().getUserRole(session.Email).String(),
 		})
 	}
 }
