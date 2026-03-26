@@ -3,7 +3,7 @@ ADMIN:
 
 User:
  - [ ] TODO: add API to fetch all results for a user: /api/results
- - [ ] TODO: adjectives: /api/adjectives
+ - [x] TODO: adjectives: /api/adjectives
  - [x] ~~TODO~~: add API to fetch a user's role: /api/user ~~/role~~ **included in payload from /api/user**
 
 
