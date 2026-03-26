@@ -1,5 +1,5 @@
 ADMIN:
- - [ ] TODO: add API to fetch all clubs and store in state: /api/admin/orgs/
+ - [x] ~~TODO~~: add API to fetch all clubs and store in state: /api/admin/orgs/
 
 User:
  - [ ] TODO: add API to fetch all results for a user: /api/results
