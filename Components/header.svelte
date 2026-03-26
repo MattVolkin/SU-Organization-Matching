@@ -105,6 +105,22 @@
   function closeMenu() {
     isMenuOpen = false;
   }
+
+  function toClubSlug(clubName) {
+    return clubName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  function getOfficerClubs()
+  {
+    if (getNavUserType() === 'admin')
+    {
+      return [];
+    }
+    else if (getNavUserType() === 'officer')
+    {
+      return ["Club 1", "Club 2"];// Todo: replace with API call to fetch clubs the officer is an officer of
+    }
+  }
 </script>
 
 <header class="header">
@@ -143,7 +159,18 @@
     {#if getNavUserType() === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
-      <a href="/manage-club" onclick={closeMenu}>Manage Club</a>
+      <div class="nav-item manage-club-menu">
+        <a href={getOfficerClubs().length > 0 ? `/manage-club/${toClubSlug(getOfficerClubs()[0])}?club=${encodeURIComponent(getOfficerClubs()[0])}` : '/manage-club'} onclick={closeMenu}>Manage Club</a>
+        <div class="club-dropdown" aria-label="Clubs you can manage">
+          {#if getOfficerClubs().length > 0}
+            {#each getOfficerClubs() as club}
+              <a href={`/manage-club/${toClubSlug(club)}?club=${encodeURIComponent(club)}`} onclick={closeMenu}>{club}</a>
+            {/each}
+          {:else}
+            <span class="empty-clubs">No clubs assigned</span>
+          {/if}
+        </div>
+      </div>
     {/if}
   </nav>
 </header>
@@ -284,6 +311,57 @@
     color: #3498db;
   }
 
+  .nav-item {
+    position: relative;
+    flex: 1;
+  }
+
+  .nav-item > a {
+    display: block;
+  }
+
+  .club-dropdown {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 0.3rem);
+    transform: translateX(-50%);
+    min-width: 13rem;
+    max-width: 18rem;
+    background-color: #1f2f3d;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    z-index: 10;
+    flex-direction: column;
+  }
+
+  .manage-club-menu:hover .club-dropdown,
+  .manage-club-menu:focus-within .club-dropdown {
+    display: flex;
+  }
+
+  .club-dropdown a,
+  .empty-clubs {
+    display: block;
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    color: white;
+    text-decoration: none;
+    flex: none;
+  }
+
+  .club-dropdown a:hover {
+    color: white;
+    background-color: rgba(52, 152, 219, 0.3);
+  }
+
+  .empty-clubs {
+    color: rgba(255, 255, 255, 0.75);
+    cursor: default;
+  }
+
   /* Desktop scaling for login button */
   @media (min-width: 768px) {
     .header-content {
@@ -377,6 +455,30 @@
       transition: background-color 0.3s ease;
       padding: 0.75rem;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-item {
+      width: 100%;
+    }
+
+    .club-dropdown {
+      display: flex;
+      position: static;
+      transform: none;
+      min-width: 0;
+      max-width: none;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0;
+      box-shadow: none;
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .club-dropdown a,
+    .empty-clubs {
+      text-align: center;
+      padding: 0.65rem 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .nav a:hover {

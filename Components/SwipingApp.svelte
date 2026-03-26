@@ -88,7 +88,7 @@
 	clicks: {count}
 </button>
  -->
-<Header />
+<Header userType="officer" />
 
 <div class="swipedContainer">
 	<h1>Swipe left if you don't like the activity, swipe right if you do! </h1>

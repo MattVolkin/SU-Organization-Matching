@@ -6,7 +6,7 @@ function getAllAdjectives() {
   return ["Creative", "Friendly", "Organized", "Passionate", "Innovative", "Collaborative", "Supportive", "Ambitious", "Inclusive", "Dynamic"];}
 function getAllClubsByOfficer(user){
     // Placeholder function - replace with API call to fetch clubs that the given user is an officer of, this will help with scalability as well as making sure that officers can only edit the clubs they are in charge of
-    return ["Computer Science Club"];
+  return ["Club 1", "Club 2"];
 }
 function saveClubAdjectives(club, adjectives) {
     // Placeholder function - replace with API call to save the given adjectives for the given club in the backend database
@@ -22,12 +22,20 @@ function saveNewOfficers(club, officersEmails) {
 }
 
 const allAdjectives = getAllAdjectives();
+const officerClubs = getAllClubsByOfficer("currentUser");
+let selectedClubFromUrl = '';
+let accessibleClubs: string[] = [];
+let pageNotice = '';
 let selectedAdjectives = [];
 let clubImageLibrary: Record<string, string[]> = {};
 let selectedImageByClub: Record<string, string> = {};
 
 const uploadedImagesStorageKey = 'clubUploadedImagesByClub';
 const selectedImageStorageKey = 'selectedClubResultImages';
+
+function toClubSlug(clubName: string) {
+  return clubName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
 
 function loadSavedClubMedia() {
   try {
@@ -93,11 +101,54 @@ function chooseResultImage(club: string, imageUrl: string) {
 
 onMount(() => {
   loadSavedClubMedia();
+
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const slugFromPath = pathParts[0] === 'manage-club' ? (pathParts[1] || '') : '';
+  const clubFromQuery = new URLSearchParams(window.location.search).get('club') || '';
+  const clubFromSlug = officerClubs.find((club) => toClubSlug(club) === slugFromPath) || '';
+  const requestedClub = clubFromQuery || clubFromSlug;
+  selectedClubFromUrl = requestedClub;
+
+  if (!slugFromPath) {
+    pageNotice = 'Open a specific club settings page from the Manage Club header menu.';
+    accessibleClubs = [];
+    return;
+  }
+
+  if (clubFromQuery && toClubSlug(clubFromQuery) !== slugFromPath) {
+    pageNotice = 'The selected club URL is invalid. Open the page again from the Manage Club menu.';
+    accessibleClubs = [];
+    return;
+  }
+
+  if (!requestedClub) {
+    pageNotice = 'That club settings page does not exist for your account.';
+    accessibleClubs = [];
+    return;
+  }
+
+  const canManageRequestedClub = officerClubs.includes(requestedClub);
+  if (!canManageRequestedClub) {
+    pageNotice = `You do not have permission to manage "${requestedClub}".`;
+    accessibleClubs = [];
+    return;
+  }
+
+  pageNotice = '';
+  accessibleClubs = [requestedClub];
 });
 
 </script>   
 <h2> WARNING all of these changes will be saved immediately </h2>
-{#each getAllClubsByOfficer("currentUser") as club}
+{#if pageNotice}
+  <p class="club-warning">{pageNotice}</p>
+{/if}
+
+{#if accessibleClubs.length === 0}
+  <p class="club-warning">No editable club loaded.</p>
+{/if}
+
+{#each accessibleClubs as club}
     <section class="club-settings-card">
     <p>{club} Settings</p>
     <p>Change adjectives to describe the club:</p>
@@ -139,6 +190,15 @@ onMount(() => {
     padding: 1rem;
     margin-bottom: 1rem;
     background: #fafcff;
+  }
+
+  .club-warning {
+    border: 1px solid #f4c27a;
+    background: #fff8ee;
+    color: #7a4d12;
+    border-radius: 0.65rem;
+    padding: 0.75rem 0.9rem;
+    margin: 0.8rem 0;
   }
 
   .image-grid {
