@@ -391,7 +391,7 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	return next, clubs, err
 }
 
-func (db *DatabaseClient) UpdateClubFromOfficerOrgJSON(ctx context.Context, payload *OfficerOrgJSON) (*DatabaseClient, error) {
+func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OfficerOrgJSON) (*DatabaseClient, error) {
 	next := db.clone()
 	if next.lastErr != nil {
 		return next, next.lastErr
@@ -400,25 +400,25 @@ func (db *DatabaseClient) UpdateClubFromOfficerOrgJSON(ctx context.Context, payl
 		next.lastErr = fmt.Errorf("database not initialized")
 		return next, next.lastErr
 	}
-	if payload == nil {
+	if newClubInfo == nil {
 		next.lastErr = fmt.Errorf("payload is required")
 		return next, next.lastErr
 	}
 
-	clubID := payload.ID
+	clubID := newClubInfo.ID
 	if clubID <= 0 {
 		next.lastErr = fmt.Errorf("club id must be positive")
 		return next, next.lastErr
 	}
 
 	update := next.client.Club.UpdateOneID(clubID)
-	update.SetClubName(strings.TrimSpace(payload.ClubName))
-	update.SetDescription(strings.TrimSpace(payload.Description))
-	update.SetMeetingTime(strings.TrimSpace(payload.MeetingTime))
-	update.SetImagePath(strings.TrimSpace(payload.ImagePath))
-	update.SetExternalLink(strings.TrimSpace(payload.ExternalLink))
-	update.SetContactInfo(strings.TrimSpace(payload.ContactInfo))
-	update.SetIncludeOfficerEmails(payload.IncludeOfficerEmails)
+	update.SetClubName(strings.TrimSpace(newClubInfo.ClubName))
+	update.SetDescription(strings.TrimSpace(newClubInfo.Description))
+	update.SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime))
+	update.SetImagePath(strings.TrimSpace(newClubInfo.ImagePath))
+	update.SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink))
+	update.SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo))
+	update.SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
 
 	err := update.Exec(ctx)
 	next.lastErr = err

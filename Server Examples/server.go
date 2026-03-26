@@ -185,7 +185,7 @@ func handleOfficerUpdateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbClient.Query().UpdateClubFromOfficerOrgJSON(r.Context(), payload)
+	dbClient.Query().UpdateClubFromJSON(r.Context(), &payload)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
