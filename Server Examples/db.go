@@ -391,6 +391,40 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	return next, clubs, err
 }
 
+func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+	if newClubInfo == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, next.lastErr
+	}
+
+	clubID := newClubInfo.ID
+	if clubID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, next.lastErr
+	}
+
+	update := next.client.Club.UpdateOneID(clubID)
+	update.SetClubName(strings.TrimSpace(newClubInfo.ClubName))
+	update.SetDescription(strings.TrimSpace(newClubInfo.Description))
+	update.SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime))
+	update.SetImagePath(strings.TrimSpace(newClubInfo.ImagePath))
+	update.SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink))
+	update.SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo))
+	update.SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
+
+	err := update.Exec(ctx)
+	next.lastErr = err
+	return next, err
+}
+
 // FetchOfficerClubsByUserEmail returns all clubs where the given user is listed
 // as a leader/officer. The user is identified by email.
 func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Club, error) {
