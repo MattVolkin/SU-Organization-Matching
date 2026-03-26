@@ -7,10 +7,12 @@
 	import { useSwipe , type SwipeCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
 	import Card from './Card.svelte'; // import the Card Component and it's relevant method (advanceCard) to display the details of a word and its description
 	import advanceCard from './Card.svelte'
-	import Header from './header.svelte'
-    import Footer from './footer.svelte'
+	import Bar from './ProgressBar.svelte'
+
+
 
 	let cardObject = $state({}); //create this object as a blank version of the Card class so that we can refer to one object that can internally track its data
+	let barObject = $state({}); // create object so we can call methods from the bar file
 	
   import { fade, fly, scale } from 'svelte/transition'; // import transitions
 
@@ -39,6 +41,8 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
+				barObject.advanceProgress(1)
+
 	}
 
 	function swipeRight() {// method to swipe right, this is broke out into a function so that it can be called by both the swipe gesture and arrow keys
@@ -59,6 +63,10 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
+
+		barObject.advanceProgress(1)
+
+		
 
 		
 	}
@@ -100,8 +108,6 @@
 	
 </script>
 
-<svelte:window onkeydown={keyboardHandler} />
-
 
 <!-- 
 <h1>Hello {name}!</h1>
@@ -111,7 +117,9 @@
 	clicks: {count}
 </button>
  -->
-<Header userType="officer" />
+
+<svelte:window onkeydown={keyboardHandler} />
+
 
 <div class="swipedContainer">
 	<h1>Swipe left if you don't like the activity, swipe right if you do! </h1>
@@ -142,7 +150,7 @@
 		
 	</div>
 
-
+<Bar maxLimit = 33 bind:this={barObject} />
 
 	
 </section>	
@@ -161,7 +169,6 @@
 <h1>Transition Demo</h1>
 <Card left/> -->
 
-<Footer />
 
 <style>
 	.content {

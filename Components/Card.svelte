@@ -1,7 +1,8 @@
 <script>
 
-// TODO make it look like its something that can be swipeable
-// TODO make general progress bar (new file that can be added for other parts)
+// TODO make it look like its something that can be swiped
+// TODO make it so the cards dont jump around when they are swiped (maybe add a transition or something?)
+
   import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
 
   let { show = true } = $props();
