@@ -7,7 +7,10 @@ require (
 	github.com/lib/pq v1.11.2
 )
 
-require golang.org/x/oauth2 v0.15.0
+require (
+	github.com/gorilla/mux v1.8.1
+	golang.org/x/oauth2 v0.15.0
+)
 
 require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
