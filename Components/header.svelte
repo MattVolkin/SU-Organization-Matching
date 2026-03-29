@@ -10,6 +10,7 @@
 -->
 <script>
   import { onMount, onDestroy } from 'svelte';
+  import AdminSwitch from './AdminSwitch.svelte';
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
@@ -122,7 +123,9 @@
     }
   }
 </script>
-
+{#if getNavUserType() === 'admin'} 
+  <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />
+{/if}
 <header class="header">
   <div class="header-content">
     <h1>SU Organization Matching Tool</h1>
