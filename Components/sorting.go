@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type organization struct {
 	name              string
 	personality       []string
@@ -116,23 +118,47 @@ func main() {
 		},
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < len(users); i++ {
 		var cs_score float32 = compare(users[i], cs_club)
 		var normalized_score float32 = 100 * cs_score / cs_club.max_score
-		println("The matching score for", users[i].name, "and", cs_club.name, "is", normalized_score)
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, cs_club.name, normalized_score)
 	}
 
-	// compare(tanner, su_tabletop)
-	// compare(matt, su_tabletop)
-	// compare(aidan, su_tabletop)
-	// compare(ben, su_tabletop)
-	// compare(su_tabletop, su_tabletop)
+	for i := 0; i < len(users); i++ {
+		var tabletop_score float32 = compare(users[i], su_tabletop)
+		var normalized_score float32 = 100 * tabletop_score / su_tabletop.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, su_tabletop.name, normalized_score)
+	}
 
-	// compare(tanner, p4p)
-	// compare(matt, p4p)
-	// compare(aidan, p4p)
-	// compare(ben, p4p)
-	// compare(p4p, p4p)
+	for i := 0; i < len(users); i++ {
+		var p4p_score float32 = compare(users[i], p4p)
+		var normalized_score float32 = 100 * p4p_score / p4p.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, p4p.name, normalized_score)
+	}
+
+	for i := 0; i < len(users); i++ {
+		var kdc_score float32 = compare(users[i], kdc)
+		var normalized_score float32 = 100 * kdc_score / kdc.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, kdc.name, normalized_score)
+	}
+
+	for i := 0; i < len(users); i++ {
+		var eim_score float32 = compare(users[i], exercise_is_medicine)
+		var normalized_score float32 = 100 * eim_score / exercise_is_medicine.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, exercise_is_medicine.name, normalized_score)
+	}
+
+	for i := 0; i < len(users); i++ {
+		var classics_score float32 = compare(users[i], classics_club)
+		var normalized_score float32 = 100 * classics_score / classics_club.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, classics_club.name, normalized_score)
+	}
+
+	for i := 0; i < len(users); i++ {
+		var sig_score float32 = compare(users[i], kappa_sigma)
+		var normalized_score float32 = 100 * sig_score / kappa_sigma.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, kappa_sigma.name, normalized_score)
+	}
 
 	// compare(tanner, exercise_is_medicine)
 	// compare(matt, exercise_is_medicine)
