@@ -38,6 +38,8 @@ Linux: `bash ssh_setup.sh`
 These scripts will install and configure the necessary connector software. It will open a web browser and prompt for a login, simply enter your SU email, then the code it emails you, then grant access. 
 
 ### Connecting 
+* To use the updated server, the ssh key needs to be reset. To accomplish this, run the command: `ssh-keys -R capstonessh.benmckallip.com`
+  * If this doesn't work, simply remove the `known_hosts` file from the `$USERNAME$/.ssh` folder
 * Username is your name (lowercase). so for Ben, the username is `ben`. You can connect with `ssh ben@capstone` (replacing `ben` with your username)
 * first-time password should be `ubuntu`, it will prompt you to change this
 * `~/capstone` is a shared folder with much more storage than the home directory, try to keep shared files in there. 
