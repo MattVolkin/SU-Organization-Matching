@@ -1,18 +1,17 @@
 package main
 
-import "fmt"
-
 type organization struct {
-	name                string
-	personality         []string
-	activities          []string
-	genders             []string
-	ethnicities         []string
-	religions           []string
-	strict_demographics bool
-	dedicated_majors    []string
-	associated_majors   []string // this field will be blank for users
-	other               []string
+	name              string
+	personality       []string
+	activities        []string
+	genders           []string
+	ethnicities       []string
+	religions         []string
+	strict_genders    bool
+	dedicated_majors  []string
+	associated_majors []string // this field will be blank for users
+	other             []string
+	max_score         float32
 }
 
 func main() {
@@ -24,11 +23,13 @@ func main() {
 	cs_club.activities = []string{"Board Games", "Movies", "Video Games", "Giving Presentations", "Trivia", "Guest Speakers", "Group Meals"}
 	cs_club.dedicated_majors = []string{"Computer Science", "Computational Mathematics"}
 	cs_club.associated_majors = []string{"Biology", "Mathematics"}
+	cs_club.max_score = compare(cs_club, cs_club)
 
 	var su_tabletop organization
 	su_tabletop.name = "SU Tabletop"
 	su_tabletop.personality = []string{"Welcoming", "Caring", "Creative", "Nerdy", "Enthusiastic", "Curious", "Fun"}
 	su_tabletop.activities = []string{"Board Games"}
+	su_tabletop.max_score = compare(su_tabletop, su_tabletop)
 
 	var p4p organization
 	p4p.name = "Pirates for Pride"
@@ -36,6 +37,7 @@ func main() {
 	p4p.activities = []string{"Social Justice", "Arts & Crafts", "Discussion"}
 	p4p.genders = []string{"Non Binary", "Other"}
 	p4p.other = []string{"Queer"}
+	p4p.max_score = compare(p4p, p4p)
 
 	// I am a part of the first three orgs, I am not a part of the ones below
 
@@ -43,96 +45,118 @@ func main() {
 	exercise_is_medicine.name = "Exercise is Medicine"
 	exercise_is_medicine.personality = []string{"Welcoming", "Hard Working", "Caring", "Collaborative"}
 	exercise_is_medicine.activities = []string{"Exercise", "Animal Care"}
+	exercise_is_medicine.max_score = compare(exercise_is_medicine, exercise_is_medicine)
 
 	var kdc organization
 	kdc.name = "Kappa Delta Chi"
-	kdc.personality = []string{"Hard Working", "Caring", "Eager to Learn", "A Leader", "Social"}
+	kdc.personality = []string{"Hard Working", "Caring", "Eager to Learn", "Leader", "Social"}
 	kdc.activities = []string{"Fundraising", "Social Justice", "Retreats"}
 	kdc.genders = []string{"Woman"}
+	kdc.strict_genders = true
 	kdc.ethnicities = []string{"Latino"}
 	kdc.other = []string{"Greek Life"}
+	kdc.max_score = compare(kdc, kdc)
 
 	var classics_club organization
 	classics_club.name = "Classics Club"
 	classics_club.personality = []string{"Outgoing", "Eager to Learn", "Enthusiastic", "Social", "Fun"}
 	classics_club.activities = []string{"Board Games", "Arts & Crafts", "Giving Presentations"}
 	classics_club.dedicated_majors = []string{"Classics"}
+	classics_club.max_score = compare(classics_club, classics_club)
+
+	var kappa_sigma organization
+	kappa_sigma.name = "Kappa Sigma"
+	kappa_sigma.personality = []string{"Creative", "Leader", "Social"}
+	kappa_sigma.activities = []string{"Fundraising", "Group Meals"}
+	kappa_sigma.genders = []string{"Man"}
+	kappa_sigma.strict_genders = true
+	kappa_sigma.other = []string{"Greek Life"}
+	kappa_sigma.max_score = compare(kappa_sigma, kappa_sigma)
 
 	// using info I would put in for the sake of testing
-	var tanner organization
-	tanner.name = "Tanner Klein"
-	tanner.personality = []string{"Welcoming", "Hard Working", "Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "A Leader", "Enthusiastic", "Fun"}
-	tanner.activities = []string{"Board Games", "Video Games", "Arts & Crafts", "Giving Presentations"}
-	tanner.genders = []string{"Man"}
-	tanner.ethnicities = []string{"White"}
-	tanner.religions = []string{"No Religion"}
-	tanner.dedicated_majors = []string{"Mathematics", "Computer Science"}
-	tanner.other = []string{"Queer"}
+	users := [4]organization{
+		{
+			name:             "Tanner Klein",
+			personality:      []string{"Welcoming", "Hard Working", "Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "Leader", "Enthusiastic", "Fun"},
+			activities:       []string{"Board Games", "Video Games", "Arts & Crafts", "Giving Presentations"},
+			genders:          []string{"Man"},
+			ethnicities:      []string{"White"},
+			religions:        []string{"No Religion"},
+			dedicated_majors: []string{"Mathematics", "Computer Science"},
+			other:            []string{"Queer"},
+		},
+		{
+			name:             "Matthew Volkin",
+			personality:      []string{"Welcoming", "Hard Working", "Caring", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Collaborative", "Curious", "Social", "Fun"},
+			activities:       []string{"Board Games", "Movies", "Video Games", "Trivia", "Study Groups", "Group Meals"},
+			genders:          []string{"Man"},
+			ethnicities:      []string{"White"},
+			religions:        []string{"No Religion"},
+			dedicated_majors: []string{"Computer Science"},
+			other:            []string{"Disability"},
+		},
+		{
+			name:             "Aidan Balakrishnan",
+			personality:      []string{"Hard Working", "Caring", "Creative", "Eager to Learn", "Nerdy", "Collaborative", "Social", "Fun"},
+			activities:       []string{"Fundraising", "Social Justice", "Board Games", "Movies", "Video Games", "Arts & Crafts", "Music", "Professional Development", "Trivia", "Study Groups"},
+			genders:          []string{"Man"},
+			ethnicities:      []string{"Asian"},
+			religions:        []string{"No Religion"},
+			dedicated_majors: []string{"Computer Science", "Theatre"},
+			other:            []string{"Queer"},
+		},
+		{
+			name:             "Benjamin McKallip",
+			personality:      []string{"Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Curious", "Social", "Fun"},
+			activities:       []string{"Board Games", "Movies", "Video Games", "Music", "Trivia", "Group Meals", "Discussion"},
+			genders:          []string{"Man"},
+			ethnicities:      []string{"White"},
+			religions:        []string{"No Religion"},
+			dedicated_majors: []string{"Physics", "Computer Science"},
+		},
+	}
 
-	var matt organization
-	matt.name = "Matthew Volkin"
-	matt.personality = []string{"Welcoming", "Hard Working", "Caring", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Collaborative", "Curious", "Social", "Fun"}
-	matt.activities = []string{"Board Games", "Movies", "Video Games", "Trivia", "Study Groups", "Group Meals"}
-	matt.genders = []string{"Man"}
-	matt.ethnicities = []string{"White"}
-	matt.religions = []string{"No Religion"}
-	matt.dedicated_majors = []string{"Computer Science"}
-	matt.other = []string{"Disability"}
+	for i := 0; i < 4; i++ {
+		var cs_score float32 = compare(users[i], cs_club)
+		var normalized_score float32 = 100 * cs_score / cs_club.max_score
+		println("The matching score for", users[i].name, "and", cs_club.name, "is", normalized_score)
+	}
 
-	var aidan organization
-	aidan.name = "Aidan Balakrishnan"
-	aidan.personality = []string{"Hard Working", "Caring", "Creative", "Eager to Learn", "Nerdy", "Collaborative", "Social", "Fun"}
-	aidan.activities = []string{"Fundraising", "Social Justice", "Board Games", "Movies", "Video Games", "Arts & Crafts", "Music", "Professional Development", "Trivia", "Study Groups"}
-	aidan.genders = []string{"Man"}
-	aidan.ethnicities = []string{"Asian"}
-	aidan.religions = []string{"No Religion"}
-	aidan.dedicated_majors = []string{"Computer Science", "Theatre"}
-	aidan.other = []string{"Queer"}
+	// compare(tanner, su_tabletop)
+	// compare(matt, su_tabletop)
+	// compare(aidan, su_tabletop)
+	// compare(ben, su_tabletop)
+	// compare(su_tabletop, su_tabletop)
 
-	var ben organization
-	ben.name = "Benjamin McKallip"
-	ben.personality = []string{"Caring", "Creative", "Open Minded", "Eager to Learn", "Nerdy", "Enthusiastic", "Curious", "Social", "Fun"}
-	ben.activities = []string{"Board Games", "Movies", "Video Games", "Music", "Trivia", "Group Meals", "Discussion"}
-	ben.genders = []string{"Man"}
-	ben.ethnicities = []string{"White"}
-	ben.religions = []string{"No Religion"}
-	ben.dedicated_majors = []string{"Physics", "Computer Science"}
+	// compare(tanner, p4p)
+	// compare(matt, p4p)
+	// compare(aidan, p4p)
+	// compare(ben, p4p)
+	// compare(p4p, p4p)
 
-	compare(tanner, cs_club)
-	compare(matt, cs_club)
-	compare(aidan, cs_club)
-	compare(ben, cs_club)
-	compare(cs_club, cs_club)
+	// compare(tanner, exercise_is_medicine)
+	// compare(matt, exercise_is_medicine)
+	// compare(aidan, exercise_is_medicine)
+	// compare(ben, exercise_is_medicine)
+	// compare(exercise_is_medicine, exercise_is_medicine)
 
-	compare(tanner, su_tabletop)
-	compare(matt, su_tabletop)
-	compare(aidan, su_tabletop)
-	compare(ben, su_tabletop)
-	compare(su_tabletop, su_tabletop)
+	// compare(tanner, kdc)
+	// compare(matt, kdc)
+	// compare(aidan, kdc)
+	// compare(ben, kdc)
+	// compare(kdc, kdc)
 
-	compare(tanner, p4p)
-	compare(matt, p4p)
-	compare(aidan, p4p)
-	compare(ben, p4p)
-	compare(p4p, p4p)
+	// compare(tanner, classics_club)
+	// compare(matt, classics_club)
+	// compare(aidan, classics_club)
+	// compare(ben, classics_club)
+	// compare(classics_club, classics_club)
 
-	compare(tanner, exercise_is_medicine)
-	compare(matt, exercise_is_medicine)
-	compare(aidan, exercise_is_medicine)
-	compare(ben, exercise_is_medicine)
-	compare(exercise_is_medicine, exercise_is_medicine)
-
-	compare(tanner, kdc)
-	compare(matt, kdc)
-	compare(aidan, kdc)
-	compare(ben, kdc)
-	compare(kdc, kdc)
-
-	compare(tanner, classics_club)
-	compare(matt, classics_club)
-	compare(aidan, classics_club)
-	compare(ben, classics_club)
-	compare(classics_club, classics_club)
+	// compare(tanner, kappa_sigma)
+	// compare(matt, kappa_sigma)
+	// compare(aidan, kappa_sigma)
+	// compare(ben, kappa_sigma)
+	// compare(kappa_sigma, kappa_sigma)
 
 	// trying out comparing orgs to each other
 	// we might be able to make a "similar orgs" button
@@ -152,7 +176,7 @@ func main() {
 
 // Takes a user's answers and organization's information and
 // passes them to other functions to get scores for each category
-func compare(user organization, org organization) {
+func compare(user organization, org organization) float32 {
 	var personality_score float32 = personality_scoring(user, org)
 	var activity_score float32 = activity_scoring(user, org)
 	var demographic_score float32 = demographic_scoring(user, org)
@@ -160,12 +184,10 @@ func compare(user organization, org organization) {
 	var other_score float32 = other_scoring(user, org)
 	// how do we want to combine these? (I'll just add them for now)
 	var final_score float32 = personality_score + activity_score + demographic_score + academic_score + other_score
-	if demographic_score == 0 && org.strict_demographics {
+	if demographic_score == 0 && org.strict_genders {
 		final_score = 0
 	}
-	// testing print statement
-	fmt.Println("The matching score for", user.name, "and", org.name, "is", final_score)
-
+	return final_score
 }
 
 // Takes a user's answers and an organization's information and
@@ -184,7 +206,7 @@ func personality_scoring(user organization, org organization) float32 {
 }
 
 // Takes a user's answers and an organization's information and
-// returns a score based on how closely the activity interestes match
+// returns a score based on how closely the activity interests match
 func activity_scoring(user organization, org organization) float32 {
 	var score float32 = 0
 	for i := 0; i < len(user.activities); i++ {
@@ -201,7 +223,7 @@ func activity_scoring(user organization, org organization) float32 {
 // Takes a user's answers and an organization's information and
 // returns a score based on how closely the demographics match
 func demographic_scoring(user organization, org organization) float32 { // TODO: Rework this it doesn't work with the multiple choice questions
-	var total_demographics int = len(org.genders) + len(org.ethnicities) + len(org.religions)
+	var total_demographics int = min(1, len(org.genders)) + len(org.ethnicities) + min(1, len(org.religions))
 	if total_demographics == 0 { // remove possibility of dividing by 0
 		return 0
 	}
@@ -212,6 +234,9 @@ func demographic_scoring(user organization, org organization) float32 { // TODO:
 				score++
 			}
 		}
+	}
+	if score == 0 && org.strict_genders { // used mostly for non-coed greek orgs
+		return 0
 	}
 	for i := 0; i < len(user.ethnicities); i++ {
 		for j := 0; j < len(org.ethnicities); j++ {
