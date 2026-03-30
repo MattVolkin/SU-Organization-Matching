@@ -11,6 +11,8 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import AdminSwitch from './AdminSwitch.svelte';
+  import { APICreater } from './APIHandler.svelte';
+
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
@@ -119,9 +121,10 @@
     }
     else if (getNavUserType() === 'officer')
     {
-      return ["Club 1", "Club 2"];// Todo: replace with API call to fetch clubs the officer is an officer of
+      return APICreater('GET', '/api/officer/orgs', null); 
     }
   }
+
 </script>
 {#if getNavUserType() === 'admin'} 
   <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />

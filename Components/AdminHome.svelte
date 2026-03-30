@@ -19,14 +19,16 @@
     import AdminSwitch from './AdminSwitch.svelte'
     import Header from './header.svelte'
     import Footer from './footer.svelte'
+    import { APICreater } from './APIHandler.svelte'
 
     let adminPreviewType = $state('admin')
     let maxClubsPerPage = $state(8)
     let pageNum = $state(1)
-    let clubs = $state(["Club 1", "Club 2", "Club 3"]) //Todo: replace with API call to fetch clubs
+    let clubs = $state(getAllClubs())//Todo: replace with API call to fetch clubs
     const totalPages = $derived(Math.max(1, Math.ceil(clubs.length / maxClubsPerPage)))
     //Todo: add API to fetch all clubs and store in state
     function getAllClubs() {
+        return APICreater('GET', '/api/admin/orgs',null)
     }
     function nextPage() {
         if (pageNum < totalPages) {
