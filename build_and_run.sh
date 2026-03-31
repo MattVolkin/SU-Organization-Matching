@@ -8,4 +8,4 @@ export GOOGLE_CLIENT_SECRET='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'
 export GOOGLE_REDIRECT_URL='https://capstone.benmckallip.com/auth/callback'
 
 cd 'Svelte Examples/plain-svelte-app' && npm run build
-cd '../../Server Examples' && go mod tidy && go build server.go && chmod +x server && ./server > server.log 2>&1 &
+cd '../../Server Examples' && go mod tidy && go build -o server . && chmod +x server && ./server > server.log 2>&1 &
