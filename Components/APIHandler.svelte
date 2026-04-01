@@ -1,6 +1,6 @@
-<script>
+<script context="module">
 // /api/results
-async function APICreater(method,url, body, loginToken, debug = false) {
+export async function APICreater(method,url, body, loginToken, debug = false) {
     const response = await fetch(url, {
         method: method,
         headers: {
@@ -16,7 +16,4 @@ async function APICreater(method,url, body, loginToken, debug = false) {
 
     return response.json()
 }
-
-a
-
 </script>

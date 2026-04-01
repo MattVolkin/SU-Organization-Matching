@@ -187,17 +187,26 @@ func main() {
 }
 
 func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
-	// email := r.Header.Get("X-User-Email")
-	// _, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
-	// 	return
-	// }
+	email := r.Header.Get("X-User-Email")
+	_, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+		return
+	}
 
-	// clubs := getClubsFromAnswers(answers) // use the algorithm made by @TannerK7 here to get a list of clubs!
+	
+
+	clubs := getClubsFromAnswers(answers) // use the algorithm made by @TannerK7 here to get a list of clubs!
 
 	// jsonClubs := Map(clubs, getOrgInfoFromName)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(clubs)
+}
+
+// getClubsFromAnswers is a placeholder for the algorithm that would determine club membership based on user answers. TODO: replace with the actual implementation made by @TannerK7.
+func getClubsFromAnswers(answers []DBAnswer) []OrgJSON {
 	jsonClubs := [2]OrgJSON{
 		{
 			ID:                   0,
@@ -213,7 +222,7 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			ID:                   1,
 			ClubName:             "Physics Club",
-			Description:          "placeholder description yay! This is a longer one to show how text wrapping looks in the frontend.more words to make it even longer and see if it breaks or not! sorry Matt lol",
+			Description:          "placeholder description yay! This is a longer one to show how text wrapping looks in the frontend.more words to make it even longer and see if it breaks or not! sorry Matt",
 			MeetingTime:          "random",
 			ImagePath:            "",
 			ExternalLink:         "",
@@ -222,9 +231,7 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt:            time.Now(),
 		},
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jsonClubs)
+	return jsonClubs
 }
 
 func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {

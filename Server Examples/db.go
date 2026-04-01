@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"server-example/ent"
 	"server-example/ent/answer"
@@ -26,6 +27,16 @@ type DatabaseClient struct {
 	userEmail    string
 	resultRows   []map[string]any
 	lastErr      error
+}
+
+type DBAnswer struct {
+	ID           int
+	AnswerText   string
+	SubmittedAt  time.Time
+	QuestionID   int
+	QuestionType string
+	Translations map[string]string
+	IsActive     bool
 }
 
 var (
@@ -151,6 +162,57 @@ func (db *DatabaseClient) Results() []map[string]any {
 		out = append(out, rowCopy)
 	}
 	return out
+}
+
+func (db *DatabaseClient) FetchUserAnswersByUserEmail(ctx context.Context, email string) (*DatabaseClient, []DBAnswer, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, nil, next.lastErr
+	}
+
+	answers, err := next.client.Answer.Query().
+		Where(answer.HasUserWith(user.EmailEQ(lookupEmail))).
+		WithQuestion().
+		All(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	rows := make([]DBAnswer, 0, len(answers))
+	for _, a := range answers {
+		if a == nil {
+			continue
+		}
+		row := DBAnswer{
+			ID:          a.ID,
+			AnswerText:  a.AnswerText,
+			SubmittedAt: a.SubmittedAt,
+		}
+		if q := a.Edges.Question; q != nil {
+			row.QuestionID = q.ID
+			row.QuestionType = q.QuestionType
+			row.Translations = q.Translations
+			row.IsActive = q.IsActive
+		}
+		rows = append(rows, row)
+	}
+
+	return next, rows, nil
 }
 
 // FetchQuestionsByTypeAndAppend runs FetchQuestionsByType and appends the

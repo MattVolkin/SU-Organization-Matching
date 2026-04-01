@@ -3,6 +3,8 @@ for user in matt tanner aidan
 do
     useradd -m $user
     echo -e "ubuntu\nubuntu" | passwd $user
-    mkdir -p /home/$user/capstone
+    sudo passwd -e $user
+    usermod -aG sudo $user
+    mkdir -p /home/$user/
     ln -s /mnt/capstone /home/$user/
 done
