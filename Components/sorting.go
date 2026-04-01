@@ -75,6 +75,13 @@ func main() {
 	kappa_sigma.other = []string{"Greek Life"}
 	kappa_sigma.max_score = compare(kappa_sigma, kappa_sigma)
 
+	var mask_wig organization
+	mask_wig.name = "Mask and Wig"
+	mask_wig.personality = []string{"Welcoming", "Creative", "Open Minded", "Collaborative", "Social", "Fun"}
+	mask_wig.activities = []string{"Board Games", "Movies", "Arts & Crafts", "Writing"}
+	mask_wig.dedicated_majors = []string{"Theatre"}
+	mask_wig.max_score = compare(mask_wig, mask_wig)
+
 	// using info I would put in for the sake of testing
 	users := [4]organization{
 		{
@@ -160,6 +167,12 @@ func main() {
 		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, kappa_sigma.name, normalized_score)
 	}
 
+	for i := 0; i < len(users); i++ {
+		var mask_score float32 = compare(users[i], mask_wig)
+		var normalized_score float32 = 100 * mask_score / mask_wig.max_score
+		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, mask_wig.name, normalized_score)
+	}
+
 	// compare(tanner, exercise_is_medicine)
 	// compare(matt, exercise_is_medicine)
 	// compare(aidan, exercise_is_medicine)
@@ -227,7 +240,7 @@ func personality_scoring(user organization, org organization) float32 {
 			}
 		}
 	}
-	score = score / float32(len(org.personality)) // all orgs should have some personality info so this should never be division by 0
+	score = 1.5 * score / float32(len(org.personality)) // all orgs should have some personality info so this should never be division by 0
 	return score
 }
 
@@ -242,7 +255,7 @@ func activity_scoring(user organization, org organization) float32 {
 			}
 		}
 	}
-	score = 1.5 * score / float32(len(org.activities)) // all orgs should have some personality info so this should never be division by 0
+	score = 2.25 * score / float32(len(org.activities)) // all orgs should have some personality info so this should never be division by 0
 	return score
 }
 
@@ -278,7 +291,7 @@ func demographic_scoring(user organization, org organization) float32 { // TODO:
 			}
 		}
 	}
-	score = score / float32(total_demographics)
+	score = 1.25 * score / float32(total_demographics)
 	return score
 }
 
