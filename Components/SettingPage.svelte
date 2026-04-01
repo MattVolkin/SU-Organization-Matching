@@ -1,5 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Header from './header.svelte';
+import Footer from './footer.svelte';
+import APIHandler from './APIHandler.svelte';
+
+const api = new APIHandler();
 
 function getAllAdjectives() {
   // Placeholder function - replace with API call to fetch adjectives from the backend to help with the scalibilty
