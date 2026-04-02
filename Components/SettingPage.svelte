@@ -4,22 +4,21 @@ import Header from './header.svelte';
 import Footer from './footer.svelte';
 import APIHandler from './APIHandler.svelte';
 
-const api = new APIHandler();
 
 function getAllAdjectives() {
   // Placeholder function - replace with API call to fetch adjectives from the backend to help with the scalibilty
-  return ["Creative", "Friendly", "Organized", "Passionate", "Innovative", "Collaborative", "Supportive", "Ambitious", "Inclusive", "Dynamic"];}
-function getAllClubsByOfficer(user){
+  return APIHandler.APICreater('GET', '/api/admin/adjectives', null);
+}
+function getAllClubsByOfficer(){
     // Placeholder function - replace with API call to fetch clubs that the given user is an officer of, this will help with scalability as well as making sure that officers can only edit the clubs they are in charge of
-  return ["Club 1", "Club 2"];
+  return APIHandler.APICreater('GET', `/api/officer/orgs}`, null);
 }
 function saveClubAdjectives(club, adjectives) {
-    // Placeholder function - replace with API call to save the given adjectives for the given club in the backend database
-    console.log(`Saving adjectives for ${club}: ${adjectives.join(", ")}`);
+  return APIHandler.APICreater("POST", "/api/officer/update", { ClubName: club, Adjectives: adjectives });
 }
 function saveClubContent(club, contentFiles) {
     // Placeholder function - replace with API call to save the given content files for the given club in the backend database
-    console.log(`Saving content for ${club}: ${contentFiles.join(", ")}`);
+    return APIHandler.APICreater("POST", "/api/officer/update", { ClubName: club, ImagePaths: contentFiles });
 }
 function saveNewOfficers(club, officersEmails) {
     // Placeholder function - replace with API call to save the given officers for the given club in the backend database
@@ -27,20 +26,11 @@ function saveNewOfficers(club, officersEmails) {
 }
 
 const allAdjectives = getAllAdjectives();
-const officerClubs = getAllClubsByOfficer("currentUser");
-let selectedClubFromUrl = '';
-let accessibleClubs: string[] = [];
-let pageNotice = '';
-let selectedAdjectives = [];
-let clubImageLibrary: Record<string, string[]> = {};
-let selectedImageByClub: Record<string, string> = {};
+const officerClubs = getAllClubsByOfficer();
 
-const uploadedImagesStorageKey = 'clubUploadedImagesByClub';
-const selectedImageStorageKey = 'selectedClubResultImages';
 
-function toClubSlug(clubName: string) {
-  return clubName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+
+
 
 function loadSavedClubMedia() {
   try {
@@ -153,7 +143,7 @@ onMount(() => {
   <p class="club-warning">No editable club loaded.</p>
 {/if}
 
-{#each accessibleClubs as club}
+{#each getAllClubsByOfficer() as club}
     <section class="club-settings-card">
     <p>{club} Settings</p>
     <p>Change adjectives to describe the club:</p>
