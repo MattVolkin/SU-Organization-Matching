@@ -18,6 +18,7 @@
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
+  * @function refreshUser - checks if the user is logged in by making a request to the /api/user endpoint and updates userEmail and authToken state accordingly
  */
   let { userType = "admin", previewAs = '' } = $props();
   const getNavUserType = () => (previewAs || userType);
