@@ -26,7 +26,7 @@
   let userEmail = $state('');
   let authToken = $state('');
   let officerClubs = $state([]);
-  let showLoginPopup = $state(false);
+  let isTestMode = $state(false);
 
   async function refreshUser() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
@@ -92,7 +92,6 @@
     userEmail = '';
     authToken = '';
     localStorage.removeItem('authToken');
-    showLoginPopup = false;
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
@@ -107,13 +106,13 @@
     if (event.data.token) {
       authToken = event.data.token;
       localStorage.setItem('authToken', event.data.token);
-      showLoginPopup = false;
     }
     userEmail = event.data.email || '';
   }
 
   onMount(() => {
     window.addEventListener('message', onAuthMessage);
+    isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
     refreshUser();
     refreshOfficerClubs();
   });
@@ -138,12 +137,29 @@
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club');
   }
 
+  function getManageClubs() {
+    const clubs = Array.isArray(officerClubs) ? officerClubs : [];
+    if (clubs.length === 0) {
+      return ['Test Club'];
+    }
+
+    if (!isTestMode) {
+      return clubs;
+    }
+
+    const hasTestClub = clubs.some((club) => getClubName(club).trim().toLowerCase() === 'test club');
+    return hasTestClub ? clubs : ['Test Club', ...clubs];
+  }
+
+  function getManageClubHref(club) {
+    const clubName = getClubName(club);
+    const shouldUseTestMode = isTestMode || clubName.trim().toLowerCase() === 'test club';
+    const testSuffix = shouldUseTestMode ? '&test=1' : '';
+    return `/manage-club/${toClubSlug(clubName)}?club=${encodeURIComponent(clubName)}${testSuffix}`;
+  }
+
 </script>
-<LoginPopup
-  autoOpen={showLoginPopup}
-  onSuccess={() => showLoginPopup = false}
-  onBlocked={() => showLoginPopup = true}
-/>
+<LoginPopup/>
 {#if getNavUserType() === 'admin'} 
   <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />
 {/if}
@@ -156,7 +172,9 @@
         <button class="login-button logout-btn" type="button" onclick={logout}>Logout</button>
       </div>
     {:else}
-      <button class="login-button" type="button" onclick={() => showLoginPopup = true}>Login</button>
+      <!--
+      <button class="login-button" type="button" onclick={loginWithGooglePopup}>Login</button>
+      -->
     {/if}
   </div>
   <!-- Mobile hamburger menu toggle button -->
@@ -181,13 +199,14 @@
     {#if getNavUserType() === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
+      {@const managedClubs = getManageClubs()}
       <div class="nav-item manage-club-menu">
-        <a href={officerClubs.length > 0 ? `/manage-club/${toClubSlug(getClubName(officerClubs[0]))}?club=${encodeURIComponent(getClubName(officerClubs[0]))}` : '/manage-club'} onclick={closeMenu}>Manage Club</a>
+        <a href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/manage-club'} onclick={closeMenu}>Manage Club</a>
         <div class="club-dropdown" aria-label="Clubs you can manage">
-          {#if officerClubs.length > 0}
-            {#each officerClubs as club}
+          {#if managedClubs.length > 0}
+            {#each managedClubs as club}
               {@const clubName = getClubName(club)}
-              <a href={`/manage-club/${toClubSlug(clubName)}?club=${encodeURIComponent(clubName)}`} onclick={closeMenu}>{clubName}</a>
+              <a href={getManageClubHref(club)} onclick={closeMenu}>{clubName}</a>
             {/each}
           {:else}
             <span class="empty-clubs">No clubs assigned</span>

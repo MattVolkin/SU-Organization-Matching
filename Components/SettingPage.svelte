@@ -18,6 +18,16 @@
   let clubImageLibrary = $state<Record<string, string[]>>({});
   let selectedImageByClub = $state<Record<string, string>>({});
   let loading = $state(true);
+  let isTestMode = $state(false);
+
+  const testAdjectives = [
+    'Welcoming',
+    'Competitive',
+    'Creative',
+    'Outdoorsy',
+    'Academic',
+    'Community-focused',
+  ];
 
   function getClubName(club: ClubValue) {
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club');
@@ -110,6 +120,23 @@
   onMount(async () => {
     loadSavedClubMedia();
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedClubFromParams = searchParams.get('testClub') || searchParams.get('club') || '';
+    const shouldUseTestMode =
+      searchParams.get('test') === '1' ||
+      requestedClubFromParams.trim().toLowerCase() === 'test club';
+
+    if (shouldUseTestMode) {
+      const requestedTestClub = requestedClubFromParams || 'Test Club';
+      isTestMode = true;
+      selectedClubFromUrl = requestedTestClub;
+      accessibleClubs = [requestedTestClub];
+      allAdjectives = testAdjectives;
+      pageNotice = 'Test mode enabled. API checks are bypassed for this page.';
+      loading = false;
+      return;
+    }
+
     try {
       await Promise.all([loadAdjectives(), loadOfficerClubs()]);
 
@@ -152,7 +179,8 @@
   });
 </script>
 
-<Header userType="officer" />
+
+<Header userType="officer"/>
 
 <main class="settings-page">
   <h2>{selectedClubFromUrl ? `${selectedClubFromUrl} Settings` : 'Club Settings'}</h2>

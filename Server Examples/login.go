@@ -114,11 +114,17 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
 				fmt.Println("User info error:", err)
 				return
 			}
-			dbState, err = dbState.UpsertUserProfileByGoogleID(r.Context(), googleID, userInfo)
+			dbState, err = dbClient.Query().UpsertUserProfileByGoogleID(r.Context(), googleID, userInfo)
 			if err != nil {
-				http.Error(w, "Failed to persist user info", http.StatusInternalServerError)
 				fmt.Println("Persist user info error:", err)
-				return
+
+				// Fallback: continue login if the user already exists by email.
+				dbState, userInfo, err = dbClient.Query().FetchUserProfileByEmail(r.Context(), userInfo.Email)
+				if err != nil {
+					http.Error(w, "Failed to persist user info", http.StatusInternalServerError)
+					fmt.Println("Fetch user by email fallback error:", err)
+					return
+				}
 			}
 		}
 		_ = dbState
