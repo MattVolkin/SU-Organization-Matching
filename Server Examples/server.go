@@ -207,7 +207,7 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 
 // getClubsFromAnswers is a placeholder for the algorithm that would determine club membership based on user answers. TODO: replace with the actual implementation made by @TannerK7.
 func getClubsFromAnswers(answers []DBAnswer) []OrgJSON {
-	jsonClubs := [2]OrgJSON{
+	jsonClubs := []OrgJSON{
 		{
 			ID:                   0,
 			ClubName:             "CS Club",

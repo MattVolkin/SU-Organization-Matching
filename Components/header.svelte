@@ -12,19 +12,21 @@
   import { onMount, onDestroy } from 'svelte';
   import AdminSwitch from './AdminSwitch.svelte';
   import { APICreater } from './APIHandler.svelte';
+  import LoginPopup from './login_popup.svelte';
 
 /**
  * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
  * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
-  * @function refreshUser - checks if the user is logged in by making a request to the /api/user endpoint and updates userEmail and authToken state accordingly
  */
   let { userType = "admin", previewAs = '' } = $props();
   const getNavUserType = () => (previewAs || userType);
   let isMenuOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
+  let officerClubs = $state([]);
+  let showLoginPopup = $state(false);
 
   async function refreshUser() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
@@ -48,6 +50,21 @@
 
     const data = await res.json();
     userEmail = data.email || '';
+  }
+
+  async function refreshOfficerClubs() {
+    if (getNavUserType() !== 'officer') {
+      officerClubs = [];
+      return;
+    }
+
+    try {
+      const clubs = await APICreater('GET', '/api/officer/orgs', null, authToken);
+      officerClubs = Array.isArray(clubs) ? clubs : [];
+    } catch (error) {
+      console.error('Unable to load officer clubs', error);
+      officerClubs = [];
+    }
   }
 
   /*
@@ -75,6 +92,7 @@
     userEmail = '';
     authToken = '';
     localStorage.removeItem('authToken');
+    showLoginPopup = false;
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
@@ -89,6 +107,7 @@
     if (event.data.token) {
       authToken = event.data.token;
       localStorage.setItem('authToken', event.data.token);
+      showLoginPopup = false;
     }
     userEmail = event.data.email || '';
   }
@@ -96,6 +115,7 @@
   onMount(() => {
     window.addEventListener('message', onAuthMessage);
     refreshUser();
+    refreshOfficerClubs();
   });
 
   onDestroy(() => {
@@ -114,19 +134,16 @@
     return clubName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
 
-  function getOfficerClubs()
-  {
-    if (getNavUserType() === 'admin')
-    {
-      return [];
-    }
-    else if (getNavUserType() === 'officer')
-    {
-      return APICreater('GET', '/api/officer/orgs', null); 
-    }
+  function getClubName(club) {
+    return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club');
   }
 
 </script>
+<LoginPopup
+  autoOpen={showLoginPopup}
+  onSuccess={() => showLoginPopup = false}
+  onBlocked={() => showLoginPopup = true}
+/>
 {#if getNavUserType() === 'admin'} 
   <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />
 {/if}
@@ -139,9 +156,7 @@
         <button class="login-button logout-btn" type="button" onclick={logout}>Logout</button>
       </div>
     {:else}
-      <!--
-      <button class="login-button" type="button" onclick={loginWithGooglePopup}>Login</button>
-      -->
+      <button class="login-button" type="button" onclick={() => showLoginPopup = true}>Login</button>
     {/if}
   </div>
   <!-- Mobile hamburger menu toggle button -->
@@ -167,11 +182,12 @@
       <a href="/create" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
       <div class="nav-item manage-club-menu">
-        <a href={getOfficerClubs().length > 0 ? `/manage-club/${toClubSlug(getOfficerClubs()[0])}?club=${encodeURIComponent(getOfficerClubs()[0])}` : '/manage-club'} onclick={closeMenu}>Manage Club</a>
+        <a href={officerClubs.length > 0 ? `/manage-club/${toClubSlug(getClubName(officerClubs[0]))}?club=${encodeURIComponent(getClubName(officerClubs[0]))}` : '/manage-club'} onclick={closeMenu}>Manage Club</a>
         <div class="club-dropdown" aria-label="Clubs you can manage">
-          {#if getOfficerClubs().length > 0}
-            {#each getOfficerClubs() as club}
-              <a href={`/manage-club/${toClubSlug(club)}?club=${encodeURIComponent(club)}`} onclick={closeMenu}>{club}</a>
+          {#if officerClubs.length > 0}
+            {#each officerClubs as club}
+              {@const clubName = getClubName(club)}
+              <a href={`/manage-club/${toClubSlug(clubName)}?club=${encodeURIComponent(clubName)}`} onclick={closeMenu}>{clubName}</a>
             {/each}
           {:else}
             <span class="empty-clubs">No clubs assigned</span>
