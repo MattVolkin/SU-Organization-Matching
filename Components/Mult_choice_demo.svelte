@@ -1,13 +1,96 @@
 <script>
+import Header from './header.svelte'
+import Footer from './footer.svelte'
+
   let name = ''
   let club = ''
   let contact = ''
   let officer = ""
   let email = ''
 	let gender = ''
-	let race = ''
+  let race = []
 	let religion = ''
-  let major = ''
+  let major = []
+
+  const genderOptions = [
+    'Man',
+    'Woman',
+    'Non-Binary',
+    'Other',
+    'Prefer not to say',
+  ]
+
+  const raceOptions = [
+    'American Native/Alaska Native',
+    'Asian',
+    'Black or African American',
+    'Hispanic or Latino',
+    'Middle Eastern or North African',
+    'Native Hawaiian or Pacific Islander',
+    'White',
+    'Prefer not to say',
+  ]
+
+  const religionOptions = [
+    'Protestantism',
+    'Catholocism',
+    'Judaism',
+    'Islam',
+    'Buddhism',
+    'Hinduism',
+    'No religion',
+    'Other',
+    'Prefer not to say',
+  ]
+
+  const majorOptions = [
+    'Anthropology',
+    'Applied Physics',
+    'Art (Studio)',
+    'Art History',
+    'Biochemistry',
+    'Biology',
+    'Business',
+    'Chemistry',
+    'Classics',
+    'Communication Studies',
+    'Computational Mathematics',
+    'Computer Science',
+    'Pre-Dentistry',
+    'Economics',
+    'Education',
+    'Pre-Engineering',
+    'English',
+    'Environmental Studies',
+    'Feminist Studies',
+    'French',
+    'German',
+    'Greek',
+    'Health Professions',
+    'History',
+    'International Studies',
+    'Kinesiology',
+    'Latin',
+    'Latin American & Border Studies',
+    'Pre-Law',
+    'Mathematics',
+    'Pre-Med',
+    'Pre-Ministry',
+    'Music',
+    'Pre-Nursing',
+    'Pre-Occupational Therapy',
+    'Philosophy',
+    'Physics',
+    'Political Science',
+    'Psychology',
+    'Pre-Physician Assistant',
+    'Pre-Physical Therapy',
+    'Religion',
+    'Sociology',
+    'Spanish',
+    'Theatre',
+    'Undecided',
+  ]
 
 
   function submit() {
@@ -29,323 +112,226 @@
   }
 </script>
 
+<Header />
+
 <main>
-  <h1>Club Form</h1>
+  <section class="settings-page">
+    <h2>Club Form</h2>
+   
 
-  <form on:submit|preventDefault={submit}>
-    
-    <fieldset>
-      <legend>Gender</legend>
-      <label>
-        <input type="radio" name="gender" value="Man" bind:group={gender} required />
-        Man <br>
-      </label>
-      <label>
-        <input type="radio" name="gender" value="Woman" bind:group={gender} required />
-        Woman <br>
-      </label>
-			<label>
-        <input type="radio" name="gender" value="Non-Binary" bind:group={gender} required />
-        Non-Binary <br>
-      </label>
-			<label>
-        <input type="radio" name="gender" value="Other" bind:group={gender} required />
-        Other <br>
-      </label>
-			<label>
-        <input type="radio" name="gender" value="Prefer not to say" bind:group={gender} required />
-        Prefer not to say
-      </label>
-    </fieldset>
-		
-    <fieldset>
-      <legend>Race/Ethnicity (Select all that apply)</legend>
-      <label>
-        <input type="checkbox" name="race" value="American Native/Alaska Native" bind:group={race} required />
-        American Native/Alaska Native <br>
-      </label>
-			<label>
-        <input type="checkbox" name="race" value="Asian" bind:group={race} required />
-        Asian <br>
-      </label>
-			<label>
-        <input type="checkbox" name="race" value="Black or African American" bind:group={race} required />
-        Black or African American <br>
-      </label>
-      <label>
-        <input type="checkbox" name="race" value="Hispanic or Latino" bind:group={race} required />
-        Hispanic or Latino <br>
-      </label>
-			<label>
-        <input type="checkbox" name="race" value="Middle Eastern or North African" bind:group={race} required />
-        Middle Eastern or North African <br>
-      </label>
-			<label>
-        <input type="checkbox" name="race" value="Native Hawaiian or Pacific Islander" bind:group={race} required />
-        Native Hawaiian or Pacific Islander <br>
-      </label>
-			<label>
-        <input type="checkbox" name="race" value="White" bind:group={race} required />
-        White <br>
-      </label>
-			<label>
-        <input type="radio" name="race" value="Prefer not to say" bind:group={race} required />
-        Prefer not to say <br>
-      </label>
-    </fieldset>
+    <section class="club-settings-card">
+      <p class="club-title">Form Preview</p>
+      <p class="description">A cleaner version of the demographic and interest form with grouped controls and a live summary.</p>
 
-    <fieldset>
-      <legend>Religion</legend>
-      <label>
-        <input type="radio" name="religion" value="Protestantism" bind:group={religion} required />
-        Protestantism <br>
-      </label>
-      <label>
-        <input type="radio" name="religion" value="Catholocism" bind:group={religion} required />
-        Catholocism <br>
-      </label>
-			<label>
-        <input type="radio" name="religion" value="Judaism" bind:group={religion} required />
-        Judaism <br>
-      </label>
-				<label>
-        <input type="radio" name="religion" value="Islam" bind:group={religion} required />
-        Islam <br>
-				</label>
-			<label>
-        <input type="radio" name="religion" value="Buddhism" bind:group={religion} required />
-        Buddhism <br>
-      </label>
-			<label>
-        <input type="radio" name="religion" value="Hinduism" bind:group={religion} required />
-        Hinduism <br>
-      </label>
-			<label>
-        <input type="radio" name="religion" value="No religion" bind:group={religion} required />
-        No religion <br>
-      </label>
-			<label>
-        <input type="radio" name="religion" value="Other" bind:group={religion} required />
-        Other <br>
-      </label>
-			<label>
-        <input type="radio" name="religion" value="Prefer not to say" bind:group={religion} required />
-        Prefer not to say <br>
-      </label>
-    </fieldset>
+      <form on:submit|preventDefault={submit}>
+        <fieldset>
+          <legend>Identity</legend>
+          <div class="option-stack">
+            {#each genderOptions as option}
+              <label>
+                <input type="radio" name="gender" value={option} bind:group={gender} required />
+                <span>{option}</span>
+              </label>
+            {/each}
+          </div>
+        </fieldset>
 
-    <fieldset>
-			<legend>
-				Intended Major(s)/Program of Study
-			</legend>
-			<label>
-        <input type="checkbox" name="major" value="Anthropology" bind:group={major} required />
-        Anthropology <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Applied Physics" bind:group={major} required />
-        Applied Physics<br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Art (Studio)" bind:group={major} required />
-        Art (Studio)<br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Art History" bind:group={major} required />
-        Art History <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Biochemistry" bind:group={major} required />
-        Biochemistry <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Biology" bind:group={major} required />
-        Biology <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Business" bind:group={major} required />
-        Business <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Chemistry" bind:group={major} required />
-        Chemistry <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Classics" bind:group={major} required />
-        Classics <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Communication Studies" bind:group={major} required />
-        Communication Studies <br>
-      </label>
-      			<label>
-        <input type="checkbox" name="major" value="Computational Mathematics" bind:group={major} required />
-        Computational Mathematics <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Computer Science" bind:group={major} required />
-        Computer Science <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Dentistry" bind:group={major} required />
-        Pre-Dentistry <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Economics" bind:group={major} required />
-        Economics <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Education" bind:group={major} required />
-        Education <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Engineering" bind:group={major} required />
-        Pre-Engineering <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="English" bind:group={major} required />
-        English <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Environmental Studies" bind:group={major} required />
-        Environmental Studies <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Feminist Studies" bind:group={major} required />
-        Feminist Studies <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="French" bind:group={major} required />
-        French <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="German" bind:group={major} required />
-        German <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Greek" bind:group={major} required />
-        Greek <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Health Professions" bind:group={major} required />
-        Health Professions <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="History" bind:group={major} required />
-        History <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="International Studies" bind:group={major} required />
-        International Studies <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Kinesiology" bind:group={major} required />
-        Kinesiology <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Latin" bind:group={major} required />
-        Latin <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Latin American & Border Studies" bind:group={major} required />
-        Latin American & Border Studies <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Law" bind:group={major} required />
-        Pre-Law <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Mathematics" bind:group={major} required />
-        Mathematics <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Med" bind:group={major} required />
-        Pre-Med <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Ministry" bind:group={major} required />
-        Pre-Ministry <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Music" bind:group={major} required />
-        Music <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Nursing" bind:group={major} required />
-        Pre-Nursing <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Occupational Therapy" bind:group={major} required />
-        Pre-Occupational Therapy <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Philosophy" bind:group={major} required />
-        Philosophy <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Physics" bind:group={major} required />
-        Physics <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Political Science" bind:group={major} required />
-        Political Science <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Psychology" bind:group={major} required />
-        Psychology <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Physician Assistant" bind:group={major} required />
-        Pre-Physician Assistant <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Pre-Physical Therapy" bind:group={major} required />
-        Pre-Physical Therapy <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Religion" bind:group={major} required />
-        Religion <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Sociology" bind:group={major} required />
-        Sociology <br>
-      </label>
-			<label>
-        <input type="checkbox" name="major" value="Spanish" bind:group={major} required />
-        Spanish <br>
-      </label>
-    	<label>
-        <input type="checkbox" name="major" value="Theatre" bind:group={major} required />
-        Theatre <br>
-      </label>
-    	<label>
-        <input type="radio" name="major" value="Undecided" bind:group={major} required />
-        Undecided <br>
-      </label>
+        <fieldset>
+          <legend>Race / Ethnicity</legend>
+          <p class="hint">Select all that apply.</p>
+          <div class="option-grid">
+            {#each raceOptions as option}
+              <label>
+                <input type="checkbox" name="race" value={option} bind:group={race} />
+                <span>{option}</span>
+              </label>
+            {/each}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Religion</legend>
+          <div class="option-grid compact">
+            {#each religionOptions as option}
+              <label>
+                <input type="radio" name="religion" value={option} bind:group={religion} required />
+                <span>{option}</span>
+              </label>
+            {/each}
+          </div>
+        </fieldset>
+
+        <fieldset>
+			<legend>Intended Major(s) / Program of Study</legend>
+			<p class="hint">Select all that apply.</p>
+			<div class="option-grid majors">
+				{#each majorOptions as option}
+				  <label>
+				    {#if option === 'Undecided'}
+				      <input type="radio" name="major" value={option} bind:group={major} required />
+				    {:else}
+				      <input type="checkbox" name="major" value={option} bind:group={major} />
+				    {/if}
+				    <span>{option}</span>
+				  </label>
+				{/each}
+			</div>
 		</fieldset>
 
-    <button type="submit">Submit</button>
-  </form>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+  </section>
 </main>
+
+<Footer />
 
 <style>
   main {
-    max-width: 500px;
-    margin: 2rem auto;
+    width: 100%;
+    margin: 0;
+    padding: 0;
     font-family: system-ui, sans-serif;
+    background: #ffffff;
+    color: #10243a;
+  }
+
+  .settings-page {
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .settings-page h2 {
+    margin: 0.75rem 0 0.85rem 0;
+    font-size: clamp(1.35rem, 1.5vw + 0.9rem, 2rem);
+    color: #132c45;
+  }
+
+ 
+  .club-settings-card {
+    border: 1px solid #d7dee8;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #fafcff;
+    box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+  }
+
+  .club-title {
+    margin-top: 0;
+    font-weight: 700;
+  }
+
+  .description {
+    margin-top: 0.25rem;
+    color: #31506e;
+    line-height: 1.5;
   }
 
   form {
     display: grid;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   fieldset {
-    border: 1px solid #ccc;
-    padding: 0.75rem;
+    margin: 0;
+    border: 1px solid #d7dee8;
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #fafcff;
+  }
+
+  legend {
+    padding: 0 0.45rem;
+    font-weight: 800;
+    color: #132c45;
+  }
+
+  .hint {
+    margin: 0.35rem 0 0.75rem;
+    color: #31506e;
+    font-size: 0.92rem;
+  }
+
+  .option-stack,
+  .option-grid {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .option-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .option-grid.compact {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.72rem 0.8rem;
+    border-radius: 0.85rem;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 8px 16px rgba(16, 36, 58, 0.04);
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  label:hover {
+    transform: translateY(-1px);
+    border-color: #bfdde8;
+    box-shadow: 0 12px 22px rgba(16, 36, 58, 0.08);
+  }
+
+  label span {
+    line-height: 1.35;
+  }
+
+  input[type='radio'],
+  input[type='checkbox'] {
+    margin-top: 0.2rem;
+    accent-color: #1f6f8b;
+    flex: 0 0 auto;
   }
 
   button {
     width: fit-content;
+    margin-top: 0.25rem;
+    border: none;
+    border-radius: 0.55rem;
+    padding: 0.6rem 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: #0f6d8c;
+    box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+    background: #0d5f79;
+    box-shadow: 0 12px 24px rgba(13, 37, 62, 0.12);
+  }
+
+  
+
+  @media (max-width: 880px) {
+    main {
+      padding: 0;
+    }
+
+    .settings-page {
+      padding: 0.75rem;
+    }
+
+    .option-grid,
+    .option-grid.compact {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

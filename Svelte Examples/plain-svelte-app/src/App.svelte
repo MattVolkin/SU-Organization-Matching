@@ -1,10 +1,13 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
   import AdminSwitch from '../../../Components/AdminHome.svelte'
-    import AdminHome from '../../../Components/AdminHome.svelte';
-   import SwipingApp from '../../../Components/SwipingApp.svelte';
-   import SettingsPage from '../../../Components/SettingPage.svelte';
-   import LoginPopup from '../../../Components/login_popup.svelte';
+  import AdminHome from '../../../Components/AdminHome.svelte';
+  import SwipingApp from '../../../Components/SwipingApp.svelte';
+  import SettingsPage from '../../../Components/SettingPage.svelte';
+  import LoginPopup from '../../../Components/login_popup.svelte';
+  import ResultsPage from '../../../Components/results.svelte';
+  import Multi_Choice from '../../../Components/Mult_choice_demo.svelte';
+    import MultChoiceDemo from '../../../Components/Mult_choice_demo.svelte';
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
    async function promptLoginIfNeeded() {
@@ -50,15 +53,7 @@
 </script>
  <!-- <AdminHome />  -->
   <LoginPopup/>
- <SettingsPage/>
+ <ResultsPage/>
  <div class="parent">
 
 </div>
-<style>
-
-.parent {
-  align-items: center; /* Center horizontally */
-  justify-content: center; /* Center vertically */
-}
-
-</style>

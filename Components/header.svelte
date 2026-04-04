@@ -27,29 +27,35 @@
   let authToken = $state('');
   let officerClubs = $state([]);
   let isTestMode = $state(false);
+  let isAuthChecking = $state(true);
 
   async function refreshUser() {
+    isAuthChecking = true;
     const tokenFromStorage = localStorage.getItem('authToken') || '';
     authToken = tokenFromStorage;
     const headers = tokenFromStorage
       ? { Authorization: `Bearer ${tokenFromStorage}` }
       : {};
 
-    const res = await fetch('/api/user', {
-      method: 'GET',
-      credentials: 'include',
-      headers,
-    });
+    try {
+      const res = await fetch('/api/user', {
+        method: 'GET',
+        credentials: 'include',
+        headers,
+      });
 
-    if (!res.ok) {
-      userEmail = '';
-      authToken = '';
-      localStorage.removeItem('authToken');
-      return;
+      if (!res.ok) {
+        userEmail = '';
+        authToken = '';
+        localStorage.removeItem('authToken');
+        return;
+      }
+
+      const data = await res.json();
+      userEmail = data.email || '';
+    } finally {
+      isAuthChecking = false;
     }
-
-    const data = await res.json();
-    userEmail = data.email || '';
   }
 
   async function refreshOfficerClubs() {
@@ -159,7 +165,7 @@
   }
 
 </script>
-<LoginPopup/>
+<LoginPopup autoOpen={!isAuthChecking && !userEmail}/>
 {#if getNavUserType() === 'admin'} 
   <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />
 {/if}

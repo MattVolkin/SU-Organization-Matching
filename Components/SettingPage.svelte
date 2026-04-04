@@ -10,15 +10,18 @@
   const selectedImageStorageKey = 'club-selected-images';
 
   let pageNotice = $state('');
-  let accessibleClubs = $state<string[]>([]);
+  let accessibleClubs = $state<string[]>(["Test Club 1"]);
   let selectedClubFromUrl = $state('');
   let selectedAdjectives = $state<string[]>([]);
   let allAdjectives = $state<string[]>([]);
   let officerClubs = $state<ClubValue[]>([]);
   let clubImageLibrary = $state<Record<string, string[]>>({});
   let selectedImageByClub = $state<Record<string, string>>({});
+  let pendingOfficerEmailByClub = $state<Record<string, string>>({});
+  let officerStatusByClub = $state<Record<string, string>>({});
   let loading = $state(true);
   let isTestMode = $state(false);
+  let previewUrl = $state('');
 
   const testAdjectives = [
     'Welcoming',
@@ -28,6 +31,40 @@
     'Academic',
     'Community-focused',
   ];
+
+  function makePreviewImage(label: string, color: string) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="${color}"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><rect width="1200" height="720" fill="url(#g)"/><circle cx="280" cy="280" r="180" fill="rgba(255,255,255,0.15)"/><circle cx="910" cy="470" r="240" fill="rgba(255,255,255,0.12)"/><text x="70" y="640" fill="white" font-family="Arial" font-size="62" font-weight="700">${label}</text></svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  function enablePreviewMode(requestedClubName: string, noticeText: string) {
+    const requestedTestClub = requestedClubName || 'Test Club';
+    isTestMode = true;
+    selectedClubFromUrl = requestedTestClub;
+    accessibleClubs = [requestedTestClub];
+    allAdjectives = testAdjectives;
+    selectedAdjectives = ['Welcoming', 'Community-focused'];
+
+    if (!(clubImageLibrary[requestedTestClub] || []).length) {
+      const previewImages = [
+        makePreviewImage(`${requestedTestClub} Activity`, '#1d4ed8'),
+        makePreviewImage(`${requestedTestClub} Event`, '#0891b2'),
+      ];
+
+      clubImageLibrary = {
+        ...clubImageLibrary,
+        [requestedTestClub]: previewImages,
+      };
+      selectedImageByClub = {
+        ...selectedImageByClub,
+        [requestedTestClub]: previewImages[0],
+      };
+      saveClubMedia();
+    }
+
+    pageNotice = noticeText;
+    loading = false;
+  }
 
   function getClubName(club: ClubValue) {
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club');
@@ -46,10 +83,57 @@
     allAdjectives = Array.isArray(response) ? response : [];
   }
 
-  async function loadOfficerClubs() {
+  async function getClubOfficers() {
     const response = await APICreater('GET', '/api/officer/orgs', null);
     officerClubs = normalizeClubList(response);
   }
+  async function saveClubOfficer(club: string, officerEmail: string) {
+    await APICreater('POST', '/api/officer/update', { ClubName: club, OfficerEmail: officerEmail });
+  }
+
+  function setPendingOfficerEmail(club: string, value: string) {
+    pendingOfficerEmailByClub = {
+      ...pendingOfficerEmailByClub,
+      [club]: value,
+    };
+  }
+
+  function setOfficerStatus(club: string, message: string) {
+    officerStatusByClub = {
+      ...officerStatusByClub,
+      [club]: message,
+    };
+  }
+
+  function isValidEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  async function addOfficer(club: string) {
+    const officerEmail = (pendingOfficerEmailByClub[club] || '').trim();
+    if (!officerEmail) {
+      setOfficerStatus(club, 'Enter an email address first.');
+      return;
+    }
+
+    if (!isValidEmail(officerEmail)) {
+      setOfficerStatus(club, 'Enter a valid email address.');
+      return;
+    }
+
+    try {
+      if (!isTestMode) {
+        await saveClubOfficer(club, officerEmail);
+      }
+
+      setPendingOfficerEmail(club, '');
+      setOfficerStatus(club, `Added ${officerEmail} to ${club}.`);
+    } catch (error) {
+      console.error('Unable to add officer', error);
+      setOfficerStatus(club, 'Unable to add officer right now.');
+    }
+  }
+
 
   function loadSavedClubMedia() {
     try {
@@ -121,36 +205,42 @@
     loadSavedClubMedia();
 
     const searchParams = new URLSearchParams(window.location.search);
+    const previewParams = new URLSearchParams(window.location.search);
+    previewParams.set('preview', '1');
+    previewUrl = `${window.location.pathname}?${previewParams.toString()}`;
     const requestedClubFromParams = searchParams.get('testClub') || searchParams.get('club') || '';
+    const previewModeRequested = searchParams.get('preview') === '1';
     const shouldUseTestMode =
+      previewModeRequested ||
       searchParams.get('test') === '1' ||
       requestedClubFromParams.trim().toLowerCase() === 'test club';
 
     if (shouldUseTestMode) {
-      const requestedTestClub = requestedClubFromParams || 'Test Club';
-      isTestMode = true;
-      selectedClubFromUrl = requestedTestClub;
-      accessibleClubs = [requestedTestClub];
-      allAdjectives = testAdjectives;
-      pageNotice = 'Test mode enabled. API checks are bypassed for this page.';
-      loading = false;
+      enablePreviewMode(
+        requestedClubFromParams,
+        previewModeRequested
+          ? 'Preview mode enabled. You are viewing mock content for layout testing.'
+          : 'Test mode enabled. API checks are bypassed for this page.'
+      );
       return;
     }
 
     try {
-      await Promise.all([loadAdjectives(), loadOfficerClubs()]);
+      await Promise.all([loadAdjectives(), getClubOfficers()]);
 
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const slugFromPath = pathParts[0] === 'manage-club' ? (pathParts[1] || '') : '';
       const clubFromQuery = new URLSearchParams(window.location.search).get('club') || '';
       const clubFromSlug = officerClubs.find((club) => toClubSlug(getClubName(club)) === slugFromPath);
-      const requestedClub = clubFromQuery || getClubName(clubFromSlug || '');
+      const requestedClub = clubFromQuery || (clubFromSlug ? getClubName(clubFromSlug) : '');
 
       selectedClubFromUrl = requestedClub;
 
       if (!requestedClub) {
-        pageNotice = 'Open a specific club settings page from the Manage Club header menu.';
-        accessibleClubs = [];
+        enablePreviewMode(
+          'Test Club',
+          'No club was selected, so preview mode is shown for layout testing.'
+        );
         return;
       }
 
@@ -171,10 +261,14 @@
       accessibleClubs = [requestedClub];
     } catch (error) {
       console.error('Unable to load club settings', error);
-      pageNotice = 'Unable to load club settings right now.';
-      accessibleClubs = [];
+      enablePreviewMode(
+        requestedClubFromParams,
+        'Unable to load club settings from the API. Showing preview mode instead.'
+      );
     } finally {
-      loading = false;
+      if (!isTestMode) {
+        loading = false;
+      }
     }
   });
 </script>
@@ -184,7 +278,7 @@
 
 <main class="settings-page">
   <h2>{selectedClubFromUrl ? `${selectedClubFromUrl} Settings` : 'Club Settings'}</h2>
-  <p class="warning-banner">All changes on this page are saved immediately.</p>
+  <p class="warning-banner">All changes on this page are saved immediately after clicking the "Save" button.</p>
 
   {#if loading}
     <p class="club-warning">Loading club settings...</p>
@@ -192,6 +286,13 @@
 
   {#if pageNotice}
     <p class="club-warning">{pageNotice}</p>
+  {/if}
+
+  {#if !isTestMode}
+    <p class="preview-help">
+      Want to quickly test this layout without API access?
+      <a href={previewUrl}>Open preview mode</a>
+    </p>
   {/if}
 
   {#if accessibleClubs.length === 0}
@@ -210,6 +311,20 @@
 
         <button type="button" onclick={() => saveClubAdjectives(club, selectedAdjectives)}>Save Adjectives</button>
 
+        <h3>Add new officer</h3>
+        <div class="officer-row">
+          <input
+            type="email"
+            placeholder="southwestern.edu"
+            value={pendingOfficerEmailByClub[club] || ''}
+            oninput={(event) => setPendingOfficerEmail(club, (event.currentTarget as HTMLInputElement).value)}
+          />
+          <button type="button" onclick={() => addOfficer(club)}>Add Officer</button>
+        </div>
+        {#if officerStatusByClub[club]}
+          <p class="officer-status">{officerStatusByClub[club]}</p>
+        {/if}
+
         <h3>Upload club images for results page</h3>
         <input type="file" accept="image/*" multiple onchange={(event) => handleImageUpload(club, event)} />
 
@@ -226,6 +341,7 @@
                 <img src={imageUrl} alt={`Uploaded image for ${club}`} />
               </button>
             {/each}
+
           </div>
         {/if}
       </section>
@@ -281,11 +397,35 @@
     margin: 0.8rem 0;
   }
 
+  .preview-help {
+    margin: 0.25rem 0 1rem 0;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.65rem;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    font-weight: 600;
+  }
+
+  .preview-help a {
+    margin-left: 0.35rem;
+    color: #c2410c;
+  }
+
   select,
+  input[type='email'],
   input[type='file'] {
     width: 100%;
     max-width: 42rem;
     margin-top: 0.35rem;
+  }
+
+  input[type='email'] {
+    border: 1px solid #c9d6e5;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.98rem;
+    background: #fff;
   }
 
   select {
@@ -306,6 +446,23 @@
 
   h3 {
     margin-top: 1rem;
+  }
+
+  .officer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .officer-row button {
+    margin-top: 0.35rem;
+  }
+
+  .officer-status {
+    margin: 0.5rem 0 0.2rem;
+    color: #0f5132;
+    font-weight: 600;
   }
 
   .image-grid {

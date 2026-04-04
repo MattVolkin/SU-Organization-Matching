@@ -19,20 +19,48 @@
    * @lifecycle onDestroy - removes the event listeners for 'auth-login' and 'auth-logout' events when the component is destroyed to prevent memory leaks
     */    
   import { onDestroy, onMount } from 'svelte';
-  import Header from '../../../Components/header.svelte'
-  import Footer from '../../../Components/footer.svelte'
-  import LoginPopup from '../../../Components/login_popup.svelte'
+  import Header from './header.svelte'
+  import Footer from './footer.svelte'
+  import LoginPopup from './login_popup.svelte'
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
   let selectedImageByClub = $state({})
-  const selectedImageStorageKey = 'selectedClubResultImages'
+  const defaultResultImage = new URL('./20250925_185027.jpg', import.meta.url).href
+  const selectedImageStorageKey = 'club-selected-images'
+  const legacySelectedImageStorageKey = 'selectedClubResultImages'
+
+  function normalizeClubKey(value) {
+    return String(value || '').trim().toLowerCase()
+  }
+
+  function getSelectedImageForCurrentClub() {
+    const currentClubName = results[pageNum - 1]
+    if (!currentClubName) {
+      return defaultResultImage
+    }
+
+    if (selectedImageByClub[currentClubName]) {
+      return selectedImageByClub[currentClubName]
+    }
+
+    const normalizedCurrent = normalizeClubKey(currentClubName)
+    const matchedEntry = Object.entries(selectedImageByClub).find(([clubName]) => normalizeClubKey(clubName) === normalizedCurrent)
+    if (matchedEntry) {
+      return matchedEntry[1]
+    }
+
+    return defaultResultImage
+  }
 
   function loadSelectedClubImages() {
     try {
       const savedSelection = localStorage.getItem(selectedImageStorageKey)
-      selectedImageByClub = savedSelection ? JSON.parse(savedSelection) : {}
+      const legacySelection = localStorage.getItem(legacySelectedImageStorageKey)
+      selectedImageByClub = savedSelection
+        ? JSON.parse(savedSelection)
+        : (legacySelection ? JSON.parse(legacySelection) : {})
     } catch (error) {
       console.error('Unable to load selected club image', error)
       selectedImageByClub = {}
@@ -127,10 +155,10 @@
     <section class="result-card">
       <h1>{results[pageNum-1]}</h1>
 
-      {#if selectedImageByClub[results[pageNum - 1]]}
+      {#if getSelectedImageForCurrentClub()}
         <img
           class="club-hero-image"
-          src={selectedImageByClub[results[pageNum - 1]]}
+          src={getSelectedImageForCurrentClub()}
           alt={`Selected club image for ${results[pageNum - 1]}`}
         />
       {/if}
