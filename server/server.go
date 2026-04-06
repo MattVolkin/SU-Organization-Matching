@@ -72,6 +72,7 @@ type OrgJSON struct {
 	ContactInfo          string    `json:"contactInfo"`
 	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
 	UpdatedAt            time.Time `json:"updatedAt"`
+	Officers 			 []string  `json:"officers"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -136,9 +137,8 @@ func main() {
 	}
 
 	// Open the Postgres connection used by Ent queries and mutations.
-	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	var err error
-	dbClient, err = NewDatabaseClient("postgres", dsn)
+	dbClient, err = NewDatabaseClient("postgres")
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}

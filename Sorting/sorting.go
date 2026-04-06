@@ -22,7 +22,7 @@ type Organization struct {
 func main() {
 
 	// Open the Postgres connection used by Ent queries and mutations.
-   	dbClient := GetDatabaseClient('default')
+   	dbClient := GetDatabaseClient("default")
    	_, orgs, err := dbClient.Query().FetchAllOrganizationsForSorting()
 
 
