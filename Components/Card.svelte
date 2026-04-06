@@ -50,15 +50,53 @@
 
 	]);
 
+	let items = $state(Hardcodeditems); // active card list used by the component at runtime
+
+	function normalizeApiCardItems(payload) {
+		if (!Array.isArray(payload)) {
+			return [];
+		}
+
+		return payload
+			.map((item) => {
+				if (!item || typeof item !== 'object') {
+					return null;
+				}
+
+				const questionType = item.question_type === 'personality_traits'
+					? 'personality'
+					: (item.question_type || 'activities');
+				const englishValue = typeof item.en === 'string'
+					? item.en
+					: (item.en?.term || item.en?.def || '');
+
+				if (!englishValue) {
+					return null;
+				}
+
+				return {
+					id: item.id,
+					question_type: questionType,
+					en: {
+						term: englishValue,
+						def: typeof item.en?.def === 'string' ? item.en.def : '',
+					},
+				};
+			})
+			.filter(Boolean);
+	}
+
 
 
 	async function loadAdjectivesAndPersonalityTraits() { // load the adjectives and personality traits from the backend to be used in the cards or, if unable to load, use the hardcoded list of items
     try {
       const adjectivesList = await APICreater('GET', '/api/adjectives', null);
-	  items = Hardcodeditems | adjectivesList; // combine the two lists into one list of items for the cards
+	  const normalizedItems = normalizeApiCardItems(adjectivesList);
+	  items = normalizedItems.length > 0 ? normalizedItems : Hardcodeditems;
 
 	} catch (error) {
       console.error('Unable to load adjectives and personality traits', error);
+	  items = Hardcodeditems;
     }
 }
 
