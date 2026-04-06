@@ -74,6 +74,8 @@
 	let term = $derived(items[counter].term); // create a local variable using the derived rune that dynamically updates as we move cards back and forth
 	let def = $derived(items[counter].def);	// same as the term but for the definition
     let tag = $derived(items[counter].tag); // same as the term but for the type (personality or activity)
+
+	
 	export function advanceCard( index = 0) { // update card information
 		
 		counter = index;

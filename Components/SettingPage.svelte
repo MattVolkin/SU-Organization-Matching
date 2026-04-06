@@ -87,10 +87,10 @@
     const response = await APICreater('GET', '/api/officer/orgs', null);
     officerClubs = normalizeClubList(response);
   }
-  async function saveClubOfficer(club: string, officerEmail: string) {
+  async function saveClubOfficer( officerEmail: string) {
     await APICreater('POST', '/api/officer/update', {
-      ClubName: club,
-      Officers: [officerEmail],
+      ClubID: officerClubs[0],
+      Officers: [officerEmail]
     });
   }
 
@@ -126,7 +126,7 @@
 
     try {
       if (!isTestMode) {
-        await saveClubOfficer(club, officerEmail);
+        await saveClubOfficer( officerEmail);
       }
 
       setPendingOfficerEmail(club, '');
@@ -200,8 +200,8 @@
     saveClubMedia();
   }
 
-  function saveClubAdjectives(club: string, adjectives: string[]) {
-    return APICreater('POST', '/api/officer/update', { ClubName: club, Adjectives: adjectives });
+  function saveClubAdjectives( adjectives: string[]) {
+    return APICreater('POST', '/api/officer/update', { ClubID: officerClubs[0], Adjectives: adjectives });
   }
 
   onMount(async () => {
