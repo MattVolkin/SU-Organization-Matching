@@ -514,7 +514,7 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().All(ctx)
+	clubs, err := next.client.Club.Query().WithLeaders().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
 }
@@ -627,6 +627,57 @@ func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, patch *OrgUpdat
 	if patch.IncludeOfficerEmails != nil {
 		update.SetIncludeOfficerEmails(*patch.IncludeOfficerEmails)
 	}
+	if patch.PersonalityTraits != nil {
+		update.SetPersonality(append([]string(nil), (*patch.PersonalityTraits)...))
+	}
+	if patch.Activities != nil {
+		update.SetActivities(append([]string(nil), (*patch.Activities)...))
+	}
+	if patch.Officers != nil {
+		normalizedEmails := make([]string, 0, len(*patch.Officers))
+		seen := map[string]struct{}{}
+		for _, email := range *patch.Officers {
+			trimmed := strings.TrimSpace(email)
+			if trimmed == "" {
+				continue
+			}
+			key := strings.ToLower(trimmed)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			normalizedEmails = append(normalizedEmails, trimmed)
+		}
+
+		update.ClearLeaders()
+		if len(normalizedEmails) > 0 {
+			leaders, err := next.client.User.Query().Where(user.EmailIn(normalizedEmails...)).All(ctx)
+			if err != nil {
+				next.lastErr = err
+				return next, err
+			}
+
+			foundByEmail := make(map[string]*ent.User, len(leaders))
+			for _, leader := range leaders {
+				if leader == nil {
+					continue
+				}
+				foundByEmail[strings.ToLower(strings.TrimSpace(leader.Email))] = leader
+			}
+
+			resolvedLeaders := make([]*ent.User, 0, len(normalizedEmails))
+			for _, email := range normalizedEmails {
+				leader, ok := foundByEmail[strings.ToLower(strings.TrimSpace(email))]
+				if !ok {
+					next.lastErr = fmt.Errorf("officer with email %q was not found", email)
+					return next, next.lastErr
+				}
+				resolvedLeaders = append(resolvedLeaders, leader)
+			}
+
+			update.AddLeaders(resolvedLeaders...)
+		}
+	}
 
 	err := update.Exec(ctx)
 	next.lastErr = err
@@ -662,6 +713,8 @@ func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *O
 		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
 		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
 		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
+		SetPersonality(append([]string(nil), newClubInfo.PersonalityTraits...)).
+		SetActivities(append([]string(nil), newClubInfo.Activities...)).
 		Save(ctx)
 	if err != nil {
 		next.lastErr = err
@@ -692,7 +745,7 @@ func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, emai
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).All(ctx)
+	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).WithLeaders().All(ctx)
 	next.userEmail = lookupEmail
 	next.lastErr = err
 	return next, clubs, err

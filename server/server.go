@@ -71,8 +71,10 @@ type OrgJSON struct {
 	ExternalLink         string    `json:"externalLink"`
 	ContactInfo          string    `json:"contactInfo"`
 	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
+	PersonalityTraits    []string  `json:"personalityTraits"`
+	Activities           []string  `json:"activities"`
 	UpdatedAt            time.Time `json:"updatedAt"`
-	Officers 			 []string  `json:"officers"`
+	Officers             []string  `json:"officers"`
 }
 
 // OrgUpdatePayload is the request body for PATCH /api/officer/orgs and PATCH /api/admin/orgs.
@@ -86,6 +88,9 @@ type OrgUpdatePayload struct {
 	ExternalLink         *string `json:"externalLink,omitempty"`
 	ContactInfo          *string `json:"contactInfo,omitempty"`
 	IncludeOfficerEmails *bool   `json:"includeOfficerEmails,omitempty"`
+	PersonalityTraits    *[]string `json:"personalityTraits,omitempty"`
+	Activities           *[]string `json:"activities,omitempty"`
+	Officers             *[]string `json:"officers,omitempty"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -347,6 +352,14 @@ func orgStructToJSON(clubs []*ent.Club) []OrgJSON {
 }
 
 func orgJSONFromEntClub(club *ent.Club) OrgJSON {
+	officers := make([]string, 0, len(club.Edges.Leaders))
+	for _, leader := range club.Edges.Leaders {
+		if leader == nil {
+			continue
+		}
+		officers = append(officers, strings.TrimSpace(leader.Email))
+	}
+
 	return OrgJSON{
 		ID:                   club.ID,
 		ClubName:             club.ClubName,
@@ -356,7 +369,10 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		ExternalLink:         club.ExternalLink,
 		ContactInfo:          club.ContactInfo,
 		IncludeOfficerEmails: club.IncludeOfficerEmails,
+		PersonalityTraits:    append([]string(nil), club.Personality...),
+		Activities:           append([]string(nil), club.Activities...),
 		UpdatedAt:            club.UpdatedAt,
+		Officers:             officers,
 	}
 }
 
