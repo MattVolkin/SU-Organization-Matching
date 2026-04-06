@@ -291,7 +291,6 @@ func (db *DatabaseClient) getUserRole(ctx context.Context, email string) UserRol
 	}
 
 	lookupEmail := strings.TrimSpace(email)
-
 	_, isStudentLife, err := next.IsUserStudentLifeByEmail(ctx, lookupEmail)
 	if err != nil {
 		next.lastErr = err
@@ -519,6 +518,8 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	next.lastErr = err
 	return next, clubs, err
 }
+
+// TODO: create func (db *DatabaseClient) FetchAllOrganizationsForSorting() (*DatabaseClient, []organization, error) { ... }
 
 func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, error) {
 	next := db.clone()
