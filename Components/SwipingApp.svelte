@@ -6,8 +6,8 @@
 
 	import { useSwipe , type SwipeCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
 	import Card from './Card.svelte'; // import the Card Component and it's relevant method (advanceCard) to display the details of a word and its description
-	import advanceCard from './Card.svelte'
 	import Bar from './ProgressBar.svelte'
+	import API from './APIHandler.svelte' // import the API handler to make calls to the backend and get the data for the cards
 
 
 
@@ -166,7 +166,8 @@
 
 
 <div class="swipedContainer">
-	<h1>Swipe right if you like the activity, Swipe left if you don't! </h1>
+	<h1>Swipe right if you like the activity</h1>
+	<h1>Swipe left if you don't like the activity!</h1>
 	<!-- Debug information -->
 	<!-- <h2>Activities you like: {activities} </h2>
 	<h2>Personality traits you like: {personality} </h2>
@@ -194,6 +195,7 @@
 	
 
 </div>
+
 
 <style>
 

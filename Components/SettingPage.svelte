@@ -88,7 +88,10 @@
     officerClubs = normalizeClubList(response);
   }
   async function saveClubOfficer(club: string, officerEmail: string) {
-    await APICreater('POST', '/api/officer/update', { ClubName: club, OfficerEmail: officerEmail });
+    await APICreater('POST', '/api/officer/update', {
+      ClubName: club,
+      Officers: [officerEmail],
+    });
   }
 
   function setPendingOfficerEmail(club: string, value: string) {

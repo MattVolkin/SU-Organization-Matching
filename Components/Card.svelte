@@ -3,16 +3,13 @@
 // TODO make it look like its somthing that can be swipable
 	// put items on a stack of cards rather than just box on a page
 	
-  import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
-	import {flip} from 'svelte/animate';
-  let { show = true } = $props();
+  	import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
+  	import { APICreater } from './APIHandler.svelte'; // import the API handler to make calls to the backend and get the data for the cards
+
 	let counter = $state(0); // count what term we are on to stay on the list
 	let directionInt = $state('none'); // gets direction information from swiping app
 
-	
-	// list of items
-	//https://svelte.dev/playground/805300f5895f4ea89b73ba75de393db8?version=5.53.6
-	let items = $state([ // terms that will be included in the cards shown to the user
+	let Hardcodeditems = $state([ // terms that will be included in the cards shown to the user
 
 {id:0, tag: "activities", term: "Community Service/Fundraising", def: "Voluntary work/raising funds intended to help people in a particular area."},
 {id:1, tag: "activities", term: "Social Justice", def: "Advocating for the fair treatment and equitable status of all individuals and social groups within a society"},
@@ -53,9 +50,23 @@
 
 	]);
 
-	  const range = (start, end) => { // range function to get a sub-array of the full question array (without modifying the original)
+
+
+	async function loadAdjectivesAndPersonalityTraits() { // load the adjectives and personality traits from the backend to be used in the cards or, if unable to load, use the hardcoded list of items
+    try {
+      const adjectivesList = await APICreater('GET', '/api/adjectives', null, null);
+	  const personalityTraitsList = await APICreater('GET', '/api/personality_traits', null, null);
+	  items = Hardcodeditems | [...adjectivesList, ...personalityTraitsList]; // combine the two lists into one list of items for the cards
+
+	} catch (error) {
+      console.error('Unable to load officer clubs', error);
+    }
+
+}
+
+	const range = (start, end, targetArray) => { // range function to get a sub-array of the full question array (without modifying the original)
     let arr = [];
-    for (let i = start; i < end; i += 1) arr.push(items[i]);
+    for (let i = start; i < end; i += 1) arr.push(targetArray[i]);
     return arr;
   };
 
@@ -112,7 +123,7 @@
 
 
 	<!-- rest of the cards in a stack -->
-	{#each range(counter+1, items.length) as card, index} 
+	{#each range(counter+1, items.length, items) as card, index} 
     <div 
       class="card" 
     >
