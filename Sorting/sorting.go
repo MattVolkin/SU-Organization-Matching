@@ -1,6 +1,7 @@
 package main
 
 import "fmt"
+import "su-organization-matching/server"
 
 // organization defines either an organization or a user with various fields
 // corresponding with the questions asked on the quiz.
@@ -19,6 +20,11 @@ type Organization struct {
 }
 
 func main() {
+
+	// Open the Postgres connection used by Ent queries and mutations.
+   	dbClient := GetDatabaseClient('default')
+   	_, orgs, err := dbClient.Query().FetchAllOrganizationsForSorting()
+
 
 	// hardcoded structs for every organization (for now, will be importing from database, allowing for information to be updated)
 	var cs_club Organization
@@ -232,44 +238,6 @@ func main() {
 		var normalized_score float32 = 100 * score / fca.max_score
 		fmt.Printf("The matching score for %s and %s is %f\n", users[i].name, fca.name, normalized_score)
 	}
-	// compare(tanner, exercise_is_medicine)
-	// compare(matt, exercise_is_medicine)
-	// compare(aidan, exercise_is_medicine)
-	// compare(ben, exercise_is_medicine)
-	// compare(exercise_is_medicine, exercise_is_medicine)
-
-	// compare(tanner, kdc)
-	// compare(matt, kdc)
-	// compare(aidan, kdc)
-	// compare(ben, kdc)
-	// compare(kdc, kdc)
-
-	// compare(tanner, classics_club)
-	// compare(matt, classics_club)
-	// compare(aidan, classics_club)
-	// compare(ben, classics_club)
-	// compare(classics_club, classics_club)
-
-	// compare(tanner, kappa_sigma)
-	// compare(matt, kappa_sigma)
-	// compare(aidan, kappa_sigma)
-	// compare(ben, kappa_sigma)
-	// compare(kappa_sigma, kappa_sigma)
-
-	// trying out comparing orgs to each other
-	// we might be able to make a "similar orgs" button
-	// compare(cs_club, su_tabletop)
-	// compare(cs_club, p4p)
-	// compare(p4p, cs_club) // order matters right now (it probably shouldn't though)
-	// compare(su_tabletop, p4p)
-
-	// the user's answers will be passed in and put into an organization struct.
-	// they will then be compared to and scored with every organization.
-	// either:
-	// organizations with the highest x scores will be reported
-	// organizations with a score above y will be reported
-	// certain organizations will have strict requirements
-	// as an example, for a sorority, the user must be a woman and answered that they are interested in greek life
 }
 
 // Takes a user's answers and organization's information and
