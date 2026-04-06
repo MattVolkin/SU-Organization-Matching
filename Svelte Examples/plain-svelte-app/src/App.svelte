@@ -56,4 +56,6 @@
  <ResultsPage/>
  <div class="parent">
 
+  <SwipingApp/>
+
 </div>

@@ -1,13 +1,14 @@
 <script>
 
-// TODO make it look like its something that can be swiped
-// TODO make it so the cards dont jump around when they are swiped (maybe add a transition or something?)
-
+// TODO make it look like its somthing that can be swipable
+	// put items on a stack of cards rather than just box on a page
+	
   import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
-
+	import {flip} from 'svelte/animate';
   let { show = true } = $props();
 	let counter = $state(0); // count what term we are on to stay on the list
 	let directionInt = $state('none'); // gets direction information from swiping app
+
 	
 	// list of items
 	//https://svelte.dev/playground/805300f5895f4ea89b73ba75de393db8?version=5.53.6
@@ -52,6 +53,12 @@
 
 	]);
 
+	  const range = (start, end) => { // range function to get a sub-array of the full question array (without modifying the original)
+    let arr = [];
+    for (let i = start; i < end; i += 1) arr.push(items[i]);
+    return arr;
+  };
+
 	
 	let term = $derived(items[counter].term); // create a local variable using the derived rune that dynamically updates as we move cards back and forth
 	let def = $derived(items[counter].def);	// same as the term but for the definition
@@ -59,10 +66,11 @@
 	export function advanceCard( index = 0) { // update card information
 		
 		counter = index;
-		counter %= items.length
 		term = items[counter].term;
 		def = items[counter].def;
 		console.log("tried to advance card" + counter + ":" + term + ":" + def);
+
+		//TODO: if at end of list and finished with swiping, do something (undefined at this time)
 		
 	}
 
@@ -78,71 +86,127 @@
 	export function getTag() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current tag before changing it
 		return tag;
 	}
+
+	export function getListLength() {
+		return items.length;
+	}
 </script>
 
 
 
-<div>
-<!-- <button onclick={() => show = !show}>
-  Toggle Elements
-</button> -->
 
-{#key term} <!-- This key term allows for the cards to file in one after another and change properly without weird graphical issues -->
-<div class="Card"
-        in:fade = {{delay: 1000, duration: 1000}}
+<div class="parent">
+
+
+	<!-- first card which has to be animated differently from the rest of the stack -->
+	{#key term} <!-- This key term allows for the cards to file in one after another and change properly without weird graphical issues -->
+<div class="TopCard"
+    in:fly={{ y: (100), duration: 1000}}
 		out:fly={{ x: (directionInt)*(100), duration: 1000}} > <!-- -(negative) is to the left, + (positive) is to the right -->
     
-    <h1 in:fade = {{delay: 1000, duration: 1000}}> {term} </h1>
-		<p in:fade={{delay:1000, speed: 1000 }}> {def}</p>
+    <h1 > {term} </h1> 
+		<p > {def}</p> 
 
 </div>
 {/key}
 
 
+	<!-- rest of the cards in a stack -->
+	{#each range(counter+1, items.length) as card, index} 
+    <div 
+      class="card" 
+    >
+    </div>
+	{/each}
+
+	
+
+
 </div>
 <style>
-    .Card {
 
-        background: #1C6EA4;
-        background: -moz-linear-gradient(-45deg, #1C6EA4 0%, #144E75 100%);
-        background: -webkit-linear-gradient(-45deg, #1C6EA4 0%, #144E75 100%);
-        background: linear-gradient(135deg, #1C6EA4 0%, #144E75 100%);
+	:root {
+		/* shared variables */
+  --card-width: 50vw;
+	--card-height: 60vw;
+	--card--color: #1a1a1a;
 
-        -webkit-box-shadow: 0px 5px 15px 0px #000000; 
-        box-shadow: 0px 5px 15px 0px #000000;
+	}
 
-        border: 1px solid;
+	h1 {
+		
+		font-size: 4vw;
+		margin: 10px;
+		border-bottom: 3px solid #ccc;
+		font-weight: 1000; /* make the text a larger weight so it stands out more*/
+		
+	}
+
+	p {
+		font-size: 3vw;
+				margin: 10px;
+	}
+
+	.parent {
+		/* althougth there is nothing in the styling for the parent element, this is here just incase somthing needs to be added*/
+	}
+	
+	.card:not(:first-child) {
+		box-shadow: -3rem 0 3rem -2rem #000;
+		color: transparent
+	}
+	
+  .card {
+		
+		position: relative; /* render following cards under the top card*/
+		z-index: 0;
+
+		
+		transition: none; /* clear the transitions so that cards look normal until hovered over */
+
+		
+    grid-area: 1 / 1;  /* place the background cards in the same position as the top card so they look like they are under the first one */
+
+		/* use shared variables so that all the cards are the same size*/
+    width: var(--card-width);
+    height: var(--card-height);
+    background: var(--card--color);
+		
+    border: 5px solid #ccc; /* offset bottom cards so the cards look like they are in a stack*/
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+		margin-bottom: 160px;
 
 
-        color: #91ff00;
-        width: 100vw;
-        height: 30vw;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 1.5rem;
-        box-sizing: border-box;
+  }
+
+    .TopCard {
+			
+	  position: absolute;
+		z-index: 1; /* setting this index to 1 allows it to render above the background stack*/
+
+		transition: none;
+			
+    width: var(--card-width);
+    height: var(--card-height);
+    background: var(--card--color);
+			
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+			
+
+		text-align: center;
+
+			
+    }
+
+	.TopCard:hover {
+		/* if the card is hovered over, it does a small rotation animation */
+
+		transform: translateY(-1rem) rotate(3deg);
+        
+
     }
 
 </style>
-<!-- 
-<style>
-	.content {
-		user-select: none;
-	}
-
-	div {
-		border: 1px solid;
-		font-size: 12px;
-		color: red;
-	}
-
-	.box {
-		border: 1px solid;
-		padding:0.5rem;
-		height:50%;
-
-	}
-</style> -->

@@ -7,7 +7,7 @@
 	let elmHeight = $state(0);
 
 	export function advanceProgress(incrementAmt) {
-		progress += incrementAmt;
+		progress = incrementAmt;
 		changeWidth();
 	}
 
@@ -15,7 +15,7 @@
 		if (progress)
 		console.log(elmWidth);
 
-		barWidth = (progress/maxLimit)*100;
+		barWidth = (progress/(maxLimit-1))*100;
 	}
 
 	
@@ -30,7 +30,6 @@
 	</h2> -->
 	<div id="progBar" style="width: {barWidth}%" > </div>
 
-<button onclick={() => advanceProgress(1)}>Run JavaScript</button>
 </div>
 
 <style>

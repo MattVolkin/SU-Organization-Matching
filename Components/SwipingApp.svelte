@@ -18,9 +18,9 @@
 
   let left = $state(true); // if we swipe left or right, augment given booleans to make sure the card is able to come back into frame/know what direction to move card
 	let right = $state(true);
-
-	let activities = $state(['testActivities']) // track the activities that the user likes doing to be fed into the fitness function
-	let personality = $state(['testPersonalities']) // track personality traits that the user likes doing (to feed into fitness function)
+ 
+	let activities = $state(['']) // track the activities that the user likes doing to be fed into the fitness function
+	let personality = $state(['']) // track personality traits that the user likes doing (to feed into fitness function)
 
 	let direction = $state("none yet"); // track direction swiping goes to determine which direction elements move
 	let directionInt = $state(-1); // represent direction as an integer for calculations of speed and position
@@ -31,8 +31,10 @@
 
 	let target: HTMLElement | null; // what kind of element is being interacted with as well as 
 
-	function swipeLeft() { // method to swipe left, this is broke out into a function so that it can be called by both the swipe gesture and arrow keys
-			left = !left;
+	function swipeLeft() { // method to swipe left, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
+			
+		//animation code
+		left = !left;
 			directionInt = -1;
 			setTimeout(() => {
 				left = !left;
@@ -41,11 +43,11 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
-				barObject.advanceProgress(1)
+				barObject.advanceProgress(count)
 
 	}
 
-	function swipeRight() {// method to swipe right, this is broke out into a function so that it can be called by both the swipe gesture and arrow keys
+	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
 		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, cardObject.getTerm()];
@@ -53,7 +55,7 @@
 				personality = [...personality, cardObject.getTerm()];
 			}
 
-
+			// animation code
 			right = !right;
 			directionInt = 1;
 			setTimeout(() => {
@@ -63,11 +65,53 @@
 			count += 1;
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
+			barObject.advanceProgress(count)		
 
-		barObject.advanceProgress(1)
+	}
 
+	function rewind() { // method to go back to the previous card, this is called when the user clicks the undo button
+		if(count > 0) { // prevent user from setting count to invalid values/trying to rewind past the stack of terms
+
+			// same animation code as swipeLeft
+		left = !left;
+			directionInt = -1;
+			setTimeout(() => {
+				left = !left;
+												} , 3000);
+			console.log(typeof cardObject);
+
+		count -= 1;
+		cardObject.setDirection(directionInt);
+		cardObject.advanceCard(count);
+		barObject.advanceProgress(count)
+
+			// because we are trying to go to the previous term, we should remove it from the array (if it exists), we should 
+		deleteGivenCardFromUserArray()
+		console.log("Made it out of remove function with: " + cardObject.getTerm())
+
+			
+		}
+	}
+
+	function deleteGivenCardFromUserArray(string: GivenItem) { // remove last term in array if it is the card we rewinded to
+	let GivenItem = cardObject.getTerm();
 		
+		console.log("Made it into remove function with: " + GivenItem);
 
+		console.log("does " + cardObject.getTerm() + " match " + GivenItem)
+			if(cardObject.getTag() === 'activities') { // if the card that was added to the array is an activity, then check the activities list to check if we need to remove it
+					if(activities[activities.length-1] === GivenItem) {
+						activities.pop();
+						console.log("removed " + GivenItem);
+					}
+			
+			
+			} else {
+					if(personality[personality.length-1] === GivenItem) {
+						personality.pop();
+						console.log("removed " + GivenItem);
+					}
+			}
 		
 	}
 
@@ -122,71 +166,77 @@
 
 
 <div class="swipedContainer">
-	<h1>Swipe left if you don't like the activity, swipe right if you do! </h1>
-	<h2>Activities you like: {activities} </h2>
+	<h1>Swipe right if you like the activity, Swipe left if you don't! </h1>
+	<!-- Debug information -->
+	<!-- <h2>Activities you like: {activities} </h2>
 	<h2>Personality traits you like: {personality} </h2>
+	<h2> {count} </h2> -->
+
+	<Bar maxLimit = 36 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+
+
 <section
 	{...useSwipe(swipeHandler, () => ({ timeframe: 300, minSwipeDistance: 25, touchAction: 'none' }), { // bound swipe function to work given a specific bounds of a section element
 		onswipemove: moveHandler
 	})}
 	class="box"
 >
+		<button onclick={() => rewind()}>Undo</button> <!-- Button to go back to the previous card -->
+
+
 	<div class="content">
-
-		<!-- <h2>Swipe Handler</h2>
-		<div>swipe direction: {direction}</div>
-		<div>pointerType {pointerType}</div>
-		<div>target: {target?.tagName}</div>
-		<h2>move</h2>
-		<div>x: {mx}</div>
-		<div>y: {my}</div> -->
-
-
-		<!-- https://www.youtube.com/watch?v=5oEo98BrRqs -->
-
-
-					<Card bind:this={cardObject} />				
-
-		
+					<Card bind:this={cardObject} />						
 	</div>
 
-<Bar maxLimit = 33 bind:this={barObject} />
 
 	
 </section>	
+	
 
 </div>
 
-<!--
-{#if right}
-	<div transition:fly={{ x: 100, duration: 700 }}>
-		whoopdedoo
-	</div>
-{/if}
--->
-<!-- 
-<h2> lets see how the animationBooleanWorks: {left} : {right} : {directionInt} </h2>
-<h1>Transition Demo</h1>
-<Card left/> -->
-
-
 <style>
+
+	h1 {
+		margin: 10px;
+		margin-bottom: 1px;
+		text-align: center;
+		font-size: 4vw
+	}
+
+	button {
+		align-self: flex-start;
+		height: 8vw;
+		width: 10vw;
+		font-size: 3vw;
+		margin: 10px
+	}
+	
 	.content {
 		user-select: none;
 		align-items: center;
 		justify-content: center;
+		
+		display: grid;
+  place-items: center; /* Centers both horizontally and vertically */
+  height: 100vh;       /* Example height to fill the viewport */
 	}
 
-	.swipedContainer {
 
+
+	.swipedContainer {
+		
+background: #ad0000;
+background: linear-gradient(90deg,rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 33%, rgba(0, 0, 0, 0) 66%, rgba(0, 168, 67, 1) 100%);		
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		width: 100vw;
+
+		width: 95vw;
 		height: 100vw;
+
+		overflow: hidden;
+
 	}
 
-
-
-	
 </style>
