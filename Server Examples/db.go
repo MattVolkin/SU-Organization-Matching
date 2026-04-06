@@ -45,7 +45,8 @@ var (
 )
 
 // NewDatabaseClient initializes a new database client with an Ent connection.
-func NewDatabaseClient(driver string, dsn string) (*DatabaseClient, error) {
+func NewDatabaseClient(driver string) (*DatabaseClient, error) {
+	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	driver = strings.TrimSpace(driver)
 	dsn = strings.TrimSpace(dsn)
 	if driver == "" {
