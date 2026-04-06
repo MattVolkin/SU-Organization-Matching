@@ -534,6 +534,7 @@ func (db *DatabaseClient) FetchAllOrganizationsForSorting(ctx context.Context) (
 		}
 
 		organizations = append(organizations, Organization{
+			id:                storedClub.ID,
 			name:              strings.TrimSpace(storedClub.ClubName),
 			personality:       append([]string(nil), storedClub.Personality...),
 			activities:        append([]string(nil), storedClub.Activities...),

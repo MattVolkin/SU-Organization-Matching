@@ -78,6 +78,7 @@ type OrgJSON struct {
 // organization defines either an organization or a user with various fields
 // corresponding with the questions asked on the quiz.
 type Organization struct {
+	id				  int
 	name              string
 	personality       []string
 	activities        []string
