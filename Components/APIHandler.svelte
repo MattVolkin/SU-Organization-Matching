@@ -1,6 +1,6 @@
 <script context="module">
 // /api/results
-export async function APICreater(method, url, body, loginToken, debug = false) {
+export async function APICreator(method, url, body, loginToken, debug = false) {
     const token = loginToken || (typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : '');
     const requestHeaders = {
         'Content-Type': 'application/json',
@@ -13,6 +13,7 @@ export async function APICreater(method, url, body, loginToken, debug = false) {
     const requestOptions = {
         method,
         headers: requestHeaders,
+        credentials: 'include',
     };
 
     if (body !== undefined && body !== null && method.toUpperCase() !== 'GET') {
