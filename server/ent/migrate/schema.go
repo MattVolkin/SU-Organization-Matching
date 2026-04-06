@@ -46,6 +46,15 @@ var (
 		{Name: "external_link", Type: field.TypeString, Nullable: true},
 		{Name: "contact_info", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "include_officer_emails", Type: field.TypeBool, Default: false},
+		{Name: "personality", Type: field.TypeJSON},
+		{Name: "activities", Type: field.TypeJSON},
+		{Name: "genders", Type: field.TypeJSON},
+		{Name: "ethnicities", Type: field.TypeJSON},
+		{Name: "religions", Type: field.TypeJSON},
+		{Name: "strict_genders", Type: field.TypeBool, Default: false},
+		{Name: "dedicated_majors", Type: field.TypeJSON},
+		{Name: "associated_majors", Type: field.TypeJSON},
+		{Name: "other", Type: field.TypeJSON},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// ClubsTable holds the schema information for the "clubs" table.
@@ -73,6 +82,11 @@ var (
 		{Name: "google_id", Type: field.TypeString, Unique: true},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "genders", Type: field.TypeJSON},
+		{Name: "ethnicities", Type: field.TypeJSON},
+		{Name: "religions", Type: field.TypeJSON},
+		{Name: "dedicated_majors", Type: field.TypeJSON},
+		{Name: "other", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.

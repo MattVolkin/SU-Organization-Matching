@@ -71,6 +71,66 @@ func (_u *UserUpdate) AppendTags(v []string) *UserUpdate {
 	return _u
 }
 
+// SetGenders sets the "genders" field.
+func (_u *UserUpdate) SetGenders(v []string) *UserUpdate {
+	_u.mutation.SetGenders(v)
+	return _u
+}
+
+// AppendGenders appends value to the "genders" field.
+func (_u *UserUpdate) AppendGenders(v []string) *UserUpdate {
+	_u.mutation.AppendGenders(v)
+	return _u
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_u *UserUpdate) SetEthnicities(v []string) *UserUpdate {
+	_u.mutation.SetEthnicities(v)
+	return _u
+}
+
+// AppendEthnicities appends value to the "ethnicities" field.
+func (_u *UserUpdate) AppendEthnicities(v []string) *UserUpdate {
+	_u.mutation.AppendEthnicities(v)
+	return _u
+}
+
+// SetReligions sets the "religions" field.
+func (_u *UserUpdate) SetReligions(v []string) *UserUpdate {
+	_u.mutation.SetReligions(v)
+	return _u
+}
+
+// AppendReligions appends value to the "religions" field.
+func (_u *UserUpdate) AppendReligions(v []string) *UserUpdate {
+	_u.mutation.AppendReligions(v)
+	return _u
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_u *UserUpdate) SetDedicatedMajors(v []string) *UserUpdate {
+	_u.mutation.SetDedicatedMajors(v)
+	return _u
+}
+
+// AppendDedicatedMajors appends value to the "dedicated_majors" field.
+func (_u *UserUpdate) AppendDedicatedMajors(v []string) *UserUpdate {
+	_u.mutation.AppendDedicatedMajors(v)
+	return _u
+}
+
+// SetOther sets the "other" field.
+func (_u *UserUpdate) SetOther(v []string) *UserUpdate {
+	_u.mutation.SetOther(v)
+	return _u
+}
+
+// AppendOther appends value to the "other" field.
+func (_u *UserUpdate) AppendOther(v []string) *UserUpdate {
+	_u.mutation.AppendOther(v)
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *UserUpdate) SetCreatedAt(v time.Time) *UserUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -210,6 +270,46 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, user.FieldTags, value)
+		})
+	}
+	if value, ok := _u.mutation.Genders(); ok {
+		_spec.SetField(user.FieldGenders, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGenders(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldGenders, value)
+		})
+	}
+	if value, ok := _u.mutation.Ethnicities(); ok {
+		_spec.SetField(user.FieldEthnicities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEthnicities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldEthnicities, value)
+		})
+	}
+	if value, ok := _u.mutation.Religions(); ok {
+		_spec.SetField(user.FieldReligions, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedReligions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldReligions, value)
+		})
+	}
+	if value, ok := _u.mutation.DedicatedMajors(); ok {
+		_spec.SetField(user.FieldDedicatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDedicatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldDedicatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.Other(); ok {
+		_spec.SetField(user.FieldOther, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedOther(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldOther, value)
 		})
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
@@ -362,6 +462,66 @@ func (_u *UserUpdateOne) SetTags(v []string) *UserUpdateOne {
 // AppendTags appends value to the "tags" field.
 func (_u *UserUpdateOne) AppendTags(v []string) *UserUpdateOne {
 	_u.mutation.AppendTags(v)
+	return _u
+}
+
+// SetGenders sets the "genders" field.
+func (_u *UserUpdateOne) SetGenders(v []string) *UserUpdateOne {
+	_u.mutation.SetGenders(v)
+	return _u
+}
+
+// AppendGenders appends value to the "genders" field.
+func (_u *UserUpdateOne) AppendGenders(v []string) *UserUpdateOne {
+	_u.mutation.AppendGenders(v)
+	return _u
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_u *UserUpdateOne) SetEthnicities(v []string) *UserUpdateOne {
+	_u.mutation.SetEthnicities(v)
+	return _u
+}
+
+// AppendEthnicities appends value to the "ethnicities" field.
+func (_u *UserUpdateOne) AppendEthnicities(v []string) *UserUpdateOne {
+	_u.mutation.AppendEthnicities(v)
+	return _u
+}
+
+// SetReligions sets the "religions" field.
+func (_u *UserUpdateOne) SetReligions(v []string) *UserUpdateOne {
+	_u.mutation.SetReligions(v)
+	return _u
+}
+
+// AppendReligions appends value to the "religions" field.
+func (_u *UserUpdateOne) AppendReligions(v []string) *UserUpdateOne {
+	_u.mutation.AppendReligions(v)
+	return _u
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_u *UserUpdateOne) SetDedicatedMajors(v []string) *UserUpdateOne {
+	_u.mutation.SetDedicatedMajors(v)
+	return _u
+}
+
+// AppendDedicatedMajors appends value to the "dedicated_majors" field.
+func (_u *UserUpdateOne) AppendDedicatedMajors(v []string) *UserUpdateOne {
+	_u.mutation.AppendDedicatedMajors(v)
+	return _u
+}
+
+// SetOther sets the "other" field.
+func (_u *UserUpdateOne) SetOther(v []string) *UserUpdateOne {
+	_u.mutation.SetOther(v)
+	return _u
+}
+
+// AppendOther appends value to the "other" field.
+func (_u *UserUpdateOne) AppendOther(v []string) *UserUpdateOne {
+	_u.mutation.AppendOther(v)
 	return _u
 }
 
@@ -534,6 +694,46 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, user.FieldTags, value)
+		})
+	}
+	if value, ok := _u.mutation.Genders(); ok {
+		_spec.SetField(user.FieldGenders, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGenders(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldGenders, value)
+		})
+	}
+	if value, ok := _u.mutation.Ethnicities(); ok {
+		_spec.SetField(user.FieldEthnicities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEthnicities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldEthnicities, value)
+		})
+	}
+	if value, ok := _u.mutation.Religions(); ok {
+		_spec.SetField(user.FieldReligions, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedReligions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldReligions, value)
+		})
+	}
+	if value, ok := _u.mutation.DedicatedMajors(); ok {
+		_spec.SetField(user.FieldDedicatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDedicatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldDedicatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.Other(); ok {
+		_spec.SetField(user.FieldOther, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedOther(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldOther, value)
 		})
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
