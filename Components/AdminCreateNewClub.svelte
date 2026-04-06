@@ -11,8 +11,8 @@
     function createClub(event) {
         event.preventDefault();
         APICreater('POST', '/api/admin/orgs', {
-            name: clubName,
-            officerEmail: PresidentEmail,
+            OrgName: clubName,
+            Officers: [PresidentEmail],
         });
 
         statusMessage = `Submitted ${clubName} for creation.`;

@@ -22,6 +22,8 @@
   import Header from './header.svelte'
   import Footer from './footer.svelte'
   import LoginPopup from './login_popup.svelte'
+  import { APICreater } from './APIHandler.svelte';
+
   let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
@@ -100,10 +102,10 @@
   }
 
   async function getResults() {
-    const response = await fetch('/results')
+    const response = await APICreater('GET', '/results')
     const payload = await response.json().catch(() => [])
     results = Array.isArray(payload) && payload.length > 0
-      ? payload
+      ? payload.map((item) => (typeof item === 'string' ? item : (item?.clubName || item?.ClubName || 'Unknown Club')))
       : ["Computer Science Club"]
   }
 

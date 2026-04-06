@@ -25,6 +25,22 @@ export async function APICreator(method, url, body, loginToken, debug = false) {
         console.log(`API Response:`, response);
     }
 
-    return response.json();
+    if (response.status === 204) {
+        return null;
+    }
+
+    const responseText = await response.text();
+    if (!responseText) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(responseText);
+    } catch {
+        return responseText;
+    }
 }
+
+// Backward-compatible alias for existing imports.
+export const APICreater = APICreator;
 </script>

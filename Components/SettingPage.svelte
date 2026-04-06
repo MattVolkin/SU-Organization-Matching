@@ -4,7 +4,14 @@
   import Footer from './footer.svelte';
   import { APICreater } from './APIHandler.svelte';
 
-  type ClubValue = string | { clubName?: string; ClubName?: string };
+  type ClubValue = string | {
+    ID?: number;
+    clubName?: string;
+    ClubName?: string;
+    officers?: string[];
+    personalityTraits?: string[];
+    activities?: string[];
+  };
 
   const uploadedImagesStorageKey = 'club-uploaded-images';
   const selectedImageStorageKey = 'club-selected-images';
@@ -70,6 +77,28 @@
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club');
   }
 
+  function getClubID(club: ClubValue) {
+    if (typeof club === 'string') {
+      return 0;
+    }
+    const rawID = (club as { ID?: number }).ID;
+    return typeof rawID === 'number' ? rawID : 0;
+  }
+
+  function getExistingClubOfficers(club: ClubValue) {
+    if (typeof club === 'string') {
+      return [];
+    }
+    return Array.isArray(club.officers) ? club.officers : [];
+  }
+
+  function getClubActivities(club: ClubValue) {
+    if (typeof club === 'string') {
+      return [];
+    }
+    return Array.isArray(club.activities) ? club.activities : [];
+  }
+
   function toClubSlug(clubName: string) {
     return clubName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
@@ -79,18 +108,43 @@
   }
 
   async function loadAdjectives() {
-    const response = await APICreater('GET', '/api/admin/adjectives', null);
-    allAdjectives = Array.isArray(response) ? response : [];
+    const response = await APICreater('GET', '/api/adjectives', null);
+    allAdjectives = Array.isArray(response)
+      ? response
+          .map((item) => (typeof item === 'string' ? item : (item?.en || item?.question_type || '')))
+          .filter((item) => typeof item === 'string' && item.trim().length > 0)
+      : [];
   }
 
   async function getClubOfficers() {
     const response = await APICreater('GET', '/api/officer/orgs', null);
     officerClubs = normalizeClubList(response);
   }
-  async function saveClubOfficer( officerEmail: string) {
-    await APICreater('POST', '/api/officer/update', {
-      ClubID: officerClubs[0],
-      Officers: [officerEmail]
+  async function saveClubOfficer(club: string, officerEmail: string) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
+    const clubID = clubInfo ? getClubID(clubInfo) : 0;
+    if (clubID <= 0) {
+      throw new Error('Missing valid club ID for officer update');
+    }
+
+    const mergedOfficers = [...getExistingClubOfficers(clubInfo || '')];
+    if (!mergedOfficers.some((existing) => existing.toLowerCase() === officerEmail.toLowerCase())) {
+      mergedOfficers.push(officerEmail);
+    }
+
+    await APICreater('PATCH', '/api/officer/orgs', {
+      id: clubID,
+      officers: mergedOfficers,
+    });
+
+    officerClubs = officerClubs.map((entry) => {
+      if (getClubName(entry) !== club || typeof entry === 'string') {
+        return entry;
+      }
+      return {
+        ...entry,
+        officers: mergedOfficers,
+      };
     });
   }
 
@@ -126,7 +180,7 @@
 
     try {
       if (!isTestMode) {
-        await saveClubOfficer( officerEmail);
+        await saveClubOfficer(club, officerEmail);
       }
 
       setPendingOfficerEmail(club, '');
@@ -200,8 +254,18 @@
     saveClubMedia();
   }
 
-  function saveClubAdjectives( adjectives: string[]) {
-    return APICreater('POST', '/api/officer/update', { ClubID: officerClubs[0], Adjectives: adjectives });
+  function saveClubAdjectives(club: string, adjectives: string[]) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
+    const clubID = clubInfo ? getClubID(clubInfo) : 0;
+    if (clubID <= 0) {
+      return Promise.reject(new Error('Missing valid club ID for adjective update'));
+    }
+
+    return APICreater('PATCH', '/api/officer/orgs', {
+      id: clubID,
+      personalityTraits: adjectives,
+      activities: getClubActivities(clubInfo || ''),
+    });
   }
 
   onMount(async () => {
@@ -258,6 +322,11 @@
         pageNotice = `You do not have permission to manage "${requestedClub}".`;
         accessibleClubs = [];
         return;
+      }
+
+      const requestedClubInfo = officerClubs.find((club) => getClubName(club) === requestedClub);
+      if (requestedClubInfo && typeof requestedClubInfo !== 'string' && Array.isArray(requestedClubInfo.personalityTraits)) {
+        selectedAdjectives = requestedClubInfo.personalityTraits;
       }
 
       pageNotice = '';
