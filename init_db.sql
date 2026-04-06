@@ -3,16 +3,21 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. User Table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     google_id VARCHAR(255) UNIQUE NOT NULL, -- Login ID from Google
     email VARCHAR(255) UNIQUE NOT NULL,
     tags JSONB DEFAULT '[]'::jsonb,
+    genders JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb,
+    religions JSONB NOT NULL DEFAULT '[]'::jsonb,
+    dedicated_majors JSONB NOT NULL DEFAULT '[]'::jsonb,
+    other JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 3. Club Table
-CREATE TABLE clubs (
+CREATE TABLE IF NOT EXISTS clubs (
     id SERIAL PRIMARY KEY,
     club_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -21,21 +26,48 @@ CREATE TABLE clubs (
     external_link VARCHAR(512),
     contact_info TEXT, -- Flexible for GroupMe, advisor emails, etc.
     include_officer_emails BOOLEAN DEFAULT FALSE,
+    personality JSONB NOT NULL DEFAULT '[]'::jsonb,
+    activities JSONB NOT NULL DEFAULT '[]'::jsonb,
+    genders JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb,
+    religions JSONB NOT NULL DEFAULT '[]'::jsonb,
+    strict_genders BOOLEAN NOT NULL DEFAULT FALSE,
+    dedicated_majors JSONB NOT NULL DEFAULT '[]'::jsonb,
+    associated_majors JSONB NOT NULL DEFAULT '[]'::jsonb,
+    other JSONB NOT NULL DEFAULT '[]'::jsonb,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Keep existing databases in sync when re-running this script.
+ALTER TABLE users DROP COLUMN IF EXISTS display_name;
+ALTER TABLE users DROP COLUMN IF EXISTS personality;
+ALTER TABLE users DROP COLUMN IF EXISTS activities;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS genders JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS religions JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS dedicated_majors JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE users DROP COLUMN IF EXISTS associated_majors;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS other JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS meeting_time VARCHAR(255);
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS personality JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS activities JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS genders JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS religions JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS strict_genders BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS dedicated_majors JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS associated_majors JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS other JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 -- 4. Club Leaders (Join Table for Many-to-Many)
-CREATE TABLE club_leaders (
+CREATE TABLE IF NOT EXISTS club_leaders (
     club_id INTEGER REFERENCES clubs(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, user_id) -- Composite Primary Key (Implicit Index)
 );
 
 -- 5. Questions Table
-CREATE TABLE questions (
+CREATE TABLE IF NOT EXISTS questions (
     id SERIAL PRIMARY KEY,
     question_type VARCHAR(50) NOT NULL, -- e.g., 'multiple_choice', 'text'
     -- Optimized: Use JSONB for multi-language support (English, Spanish, etc.)
@@ -45,7 +77,7 @@ CREATE TABLE questions (
 );
 
 -- 6. Answers Table
-CREATE TABLE answers (
+CREATE TABLE IF NOT EXISTS answers (
     id SERIAL PRIMARY KEY,
     question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -58,14 +90,14 @@ CREATE TABLE answers (
 ---
 
 -- Composite Index for faster Leader Lookups (if searching by user)
-CREATE INDEX idx_club_leaders_user_id ON club_leaders(user_id);
+CREATE INDEX IF NOT EXISTS idx_club_leaders_user_id ON club_leaders(user_id);
 
 -- GIN Index for the Translations JSONB column
 -- This makes searching for specific language keys extremely fast.
-CREATE INDEX idx_questions_translations ON questions USING GIN (translations);
+CREATE INDEX IF NOT EXISTS idx_questions_translations ON questions USING GIN (translations);
 
 -- Index for User Answers (Speeds up loading a user's specific profile)
-CREATE INDEX idx_answers_user_id ON answers(user_id);
+CREATE INDEX IF NOT EXISTS idx_answers_user_id ON answers(user_id);
 
 -- Permission Hardening
 -- Ensure the 'dev_user' owns these tables

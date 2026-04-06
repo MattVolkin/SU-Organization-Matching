@@ -45,7 +45,8 @@ var (
 )
 
 // NewDatabaseClient initializes a new database client with an Ent connection.
-func NewDatabaseClient(driver string, dsn string) (*DatabaseClient, error) {
+func NewDatabaseClient(driver string) (*DatabaseClient, error) {
+	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	driver = strings.TrimSpace(driver)
 	dsn = strings.TrimSpace(dsn)
 	if driver == "" {
@@ -290,7 +291,6 @@ func (db *DatabaseClient) getUserRole(ctx context.Context, email string) UserRol
 	}
 
 	lookupEmail := strings.TrimSpace(email)
-
 	_, isStudentLife, err := next.IsUserStudentLifeByEmail(ctx, lookupEmail)
 	if err != nil {
 		next.lastErr = err
@@ -517,6 +517,37 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 	clubs, err := next.client.Club.Query().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
+}
+
+// FetchAllOrganizationsForSorting wraps FetchAllClubs and converts persisted
+// club records into the Organization shape used by the sorting logic.
+func (db *DatabaseClient) FetchAllOrganizationsForSorting(ctx context.Context) (*DatabaseClient, []Organization, error) {
+	next, clubs, err := db.FetchAllClubs(ctx)
+	if err != nil {
+		return next, nil, err
+	}
+
+	organizations := make([]Organization, 0, len(clubs))
+	for _, storedClub := range clubs {
+		if storedClub == nil {
+			continue
+		}
+
+		organizations = append(organizations, Organization{
+			name:              strings.TrimSpace(storedClub.ClubName),
+			personality:       append([]string(nil), storedClub.Personality...),
+			activities:        append([]string(nil), storedClub.Activities...),
+			genders:           append([]string(nil), storedClub.Genders...),
+			ethnicities:       append([]string(nil), storedClub.Ethnicities...),
+			religions:         append([]string(nil), storedClub.Religions...),
+			strict_genders:    storedClub.StrictGenders,
+			dedicated_majors:  append([]string(nil), storedClub.DedicatedMajors...),
+			associated_majors: append([]string(nil), storedClub.AssociatedMajors...),
+			other:             append([]string(nil), storedClub.Other...),
+		})
+	}
+
+	return next, organizations, nil
 }
 
 func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, error) {
