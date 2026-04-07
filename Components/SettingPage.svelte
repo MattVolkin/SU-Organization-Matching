@@ -44,7 +44,7 @@
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
-  function enablePreviewMode(requestedClubName: string, noticeText: string) {
+  function enablePreviewMode(requestedClubName: string) {
     const requestedTestClub = requestedClubName || 'Test Club';
     isTestMode = true;
     selectedClubFromUrl = requestedTestClub;
@@ -69,7 +69,6 @@
       saveClubMedia();
     }
 
-    pageNotice = noticeText;
     loading = false;
   }
 
@@ -305,9 +304,7 @@
 
       if (!requestedClub) {
         enablePreviewMode(
-          'Test Club',
-          'No club was selected, so preview mode is shown for layout testing.'
-        );
+          'Test Club')
         return;
       }
 
@@ -353,11 +350,11 @@
   <p class="warning-banner">All changes on this page are saved immediately after clicking the "Save" button.</p>
 
   {#if loading}
-    <p class="club-warning">Loading club settings...</p>
+    <!-- <p class="club-warning">Loading club settings...</p> -->
   {/if}
 
   {#if pageNotice}
-    <p class="club-warning">{pageNotice}</p>
+    <!-- <p class="club-warning">{pageNotice}</p> -->
   {/if}
 
   {#if !isTestMode}
@@ -375,13 +372,15 @@
         <p class="club-title">{club} Settings</p>
         <p>Change adjectives to describe the club:</p>
 
-        <select multiple bind:value={selectedAdjectives}>
-          {#each allAdjectives as adjective}
-            <option value={adjective}>{adjective}</option>
-          {/each}
-        </select>
+        <div class="adjective-row">
+          <select multiple bind:value={selectedAdjectives}>
+            {#each allAdjectives as adjective}
+              <option value={adjective}>{adjective}</option>
+            {/each}
+          </select>
 
-        <button type="button" onclick={() => saveClubAdjectives(club, selectedAdjectives)}>Save Adjectives</button>
+          <button class="save-button action-button" type="button" onclick={() => saveClubAdjectives(club, selectedAdjectives)}>Save Adjectives</button>
+        </div>
 
         <h3>Add new officer</h3>
         <div class="officer-row">
@@ -520,6 +519,18 @@
     margin-top: 1rem;
   }
 
+  .adjective-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.6rem;
+  }
+
+  .adjective-row select {
+    flex: 1 1 30rem;
+    max-width: 43rem;
+  }
+
   .officer-row {
     display: flex;
     flex-wrap: wrap;
@@ -529,6 +540,24 @@
 
   .officer-row button {
     margin-top: 0.35rem;
+  }
+
+  .action-button {
+    margin-top: 0.35rem;
+    min-height: 2.35rem;
+    padding: 0.6rem 1.05rem;
+    border-radius: 0.6rem;
+    font-weight: 700;
+  }
+
+  .save-button {
+    background: #0f6d8c;
+    color: #fff;
+    border: none;
+  }
+
+  .save-button:hover {
+    background: #0b5a74;
   }
 
   .officer-status {
@@ -564,4 +593,5 @@
     border-radius: 0.4rem;
     display: block;
   }
+
 </style>

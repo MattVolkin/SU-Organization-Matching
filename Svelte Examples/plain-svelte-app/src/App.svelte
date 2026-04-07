@@ -53,9 +53,8 @@
 </script>
  <!-- <AdminHome />  -->
   <LoginPopup/>
- <ResultsPage/>
+ <SettingsPage/>
  <div class="parent">
 
-  <SwipingApp/>
-
+  
 </div>
