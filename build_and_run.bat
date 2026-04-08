@@ -1,2 +1,2 @@
-cd /d "Svelte Examples\plain-svelte-app" && call npm run build
-cd /d "..\..\Server Examples" && go mod tidy && go run server.go
+call npm run build
+cd /d "server" && go mod tidy && go build -o server . && go run server.go

@@ -175,10 +175,12 @@
 
 
 	<!-- rest of the cards in a stack -->
+	{#each range(counter+1, items.length, items) as card, index} 
     <div 
       class="card" 
     >
     </div>
+	{/each}
 
 	
 
@@ -221,6 +223,7 @@
 		
 		position: relative; /* render following cards under the top card*/
 		z-index: 0;
+;
 
 		
 		transition: none; /* clear the transitions so that cards look normal until hovered over */
@@ -229,8 +232,8 @@
     grid-area: 1 / 1;  /* place the background cards in the same position as the top card so they look like they are under the first one */
 
 		/* use shared variables so that all the cards are the same size*/
-    width: var(--card-width) - 5vw; /* make the cards slightly smaller than the top card so that they look like they are under the top card */
-    height: var(--card-height) - 5vh; /* make the cards slightly smaller than the top card so that they look like they are under the top card */
+    width: calc(var(--card-width) - 5vw); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
+    height: calc(var(--card-height) - 5vh); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
     background: var(--card--color);
 		
     border: 2px solid #ccc; 

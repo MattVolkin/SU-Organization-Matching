@@ -32,5 +32,5 @@ if [ "$NODE_MAJOR" -lt 24 ]; then
 	exit 1
 fi
 
-cd 'Svelte Examples/plain-svelte-app' && npm run build
-cd '../../server' && go mod tidy && go build -o server . && chmod +x server && ./server > server.log 2>&1 &
+npm run build
+cd 'server' && go mod tidy && go build -o server . && chmod +x server && ./server > server.log 2>&1 &

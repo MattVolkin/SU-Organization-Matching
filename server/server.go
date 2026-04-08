@@ -149,8 +149,11 @@ func main() {
 	log.Printf("Submit auth required: %t", submitRequiresAuth)
 
 	// Serve static files from the built Svelte distribution directory.
-	if err := os.Chdir("../Svelte Examples/plain-svelte-app/dist"); err != nil {
-		log.Printf("warning: failed to switch static directory: %v", err)
+	if err := os.Chdir("../Webpages/dist"); err != nil {
+		// Fall back to the old location so local development is still possible during migration.
+		if fallbackErr := os.Chdir("../Svelte Examples/plain-svelte-app/dist"); fallbackErr != nil {
+			log.Printf("warning: failed to switch static directory: %v (fallback also failed: %v)", err, fallbackErr)
+		}
 	}
 
 	// Register API routes and static site handler.
