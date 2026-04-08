@@ -143,7 +143,7 @@
 		return term;
 	}
 
-	export function getquestion_type() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current question_type before changing it
+	export function getTag() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current question_type before changing it
 		return question_type;
 	}
 
@@ -191,7 +191,7 @@
 	:root {
 		/* shared variables */
   	--card-width: 50vw;
-	--card-height: 60vw;
+	--card-height: 60vh;
 	--card--color: #1a1a1a;
 
 	}
@@ -231,11 +231,11 @@
     grid-area: 1 / 1;  /* place the background cards in the same position as the top card so they look like they are under the first one */
 
 		/* use shared variables so that all the cards are the same size*/
-    width: var(--card-width);
-    height: var(--card-height);
+    width: var(40vw);
+    height: var(50vh);
     background: var(--card--color);
 		
-    border: 2px solid #ccc; /* offset bottom cards so the cards look like they are in a stack*/
+    border: 2px solid #ccc; 
     border-radius: 8px;
     transition: transform 0.3s ease;
 		margin-bottom: 160px;
@@ -249,6 +249,9 @@
 		z-index: 1; /* setting this index to 1 allows it to render above the background stack*/
 
 		transition: none;
+
+	grid-area: 1 / 1;  /* place the background cards in the same position as the top card so they look like they are under the first one */
+
 			
     width: var(--card-width);
     height: var(--card-height);
