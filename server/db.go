@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"context"
@@ -45,7 +45,8 @@ var (
 )
 
 // NewDatabaseClient initializes a new database client with an Ent connection.
-func NewDatabaseClient(driver string, dsn string) (*DatabaseClient, error) {
+func NewDatabaseClient(driver string) (*DatabaseClient, error) {
+	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
 	driver = strings.TrimSpace(driver)
 	dsn = strings.TrimSpace(dsn)
 	if driver == "" {
@@ -290,7 +291,6 @@ func (db *DatabaseClient) getUserRole(ctx context.Context, email string) UserRol
 	}
 
 	lookupEmail := strings.TrimSpace(email)
-
 	_, isStudentLife, err := next.IsUserStudentLifeByEmail(ctx, lookupEmail)
 	if err != nil {
 		next.lastErr = err
@@ -514,9 +514,41 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().All(ctx)
+	clubs, err := next.client.Club.Query().WithLeaders().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
+}
+
+// FetchAllOrganizationsForSorting wraps FetchAllClubs and converts persisted
+// club records into the Organization shape used by the sorting logic.
+func (db *DatabaseClient) FetchAllOrganizationsForSorting(ctx context.Context) (*DatabaseClient, []Organization, error) {
+	next, clubs, err := db.FetchAllClubs(ctx)
+	if err != nil {
+		return next, nil, err
+	}
+
+	organizations := make([]Organization, 0, len(clubs))
+	for _, storedClub := range clubs {
+		if storedClub == nil {
+			continue
+		}
+
+		organizations = append(organizations, Organization{
+			id:                storedClub.ID,
+			name:              strings.TrimSpace(storedClub.ClubName),
+			personality:       append([]string(nil), storedClub.Personality...),
+			activities:        append([]string(nil), storedClub.Activities...),
+			genders:           append([]string(nil), storedClub.Genders...),
+			ethnicities:       append([]string(nil), storedClub.Ethnicities...),
+			religions:         append([]string(nil), storedClub.Religions...),
+			strict_genders:    storedClub.StrictGenders,
+			dedicated_majors:  append([]string(nil), storedClub.DedicatedMajors...),
+			associated_majors: append([]string(nil), storedClub.AssociatedMajors...),
+			other:             append([]string(nil), storedClub.Other...),
+		})
+	}
+
+	return next, organizations, nil
 }
 
 func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, error) {
@@ -553,6 +585,145 @@ func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *O
 	return next, err
 }
 
+// PatchClubFromJSON applies a partial update to a club record, changing only
+// the non-nil fields in the patch payload.
+func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, patch *OrgUpdatePayload) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+	if patch == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, next.lastErr
+	}
+	if patch.ID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, next.lastErr
+	}
+
+	update := next.client.Club.UpdateOneID(patch.ID)
+	if patch.ClubName != nil {
+		update.SetClubName(strings.TrimSpace(*patch.ClubName))
+	}
+	if patch.Description != nil {
+		update.SetDescription(strings.TrimSpace(*patch.Description))
+	}
+	if patch.MeetingTime != nil {
+		update.SetMeetingTime(strings.TrimSpace(*patch.MeetingTime))
+	}
+	if patch.ImagePath != nil {
+		update.SetImagePath(strings.TrimSpace(*patch.ImagePath))
+	}
+	if patch.ExternalLink != nil {
+		update.SetExternalLink(strings.TrimSpace(*patch.ExternalLink))
+	}
+	if patch.ContactInfo != nil {
+		update.SetContactInfo(strings.TrimSpace(*patch.ContactInfo))
+	}
+	if patch.IncludeOfficerEmails != nil {
+		update.SetIncludeOfficerEmails(*patch.IncludeOfficerEmails)
+	}
+	if patch.PersonalityTraits != nil {
+		update.SetPersonality(append([]string(nil), (*patch.PersonalityTraits)...))
+	}
+	if patch.Activities != nil {
+		update.SetActivities(append([]string(nil), (*patch.Activities)...))
+	}
+	if patch.Officers != nil {
+		normalizedEmails := make([]string, 0, len(*patch.Officers))
+		seen := map[string]struct{}{}
+		for _, email := range *patch.Officers {
+			trimmed := strings.TrimSpace(email)
+			if trimmed == "" {
+				continue
+			}
+			key := strings.ToLower(trimmed)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			normalizedEmails = append(normalizedEmails, trimmed)
+		}
+
+		update.ClearLeaders()
+		if len(normalizedEmails) > 0 {
+			leaders, err := next.client.User.Query().Where(user.EmailIn(normalizedEmails...)).All(ctx)
+			if err != nil {
+				next.lastErr = err
+				return next, err
+			}
+
+			foundByEmail := make(map[string]*ent.User, len(leaders))
+			for _, leader := range leaders {
+				if leader == nil {
+					continue
+				}
+				foundByEmail[strings.ToLower(strings.TrimSpace(leader.Email))] = leader
+			}
+
+			resolvedLeaders := make([]*ent.User, 0, len(normalizedEmails))
+			for _, email := range normalizedEmails {
+				leader, ok := foundByEmail[strings.ToLower(strings.TrimSpace(email))]
+				if !ok {
+					next.lastErr = fmt.Errorf("officer with email %q was not found", email)
+					return next, next.lastErr
+				}
+				resolvedLeaders = append(resolvedLeaders, leader)
+			}
+
+			update.AddLeaders(resolvedLeaders...)
+		}
+	}
+
+	err := update.Exec(ctx)
+	next.lastErr = err
+	return next, err
+}
+
+// CreateClubFromJSON inserts a new club record from an OrgJSON payload.
+func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if newClubInfo == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, nil, next.lastErr
+	}
+
+	clubName := strings.TrimSpace(newClubInfo.ClubName)
+	if clubName == "" {
+		next.lastErr = fmt.Errorf("clubName is required")
+		return next, nil, next.lastErr
+	}
+
+	createdClub, err := next.client.Club.Create().
+		SetClubName(clubName).
+		SetDescription(strings.TrimSpace(newClubInfo.Description)).
+		SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime)).
+		SetImagePath(strings.TrimSpace(newClubInfo.ImagePath)).
+		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
+		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
+		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
+		SetPersonality(append([]string(nil), newClubInfo.PersonalityTraits...)).
+		SetActivities(append([]string(nil), newClubInfo.Activities...)).
+		Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	return next, createdClub, nil
+}
+
 // FetchOfficerClubsByUserEmail returns all clubs where the given user is listed
 // as a leader/officer. The user is identified by email.
 func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Club, error) {
@@ -574,7 +745,7 @@ func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, emai
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).All(ctx)
+	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).WithLeaders().All(ctx)
 	next.userEmail = lookupEmail
 	next.lastErr = err
 	return next, clubs, err

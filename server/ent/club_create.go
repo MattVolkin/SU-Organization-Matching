@@ -111,6 +111,68 @@ func (_c *ClubCreate) SetNillableIncludeOfficerEmails(v *bool) *ClubCreate {
 	return _c
 }
 
+// SetPersonality sets the "personality" field.
+func (_c *ClubCreate) SetPersonality(v []string) *ClubCreate {
+	_c.mutation.SetPersonality(v)
+	return _c
+}
+
+// SetActivities sets the "activities" field.
+func (_c *ClubCreate) SetActivities(v []string) *ClubCreate {
+	_c.mutation.SetActivities(v)
+	return _c
+}
+
+// SetGenders sets the "genders" field.
+func (_c *ClubCreate) SetGenders(v []string) *ClubCreate {
+	_c.mutation.SetGenders(v)
+	return _c
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_c *ClubCreate) SetEthnicities(v []string) *ClubCreate {
+	_c.mutation.SetEthnicities(v)
+	return _c
+}
+
+// SetReligions sets the "religions" field.
+func (_c *ClubCreate) SetReligions(v []string) *ClubCreate {
+	_c.mutation.SetReligions(v)
+	return _c
+}
+
+// SetStrictGenders sets the "strict_genders" field.
+func (_c *ClubCreate) SetStrictGenders(v bool) *ClubCreate {
+	_c.mutation.SetStrictGenders(v)
+	return _c
+}
+
+// SetNillableStrictGenders sets the "strict_genders" field if the given value is not nil.
+func (_c *ClubCreate) SetNillableStrictGenders(v *bool) *ClubCreate {
+	if v != nil {
+		_c.SetStrictGenders(*v)
+	}
+	return _c
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_c *ClubCreate) SetDedicatedMajors(v []string) *ClubCreate {
+	_c.mutation.SetDedicatedMajors(v)
+	return _c
+}
+
+// SetAssociatedMajors sets the "associated_majors" field.
+func (_c *ClubCreate) SetAssociatedMajors(v []string) *ClubCreate {
+	_c.mutation.SetAssociatedMajors(v)
+	return _c
+}
+
+// SetOther sets the "other" field.
+func (_c *ClubCreate) SetOther(v []string) *ClubCreate {
+	_c.mutation.SetOther(v)
+	return _c
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_c *ClubCreate) SetUpdatedAt(v time.Time) *ClubCreate {
 	_c.mutation.SetUpdatedAt(v)
@@ -179,6 +241,42 @@ func (_c *ClubCreate) defaults() {
 		v := club.DefaultIncludeOfficerEmails
 		_c.mutation.SetIncludeOfficerEmails(v)
 	}
+	if _, ok := _c.mutation.Personality(); !ok {
+		v := club.DefaultPersonality
+		_c.mutation.SetPersonality(v)
+	}
+	if _, ok := _c.mutation.Activities(); !ok {
+		v := club.DefaultActivities
+		_c.mutation.SetActivities(v)
+	}
+	if _, ok := _c.mutation.Genders(); !ok {
+		v := club.DefaultGenders
+		_c.mutation.SetGenders(v)
+	}
+	if _, ok := _c.mutation.Ethnicities(); !ok {
+		v := club.DefaultEthnicities
+		_c.mutation.SetEthnicities(v)
+	}
+	if _, ok := _c.mutation.Religions(); !ok {
+		v := club.DefaultReligions
+		_c.mutation.SetReligions(v)
+	}
+	if _, ok := _c.mutation.StrictGenders(); !ok {
+		v := club.DefaultStrictGenders
+		_c.mutation.SetStrictGenders(v)
+	}
+	if _, ok := _c.mutation.DedicatedMajors(); !ok {
+		v := club.DefaultDedicatedMajors
+		_c.mutation.SetDedicatedMajors(v)
+	}
+	if _, ok := _c.mutation.AssociatedMajors(); !ok {
+		v := club.DefaultAssociatedMajors
+		_c.mutation.SetAssociatedMajors(v)
+	}
+	if _, ok := _c.mutation.Other(); !ok {
+		v := club.DefaultOther
+		_c.mutation.SetOther(v)
+	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := club.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
@@ -192,6 +290,33 @@ func (_c *ClubCreate) check() error {
 	}
 	if _, ok := _c.mutation.IncludeOfficerEmails(); !ok {
 		return &ValidationError{Name: "include_officer_emails", err: errors.New(`ent: missing required field "Club.include_officer_emails"`)}
+	}
+	if _, ok := _c.mutation.Personality(); !ok {
+		return &ValidationError{Name: "personality", err: errors.New(`ent: missing required field "Club.personality"`)}
+	}
+	if _, ok := _c.mutation.Activities(); !ok {
+		return &ValidationError{Name: "activities", err: errors.New(`ent: missing required field "Club.activities"`)}
+	}
+	if _, ok := _c.mutation.Genders(); !ok {
+		return &ValidationError{Name: "genders", err: errors.New(`ent: missing required field "Club.genders"`)}
+	}
+	if _, ok := _c.mutation.Ethnicities(); !ok {
+		return &ValidationError{Name: "ethnicities", err: errors.New(`ent: missing required field "Club.ethnicities"`)}
+	}
+	if _, ok := _c.mutation.Religions(); !ok {
+		return &ValidationError{Name: "religions", err: errors.New(`ent: missing required field "Club.religions"`)}
+	}
+	if _, ok := _c.mutation.StrictGenders(); !ok {
+		return &ValidationError{Name: "strict_genders", err: errors.New(`ent: missing required field "Club.strict_genders"`)}
+	}
+	if _, ok := _c.mutation.DedicatedMajors(); !ok {
+		return &ValidationError{Name: "dedicated_majors", err: errors.New(`ent: missing required field "Club.dedicated_majors"`)}
+	}
+	if _, ok := _c.mutation.AssociatedMajors(); !ok {
+		return &ValidationError{Name: "associated_majors", err: errors.New(`ent: missing required field "Club.associated_majors"`)}
+	}
+	if _, ok := _c.mutation.Other(); !ok {
+		return &ValidationError{Name: "other", err: errors.New(`ent: missing required field "Club.other"`)}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Club.updated_at"`)}
@@ -249,6 +374,42 @@ func (_c *ClubCreate) createSpec() (*Club, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IncludeOfficerEmails(); ok {
 		_spec.SetField(club.FieldIncludeOfficerEmails, field.TypeBool, value)
 		_node.IncludeOfficerEmails = value
+	}
+	if value, ok := _c.mutation.Personality(); ok {
+		_spec.SetField(club.FieldPersonality, field.TypeJSON, value)
+		_node.Personality = value
+	}
+	if value, ok := _c.mutation.Activities(); ok {
+		_spec.SetField(club.FieldActivities, field.TypeJSON, value)
+		_node.Activities = value
+	}
+	if value, ok := _c.mutation.Genders(); ok {
+		_spec.SetField(club.FieldGenders, field.TypeJSON, value)
+		_node.Genders = value
+	}
+	if value, ok := _c.mutation.Ethnicities(); ok {
+		_spec.SetField(club.FieldEthnicities, field.TypeJSON, value)
+		_node.Ethnicities = value
+	}
+	if value, ok := _c.mutation.Religions(); ok {
+		_spec.SetField(club.FieldReligions, field.TypeJSON, value)
+		_node.Religions = value
+	}
+	if value, ok := _c.mutation.StrictGenders(); ok {
+		_spec.SetField(club.FieldStrictGenders, field.TypeBool, value)
+		_node.StrictGenders = value
+	}
+	if value, ok := _c.mutation.DedicatedMajors(); ok {
+		_spec.SetField(club.FieldDedicatedMajors, field.TypeJSON, value)
+		_node.DedicatedMajors = value
+	}
+	if value, ok := _c.mutation.AssociatedMajors(); ok {
+		_spec.SetField(club.FieldAssociatedMajors, field.TypeJSON, value)
+		_node.AssociatedMajors = value
+	}
+	if value, ok := _c.mutation.Other(); ok {
+		_spec.SetField(club.FieldOther, field.TypeJSON, value)
+		_node.Other = value
 	}
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(club.FieldUpdatedAt, field.TypeTime, value)

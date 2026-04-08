@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"su-organization-matching/server/ent/club"
@@ -31,6 +32,24 @@ type Club struct {
 	ContactInfo string `json:"contact_info,omitempty"`
 	// IncludeOfficerEmails holds the value of the "include_officer_emails" field.
 	IncludeOfficerEmails bool `json:"include_officer_emails,omitempty"`
+	// Personality holds the value of the "personality" field.
+	Personality []string `json:"personality,omitempty"`
+	// Activities holds the value of the "activities" field.
+	Activities []string `json:"activities,omitempty"`
+	// Genders holds the value of the "genders" field.
+	Genders []string `json:"genders,omitempty"`
+	// Ethnicities holds the value of the "ethnicities" field.
+	Ethnicities []string `json:"ethnicities,omitempty"`
+	// Religions holds the value of the "religions" field.
+	Religions []string `json:"religions,omitempty"`
+	// StrictGenders holds the value of the "strict_genders" field.
+	StrictGenders bool `json:"strict_genders,omitempty"`
+	// DedicatedMajors holds the value of the "dedicated_majors" field.
+	DedicatedMajors []string `json:"dedicated_majors,omitempty"`
+	// AssociatedMajors holds the value of the "associated_majors" field.
+	AssociatedMajors []string `json:"associated_majors,omitempty"`
+	// Other holds the value of the "other" field.
+	Other []string `json:"other,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -62,7 +81,9 @@ func (*Club) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case club.FieldIncludeOfficerEmails:
+		case club.FieldPersonality, club.FieldActivities, club.FieldGenders, club.FieldEthnicities, club.FieldReligions, club.FieldDedicatedMajors, club.FieldAssociatedMajors, club.FieldOther:
+			values[i] = new([]byte)
+		case club.FieldIncludeOfficerEmails, club.FieldStrictGenders:
 			values[i] = new(sql.NullBool)
 		case club.FieldID:
 			values[i] = new(sql.NullInt64)
@@ -133,6 +154,76 @@ func (_m *Club) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.IncludeOfficerEmails = value.Bool
 			}
+		case club.FieldPersonality:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field personality", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Personality); err != nil {
+					return fmt.Errorf("unmarshal field personality: %w", err)
+				}
+			}
+		case club.FieldActivities:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field activities", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Activities); err != nil {
+					return fmt.Errorf("unmarshal field activities: %w", err)
+				}
+			}
+		case club.FieldGenders:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field genders", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Genders); err != nil {
+					return fmt.Errorf("unmarshal field genders: %w", err)
+				}
+			}
+		case club.FieldEthnicities:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field ethnicities", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Ethnicities); err != nil {
+					return fmt.Errorf("unmarshal field ethnicities: %w", err)
+				}
+			}
+		case club.FieldReligions:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field religions", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Religions); err != nil {
+					return fmt.Errorf("unmarshal field religions: %w", err)
+				}
+			}
+		case club.FieldStrictGenders:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field strict_genders", values[i])
+			} else if value.Valid {
+				_m.StrictGenders = value.Bool
+			}
+		case club.FieldDedicatedMajors:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field dedicated_majors", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DedicatedMajors); err != nil {
+					return fmt.Errorf("unmarshal field dedicated_majors: %w", err)
+				}
+			}
+		case club.FieldAssociatedMajors:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field associated_majors", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.AssociatedMajors); err != nil {
+					return fmt.Errorf("unmarshal field associated_majors: %w", err)
+				}
+			}
+		case club.FieldOther:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field other", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Other); err != nil {
+					return fmt.Errorf("unmarshal field other: %w", err)
+				}
+			}
 		case club.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
@@ -200,6 +291,33 @@ func (_m *Club) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("include_officer_emails=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IncludeOfficerEmails))
+	builder.WriteString(", ")
+	builder.WriteString("personality=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Personality))
+	builder.WriteString(", ")
+	builder.WriteString("activities=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Activities))
+	builder.WriteString(", ")
+	builder.WriteString("genders=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Genders))
+	builder.WriteString(", ")
+	builder.WriteString("ethnicities=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Ethnicities))
+	builder.WriteString(", ")
+	builder.WriteString("religions=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Religions))
+	builder.WriteString(", ")
+	builder.WriteString("strict_genders=")
+	builder.WriteString(fmt.Sprintf("%v", _m.StrictGenders))
+	builder.WriteString(", ")
+	builder.WriteString("dedicated_majors=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DedicatedMajors))
+	builder.WriteString(", ")
+	builder.WriteString("associated_majors=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AssociatedMajors))
+	builder.WriteString(", ")
+	builder.WriteString("other=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Other))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))

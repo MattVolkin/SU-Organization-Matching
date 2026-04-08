@@ -90,6 +90,11 @@ func IncludeOfficerEmails(v bool) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldIncludeOfficerEmails, v))
 }
 
+// StrictGenders applies equality check predicate on the "strict_genders" field. It's identical to StrictGendersEQ.
+func StrictGenders(v bool) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldStrictGenders, v))
+}
+
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldUpdatedAt, v))
@@ -543,6 +548,16 @@ func IncludeOfficerEmailsEQ(v bool) predicate.Club {
 // IncludeOfficerEmailsNEQ applies the NEQ predicate on the "include_officer_emails" field.
 func IncludeOfficerEmailsNEQ(v bool) predicate.Club {
 	return predicate.Club(sql.FieldNEQ(FieldIncludeOfficerEmails, v))
+}
+
+// StrictGendersEQ applies the EQ predicate on the "strict_genders" field.
+func StrictGendersEQ(v bool) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldStrictGenders, v))
+}
+
+// StrictGendersNEQ applies the NEQ predicate on the "strict_genders" field.
+func StrictGendersNEQ(v bool) predicate.Club {
+	return predicate.Club(sql.FieldNEQ(FieldStrictGenders, v))
 }
 
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.

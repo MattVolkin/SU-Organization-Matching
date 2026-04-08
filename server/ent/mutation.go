@@ -542,24 +542,41 @@ func (m *AnswerMutation) ResetEdge(name string) error {
 // ClubMutation represents an operation that mutates the Club nodes in the graph.
 type ClubMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int
-	club_name              *string
-	description            *string
-	meeting_time           *string
-	image_path             *string
-	external_link          *string
-	contact_info           *string
-	include_officer_emails *bool
-	updated_at             *time.Time
-	clearedFields          map[string]struct{}
-	leaders                map[int]struct{}
-	removedleaders         map[int]struct{}
-	clearedleaders         bool
-	done                   bool
-	oldValue               func(context.Context) (*Club, error)
-	predicates             []predicate.Club
+	op                      Op
+	typ                     string
+	id                      *int
+	club_name               *string
+	description             *string
+	meeting_time            *string
+	image_path              *string
+	external_link           *string
+	contact_info            *string
+	include_officer_emails  *bool
+	personality             *[]string
+	appendpersonality       []string
+	activities              *[]string
+	appendactivities        []string
+	genders                 *[]string
+	appendgenders           []string
+	ethnicities             *[]string
+	appendethnicities       []string
+	religions               *[]string
+	appendreligions         []string
+	strict_genders          *bool
+	dedicated_majors        *[]string
+	appenddedicated_majors  []string
+	associated_majors       *[]string
+	appendassociated_majors []string
+	other                   *[]string
+	appendother             []string
+	updated_at              *time.Time
+	clearedFields           map[string]struct{}
+	leaders                 map[int]struct{}
+	removedleaders          map[int]struct{}
+	clearedleaders          bool
+	done                    bool
+	oldValue                func(context.Context) (*Club, error)
+	predicates              []predicate.Club
 }
 
 var _ ent.Mutation = (*ClubMutation)(nil)
@@ -977,6 +994,450 @@ func (m *ClubMutation) ResetIncludeOfficerEmails() {
 	m.include_officer_emails = nil
 }
 
+// SetPersonality sets the "personality" field.
+func (m *ClubMutation) SetPersonality(s []string) {
+	m.personality = &s
+	m.appendpersonality = nil
+}
+
+// Personality returns the value of the "personality" field in the mutation.
+func (m *ClubMutation) Personality() (r []string, exists bool) {
+	v := m.personality
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPersonality returns the old "personality" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldPersonality(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPersonality is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPersonality requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPersonality: %w", err)
+	}
+	return oldValue.Personality, nil
+}
+
+// AppendPersonality adds s to the "personality" field.
+func (m *ClubMutation) AppendPersonality(s []string) {
+	m.appendpersonality = append(m.appendpersonality, s...)
+}
+
+// AppendedPersonality returns the list of values that were appended to the "personality" field in this mutation.
+func (m *ClubMutation) AppendedPersonality() ([]string, bool) {
+	if len(m.appendpersonality) == 0 {
+		return nil, false
+	}
+	return m.appendpersonality, true
+}
+
+// ResetPersonality resets all changes to the "personality" field.
+func (m *ClubMutation) ResetPersonality() {
+	m.personality = nil
+	m.appendpersonality = nil
+}
+
+// SetActivities sets the "activities" field.
+func (m *ClubMutation) SetActivities(s []string) {
+	m.activities = &s
+	m.appendactivities = nil
+}
+
+// Activities returns the value of the "activities" field in the mutation.
+func (m *ClubMutation) Activities() (r []string, exists bool) {
+	v := m.activities
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActivities returns the old "activities" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldActivities(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActivities is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActivities requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActivities: %w", err)
+	}
+	return oldValue.Activities, nil
+}
+
+// AppendActivities adds s to the "activities" field.
+func (m *ClubMutation) AppendActivities(s []string) {
+	m.appendactivities = append(m.appendactivities, s...)
+}
+
+// AppendedActivities returns the list of values that were appended to the "activities" field in this mutation.
+func (m *ClubMutation) AppendedActivities() ([]string, bool) {
+	if len(m.appendactivities) == 0 {
+		return nil, false
+	}
+	return m.appendactivities, true
+}
+
+// ResetActivities resets all changes to the "activities" field.
+func (m *ClubMutation) ResetActivities() {
+	m.activities = nil
+	m.appendactivities = nil
+}
+
+// SetGenders sets the "genders" field.
+func (m *ClubMutation) SetGenders(s []string) {
+	m.genders = &s
+	m.appendgenders = nil
+}
+
+// Genders returns the value of the "genders" field in the mutation.
+func (m *ClubMutation) Genders() (r []string, exists bool) {
+	v := m.genders
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGenders returns the old "genders" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldGenders(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGenders is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGenders requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGenders: %w", err)
+	}
+	return oldValue.Genders, nil
+}
+
+// AppendGenders adds s to the "genders" field.
+func (m *ClubMutation) AppendGenders(s []string) {
+	m.appendgenders = append(m.appendgenders, s...)
+}
+
+// AppendedGenders returns the list of values that were appended to the "genders" field in this mutation.
+func (m *ClubMutation) AppendedGenders() ([]string, bool) {
+	if len(m.appendgenders) == 0 {
+		return nil, false
+	}
+	return m.appendgenders, true
+}
+
+// ResetGenders resets all changes to the "genders" field.
+func (m *ClubMutation) ResetGenders() {
+	m.genders = nil
+	m.appendgenders = nil
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (m *ClubMutation) SetEthnicities(s []string) {
+	m.ethnicities = &s
+	m.appendethnicities = nil
+}
+
+// Ethnicities returns the value of the "ethnicities" field in the mutation.
+func (m *ClubMutation) Ethnicities() (r []string, exists bool) {
+	v := m.ethnicities
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEthnicities returns the old "ethnicities" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldEthnicities(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEthnicities is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEthnicities requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEthnicities: %w", err)
+	}
+	return oldValue.Ethnicities, nil
+}
+
+// AppendEthnicities adds s to the "ethnicities" field.
+func (m *ClubMutation) AppendEthnicities(s []string) {
+	m.appendethnicities = append(m.appendethnicities, s...)
+}
+
+// AppendedEthnicities returns the list of values that were appended to the "ethnicities" field in this mutation.
+func (m *ClubMutation) AppendedEthnicities() ([]string, bool) {
+	if len(m.appendethnicities) == 0 {
+		return nil, false
+	}
+	return m.appendethnicities, true
+}
+
+// ResetEthnicities resets all changes to the "ethnicities" field.
+func (m *ClubMutation) ResetEthnicities() {
+	m.ethnicities = nil
+	m.appendethnicities = nil
+}
+
+// SetReligions sets the "religions" field.
+func (m *ClubMutation) SetReligions(s []string) {
+	m.religions = &s
+	m.appendreligions = nil
+}
+
+// Religions returns the value of the "religions" field in the mutation.
+func (m *ClubMutation) Religions() (r []string, exists bool) {
+	v := m.religions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReligions returns the old "religions" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldReligions(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReligions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReligions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReligions: %w", err)
+	}
+	return oldValue.Religions, nil
+}
+
+// AppendReligions adds s to the "religions" field.
+func (m *ClubMutation) AppendReligions(s []string) {
+	m.appendreligions = append(m.appendreligions, s...)
+}
+
+// AppendedReligions returns the list of values that were appended to the "religions" field in this mutation.
+func (m *ClubMutation) AppendedReligions() ([]string, bool) {
+	if len(m.appendreligions) == 0 {
+		return nil, false
+	}
+	return m.appendreligions, true
+}
+
+// ResetReligions resets all changes to the "religions" field.
+func (m *ClubMutation) ResetReligions() {
+	m.religions = nil
+	m.appendreligions = nil
+}
+
+// SetStrictGenders sets the "strict_genders" field.
+func (m *ClubMutation) SetStrictGenders(b bool) {
+	m.strict_genders = &b
+}
+
+// StrictGenders returns the value of the "strict_genders" field in the mutation.
+func (m *ClubMutation) StrictGenders() (r bool, exists bool) {
+	v := m.strict_genders
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrictGenders returns the old "strict_genders" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldStrictGenders(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrictGenders is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrictGenders requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrictGenders: %w", err)
+	}
+	return oldValue.StrictGenders, nil
+}
+
+// ResetStrictGenders resets all changes to the "strict_genders" field.
+func (m *ClubMutation) ResetStrictGenders() {
+	m.strict_genders = nil
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (m *ClubMutation) SetDedicatedMajors(s []string) {
+	m.dedicated_majors = &s
+	m.appenddedicated_majors = nil
+}
+
+// DedicatedMajors returns the value of the "dedicated_majors" field in the mutation.
+func (m *ClubMutation) DedicatedMajors() (r []string, exists bool) {
+	v := m.dedicated_majors
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDedicatedMajors returns the old "dedicated_majors" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldDedicatedMajors(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDedicatedMajors is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDedicatedMajors requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDedicatedMajors: %w", err)
+	}
+	return oldValue.DedicatedMajors, nil
+}
+
+// AppendDedicatedMajors adds s to the "dedicated_majors" field.
+func (m *ClubMutation) AppendDedicatedMajors(s []string) {
+	m.appenddedicated_majors = append(m.appenddedicated_majors, s...)
+}
+
+// AppendedDedicatedMajors returns the list of values that were appended to the "dedicated_majors" field in this mutation.
+func (m *ClubMutation) AppendedDedicatedMajors() ([]string, bool) {
+	if len(m.appenddedicated_majors) == 0 {
+		return nil, false
+	}
+	return m.appenddedicated_majors, true
+}
+
+// ResetDedicatedMajors resets all changes to the "dedicated_majors" field.
+func (m *ClubMutation) ResetDedicatedMajors() {
+	m.dedicated_majors = nil
+	m.appenddedicated_majors = nil
+}
+
+// SetAssociatedMajors sets the "associated_majors" field.
+func (m *ClubMutation) SetAssociatedMajors(s []string) {
+	m.associated_majors = &s
+	m.appendassociated_majors = nil
+}
+
+// AssociatedMajors returns the value of the "associated_majors" field in the mutation.
+func (m *ClubMutation) AssociatedMajors() (r []string, exists bool) {
+	v := m.associated_majors
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssociatedMajors returns the old "associated_majors" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldAssociatedMajors(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssociatedMajors is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssociatedMajors requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssociatedMajors: %w", err)
+	}
+	return oldValue.AssociatedMajors, nil
+}
+
+// AppendAssociatedMajors adds s to the "associated_majors" field.
+func (m *ClubMutation) AppendAssociatedMajors(s []string) {
+	m.appendassociated_majors = append(m.appendassociated_majors, s...)
+}
+
+// AppendedAssociatedMajors returns the list of values that were appended to the "associated_majors" field in this mutation.
+func (m *ClubMutation) AppendedAssociatedMajors() ([]string, bool) {
+	if len(m.appendassociated_majors) == 0 {
+		return nil, false
+	}
+	return m.appendassociated_majors, true
+}
+
+// ResetAssociatedMajors resets all changes to the "associated_majors" field.
+func (m *ClubMutation) ResetAssociatedMajors() {
+	m.associated_majors = nil
+	m.appendassociated_majors = nil
+}
+
+// SetOther sets the "other" field.
+func (m *ClubMutation) SetOther(s []string) {
+	m.other = &s
+	m.appendother = nil
+}
+
+// Other returns the value of the "other" field in the mutation.
+func (m *ClubMutation) Other() (r []string, exists bool) {
+	v := m.other
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOther returns the old "other" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldOther(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOther is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOther requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOther: %w", err)
+	}
+	return oldValue.Other, nil
+}
+
+// AppendOther adds s to the "other" field.
+func (m *ClubMutation) AppendOther(s []string) {
+	m.appendother = append(m.appendother, s...)
+}
+
+// AppendedOther returns the list of values that were appended to the "other" field in this mutation.
+func (m *ClubMutation) AppendedOther() ([]string, bool) {
+	if len(m.appendother) == 0 {
+		return nil, false
+	}
+	return m.appendother, true
+}
+
+// ResetOther resets all changes to the "other" field.
+func (m *ClubMutation) ResetOther() {
+	m.other = nil
+	m.appendother = nil
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (m *ClubMutation) SetUpdatedAt(t time.Time) {
 	m.updated_at = &t
@@ -1101,7 +1562,7 @@ func (m *ClubMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ClubMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 17)
 	if m.club_name != nil {
 		fields = append(fields, club.FieldClubName)
 	}
@@ -1122,6 +1583,33 @@ func (m *ClubMutation) Fields() []string {
 	}
 	if m.include_officer_emails != nil {
 		fields = append(fields, club.FieldIncludeOfficerEmails)
+	}
+	if m.personality != nil {
+		fields = append(fields, club.FieldPersonality)
+	}
+	if m.activities != nil {
+		fields = append(fields, club.FieldActivities)
+	}
+	if m.genders != nil {
+		fields = append(fields, club.FieldGenders)
+	}
+	if m.ethnicities != nil {
+		fields = append(fields, club.FieldEthnicities)
+	}
+	if m.religions != nil {
+		fields = append(fields, club.FieldReligions)
+	}
+	if m.strict_genders != nil {
+		fields = append(fields, club.FieldStrictGenders)
+	}
+	if m.dedicated_majors != nil {
+		fields = append(fields, club.FieldDedicatedMajors)
+	}
+	if m.associated_majors != nil {
+		fields = append(fields, club.FieldAssociatedMajors)
+	}
+	if m.other != nil {
+		fields = append(fields, club.FieldOther)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, club.FieldUpdatedAt)
@@ -1148,6 +1636,24 @@ func (m *ClubMutation) Field(name string) (ent.Value, bool) {
 		return m.ContactInfo()
 	case club.FieldIncludeOfficerEmails:
 		return m.IncludeOfficerEmails()
+	case club.FieldPersonality:
+		return m.Personality()
+	case club.FieldActivities:
+		return m.Activities()
+	case club.FieldGenders:
+		return m.Genders()
+	case club.FieldEthnicities:
+		return m.Ethnicities()
+	case club.FieldReligions:
+		return m.Religions()
+	case club.FieldStrictGenders:
+		return m.StrictGenders()
+	case club.FieldDedicatedMajors:
+		return m.DedicatedMajors()
+	case club.FieldAssociatedMajors:
+		return m.AssociatedMajors()
+	case club.FieldOther:
+		return m.Other()
 	case club.FieldUpdatedAt:
 		return m.UpdatedAt()
 	}
@@ -1173,6 +1679,24 @@ func (m *ClubMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldContactInfo(ctx)
 	case club.FieldIncludeOfficerEmails:
 		return m.OldIncludeOfficerEmails(ctx)
+	case club.FieldPersonality:
+		return m.OldPersonality(ctx)
+	case club.FieldActivities:
+		return m.OldActivities(ctx)
+	case club.FieldGenders:
+		return m.OldGenders(ctx)
+	case club.FieldEthnicities:
+		return m.OldEthnicities(ctx)
+	case club.FieldReligions:
+		return m.OldReligions(ctx)
+	case club.FieldStrictGenders:
+		return m.OldStrictGenders(ctx)
+	case club.FieldDedicatedMajors:
+		return m.OldDedicatedMajors(ctx)
+	case club.FieldAssociatedMajors:
+		return m.OldAssociatedMajors(ctx)
+	case club.FieldOther:
+		return m.OldOther(ctx)
 	case club.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
 	}
@@ -1232,6 +1756,69 @@ func (m *ClubMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIncludeOfficerEmails(v)
+		return nil
+	case club.FieldPersonality:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPersonality(v)
+		return nil
+	case club.FieldActivities:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActivities(v)
+		return nil
+	case club.FieldGenders:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGenders(v)
+		return nil
+	case club.FieldEthnicities:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEthnicities(v)
+		return nil
+	case club.FieldReligions:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReligions(v)
+		return nil
+	case club.FieldStrictGenders:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrictGenders(v)
+		return nil
+	case club.FieldDedicatedMajors:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDedicatedMajors(v)
+		return nil
+	case club.FieldAssociatedMajors:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssociatedMajors(v)
+		return nil
+	case club.FieldOther:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOther(v)
 		return nil
 	case club.FieldUpdatedAt:
 		v, ok := value.(time.Time)
@@ -1342,6 +1929,33 @@ func (m *ClubMutation) ResetField(name string) error {
 		return nil
 	case club.FieldIncludeOfficerEmails:
 		m.ResetIncludeOfficerEmails()
+		return nil
+	case club.FieldPersonality:
+		m.ResetPersonality()
+		return nil
+	case club.FieldActivities:
+		m.ResetActivities()
+		return nil
+	case club.FieldGenders:
+		m.ResetGenders()
+		return nil
+	case club.FieldEthnicities:
+		m.ResetEthnicities()
+		return nil
+	case club.FieldReligions:
+		m.ResetReligions()
+		return nil
+	case club.FieldStrictGenders:
+		m.ResetStrictGenders()
+		return nil
+	case club.FieldDedicatedMajors:
+		m.ResetDedicatedMajors()
+		return nil
+	case club.FieldAssociatedMajors:
+		m.ResetAssociatedMajors()
+		return nil
+	case club.FieldOther:
+		m.ResetOther()
 		return nil
 	case club.FieldUpdatedAt:
 		m.ResetUpdatedAt()
@@ -1964,24 +2578,34 @@ func (m *QuestionMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	google_id        *string
-	email            *string
-	tags             *[]string
-	appendtags       []string
-	created_at       *time.Time
-	clearedFields    map[string]struct{}
-	led_clubs        map[int]struct{}
-	removedled_clubs map[int]struct{}
-	clearedled_clubs bool
-	answers          map[int]struct{}
-	removedanswers   map[int]struct{}
-	clearedanswers   bool
-	done             bool
-	oldValue         func(context.Context) (*User, error)
-	predicates       []predicate.User
+	op                     Op
+	typ                    string
+	id                     *int
+	google_id              *string
+	email                  *string
+	tags                   *[]string
+	appendtags             []string
+	genders                *[]string
+	appendgenders          []string
+	ethnicities            *[]string
+	appendethnicities      []string
+	religions              *[]string
+	appendreligions        []string
+	dedicated_majors       *[]string
+	appenddedicated_majors []string
+	other                  *[]string
+	appendother            []string
+	created_at             *time.Time
+	clearedFields          map[string]struct{}
+	led_clubs              map[int]struct{}
+	removedled_clubs       map[int]struct{}
+	clearedled_clubs       bool
+	answers                map[int]struct{}
+	removedanswers         map[int]struct{}
+	clearedanswers         bool
+	done                   bool
+	oldValue               func(context.Context) (*User, error)
+	predicates             []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -2205,6 +2829,261 @@ func (m *UserMutation) ResetTags() {
 	m.appendtags = nil
 }
 
+// SetGenders sets the "genders" field.
+func (m *UserMutation) SetGenders(s []string) {
+	m.genders = &s
+	m.appendgenders = nil
+}
+
+// Genders returns the value of the "genders" field in the mutation.
+func (m *UserMutation) Genders() (r []string, exists bool) {
+	v := m.genders
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGenders returns the old "genders" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGenders(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGenders is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGenders requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGenders: %w", err)
+	}
+	return oldValue.Genders, nil
+}
+
+// AppendGenders adds s to the "genders" field.
+func (m *UserMutation) AppendGenders(s []string) {
+	m.appendgenders = append(m.appendgenders, s...)
+}
+
+// AppendedGenders returns the list of values that were appended to the "genders" field in this mutation.
+func (m *UserMutation) AppendedGenders() ([]string, bool) {
+	if len(m.appendgenders) == 0 {
+		return nil, false
+	}
+	return m.appendgenders, true
+}
+
+// ResetGenders resets all changes to the "genders" field.
+func (m *UserMutation) ResetGenders() {
+	m.genders = nil
+	m.appendgenders = nil
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (m *UserMutation) SetEthnicities(s []string) {
+	m.ethnicities = &s
+	m.appendethnicities = nil
+}
+
+// Ethnicities returns the value of the "ethnicities" field in the mutation.
+func (m *UserMutation) Ethnicities() (r []string, exists bool) {
+	v := m.ethnicities
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEthnicities returns the old "ethnicities" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldEthnicities(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEthnicities is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEthnicities requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEthnicities: %w", err)
+	}
+	return oldValue.Ethnicities, nil
+}
+
+// AppendEthnicities adds s to the "ethnicities" field.
+func (m *UserMutation) AppendEthnicities(s []string) {
+	m.appendethnicities = append(m.appendethnicities, s...)
+}
+
+// AppendedEthnicities returns the list of values that were appended to the "ethnicities" field in this mutation.
+func (m *UserMutation) AppendedEthnicities() ([]string, bool) {
+	if len(m.appendethnicities) == 0 {
+		return nil, false
+	}
+	return m.appendethnicities, true
+}
+
+// ResetEthnicities resets all changes to the "ethnicities" field.
+func (m *UserMutation) ResetEthnicities() {
+	m.ethnicities = nil
+	m.appendethnicities = nil
+}
+
+// SetReligions sets the "religions" field.
+func (m *UserMutation) SetReligions(s []string) {
+	m.religions = &s
+	m.appendreligions = nil
+}
+
+// Religions returns the value of the "religions" field in the mutation.
+func (m *UserMutation) Religions() (r []string, exists bool) {
+	v := m.religions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReligions returns the old "religions" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldReligions(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReligions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReligions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReligions: %w", err)
+	}
+	return oldValue.Religions, nil
+}
+
+// AppendReligions adds s to the "religions" field.
+func (m *UserMutation) AppendReligions(s []string) {
+	m.appendreligions = append(m.appendreligions, s...)
+}
+
+// AppendedReligions returns the list of values that were appended to the "religions" field in this mutation.
+func (m *UserMutation) AppendedReligions() ([]string, bool) {
+	if len(m.appendreligions) == 0 {
+		return nil, false
+	}
+	return m.appendreligions, true
+}
+
+// ResetReligions resets all changes to the "religions" field.
+func (m *UserMutation) ResetReligions() {
+	m.religions = nil
+	m.appendreligions = nil
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (m *UserMutation) SetDedicatedMajors(s []string) {
+	m.dedicated_majors = &s
+	m.appenddedicated_majors = nil
+}
+
+// DedicatedMajors returns the value of the "dedicated_majors" field in the mutation.
+func (m *UserMutation) DedicatedMajors() (r []string, exists bool) {
+	v := m.dedicated_majors
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDedicatedMajors returns the old "dedicated_majors" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldDedicatedMajors(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDedicatedMajors is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDedicatedMajors requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDedicatedMajors: %w", err)
+	}
+	return oldValue.DedicatedMajors, nil
+}
+
+// AppendDedicatedMajors adds s to the "dedicated_majors" field.
+func (m *UserMutation) AppendDedicatedMajors(s []string) {
+	m.appenddedicated_majors = append(m.appenddedicated_majors, s...)
+}
+
+// AppendedDedicatedMajors returns the list of values that were appended to the "dedicated_majors" field in this mutation.
+func (m *UserMutation) AppendedDedicatedMajors() ([]string, bool) {
+	if len(m.appenddedicated_majors) == 0 {
+		return nil, false
+	}
+	return m.appenddedicated_majors, true
+}
+
+// ResetDedicatedMajors resets all changes to the "dedicated_majors" field.
+func (m *UserMutation) ResetDedicatedMajors() {
+	m.dedicated_majors = nil
+	m.appenddedicated_majors = nil
+}
+
+// SetOther sets the "other" field.
+func (m *UserMutation) SetOther(s []string) {
+	m.other = &s
+	m.appendother = nil
+}
+
+// Other returns the value of the "other" field in the mutation.
+func (m *UserMutation) Other() (r []string, exists bool) {
+	v := m.other
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOther returns the old "other" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldOther(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOther is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOther requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOther: %w", err)
+	}
+	return oldValue.Other, nil
+}
+
+// AppendOther adds s to the "other" field.
+func (m *UserMutation) AppendOther(s []string) {
+	m.appendother = append(m.appendother, s...)
+}
+
+// AppendedOther returns the list of values that were appended to the "other" field in this mutation.
+func (m *UserMutation) AppendedOther() ([]string, bool) {
+	if len(m.appendother) == 0 {
+		return nil, false
+	}
+	return m.appendother, true
+}
+
+// ResetOther resets all changes to the "other" field.
+func (m *UserMutation) ResetOther() {
+	m.other = nil
+	m.appendother = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *UserMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -2383,7 +3262,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 9)
 	if m.google_id != nil {
 		fields = append(fields, user.FieldGoogleID)
 	}
@@ -2392,6 +3271,21 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.tags != nil {
 		fields = append(fields, user.FieldTags)
+	}
+	if m.genders != nil {
+		fields = append(fields, user.FieldGenders)
+	}
+	if m.ethnicities != nil {
+		fields = append(fields, user.FieldEthnicities)
+	}
+	if m.religions != nil {
+		fields = append(fields, user.FieldReligions)
+	}
+	if m.dedicated_majors != nil {
+		fields = append(fields, user.FieldDedicatedMajors)
+	}
+	if m.other != nil {
+		fields = append(fields, user.FieldOther)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -2410,6 +3304,16 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case user.FieldTags:
 		return m.Tags()
+	case user.FieldGenders:
+		return m.Genders()
+	case user.FieldEthnicities:
+		return m.Ethnicities()
+	case user.FieldReligions:
+		return m.Religions()
+	case user.FieldDedicatedMajors:
+		return m.DedicatedMajors()
+	case user.FieldOther:
+		return m.Other()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -2427,6 +3331,16 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldEmail(ctx)
 	case user.FieldTags:
 		return m.OldTags(ctx)
+	case user.FieldGenders:
+		return m.OldGenders(ctx)
+	case user.FieldEthnicities:
+		return m.OldEthnicities(ctx)
+	case user.FieldReligions:
+		return m.OldReligions(ctx)
+	case user.FieldDedicatedMajors:
+		return m.OldDedicatedMajors(ctx)
+	case user.FieldOther:
+		return m.OldOther(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -2458,6 +3372,41 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case user.FieldGenders:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGenders(v)
+		return nil
+	case user.FieldEthnicities:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEthnicities(v)
+		return nil
+	case user.FieldReligions:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReligions(v)
+		return nil
+	case user.FieldDedicatedMajors:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDedicatedMajors(v)
+		return nil
+	case user.FieldOther:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOther(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2523,6 +3472,21 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldTags:
 		m.ResetTags()
+		return nil
+	case user.FieldGenders:
+		m.ResetGenders()
+		return nil
+	case user.FieldEthnicities:
+		m.ResetEthnicities()
+		return nil
+	case user.FieldReligions:
+		m.ResetReligions()
+		return nil
+	case user.FieldDedicatedMajors:
+		m.ResetDedicatedMajors()
+		return nil
+	case user.FieldOther:
+		m.ResetOther()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()

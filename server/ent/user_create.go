@@ -40,6 +40,36 @@ func (_c *UserCreate) SetTags(v []string) *UserCreate {
 	return _c
 }
 
+// SetGenders sets the "genders" field.
+func (_c *UserCreate) SetGenders(v []string) *UserCreate {
+	_c.mutation.SetGenders(v)
+	return _c
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_c *UserCreate) SetEthnicities(v []string) *UserCreate {
+	_c.mutation.SetEthnicities(v)
+	return _c
+}
+
+// SetReligions sets the "religions" field.
+func (_c *UserCreate) SetReligions(v []string) *UserCreate {
+	_c.mutation.SetReligions(v)
+	return _c
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_c *UserCreate) SetDedicatedMajors(v []string) *UserCreate {
+	_c.mutation.SetDedicatedMajors(v)
+	return _c
+}
+
+// SetOther sets the "other" field.
+func (_c *UserCreate) SetOther(v []string) *UserCreate {
+	_c.mutation.SetOther(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UserCreate) SetCreatedAt(v time.Time) *UserCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -123,6 +153,26 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultTags
 		_c.mutation.SetTags(v)
 	}
+	if _, ok := _c.mutation.Genders(); !ok {
+		v := user.DefaultGenders
+		_c.mutation.SetGenders(v)
+	}
+	if _, ok := _c.mutation.Ethnicities(); !ok {
+		v := user.DefaultEthnicities
+		_c.mutation.SetEthnicities(v)
+	}
+	if _, ok := _c.mutation.Religions(); !ok {
+		v := user.DefaultReligions
+		_c.mutation.SetReligions(v)
+	}
+	if _, ok := _c.mutation.DedicatedMajors(); !ok {
+		v := user.DefaultDedicatedMajors
+		_c.mutation.SetDedicatedMajors(v)
+	}
+	if _, ok := _c.mutation.Other(); !ok {
+		v := user.DefaultOther
+		_c.mutation.SetOther(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := user.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -139,6 +189,21 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.Tags(); !ok {
 		return &ValidationError{Name: "tags", err: errors.New(`ent: missing required field "User.tags"`)}
+	}
+	if _, ok := _c.mutation.Genders(); !ok {
+		return &ValidationError{Name: "genders", err: errors.New(`ent: missing required field "User.genders"`)}
+	}
+	if _, ok := _c.mutation.Ethnicities(); !ok {
+		return &ValidationError{Name: "ethnicities", err: errors.New(`ent: missing required field "User.ethnicities"`)}
+	}
+	if _, ok := _c.mutation.Religions(); !ok {
+		return &ValidationError{Name: "religions", err: errors.New(`ent: missing required field "User.religions"`)}
+	}
+	if _, ok := _c.mutation.DedicatedMajors(); !ok {
+		return &ValidationError{Name: "dedicated_majors", err: errors.New(`ent: missing required field "User.dedicated_majors"`)}
+	}
+	if _, ok := _c.mutation.Other(); !ok {
+		return &ValidationError{Name: "other", err: errors.New(`ent: missing required field "User.other"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
@@ -180,6 +245,26 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Tags(); ok {
 		_spec.SetField(user.FieldTags, field.TypeJSON, value)
 		_node.Tags = value
+	}
+	if value, ok := _c.mutation.Genders(); ok {
+		_spec.SetField(user.FieldGenders, field.TypeJSON, value)
+		_node.Genders = value
+	}
+	if value, ok := _c.mutation.Ethnicities(); ok {
+		_spec.SetField(user.FieldEthnicities, field.TypeJSON, value)
+		_node.Ethnicities = value
+	}
+	if value, ok := _c.mutation.Religions(); ok {
+		_spec.SetField(user.FieldReligions, field.TypeJSON, value)
+		_node.Religions = value
+	}
+	if value, ok := _c.mutation.DedicatedMajors(); ok {
+		_spec.SetField(user.FieldDedicatedMajors, field.TypeJSON, value)
+		_node.DedicatedMajors = value
+	}
+	if value, ok := _c.mutation.Other(); ok {
+		_spec.SetField(user.FieldOther, field.TypeJSON, value)
+		_node.Other = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

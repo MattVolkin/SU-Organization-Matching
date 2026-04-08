@@ -8,6 +8,7 @@
   import ResultsPage from '../../../Components/results.svelte';
   import Multi_Choice from '../../../Components/Mult_choice_demo.svelte';
     import MultChoiceDemo from '../../../Components/Mult_choice_demo.svelte';
+    import Results from '../../../Components/results.svelte';
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
    async function promptLoginIfNeeded() {
@@ -52,10 +53,12 @@
   });
 </script>
  <!-- <AdminHome />  -->
-  <LoginPopup/>
- <ResultsPage/>
+  <!-- <LoginPopup/> -->
+ <!-- <SettingsPage/> -->
+  <!-- <ResultsPage/> -->
+   <!-- <MultChoiceDemo/> -->
+    <SwipingApp />
  <div class="parent">
 
-  <SwipingApp/>
-
+  
 </div>

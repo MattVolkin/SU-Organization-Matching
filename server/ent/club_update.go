@@ -13,6 +13,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -157,6 +158,116 @@ func (_u *ClubUpdate) SetNillableIncludeOfficerEmails(v *bool) *ClubUpdate {
 	return _u
 }
 
+// SetPersonality sets the "personality" field.
+func (_u *ClubUpdate) SetPersonality(v []string) *ClubUpdate {
+	_u.mutation.SetPersonality(v)
+	return _u
+}
+
+// AppendPersonality appends value to the "personality" field.
+func (_u *ClubUpdate) AppendPersonality(v []string) *ClubUpdate {
+	_u.mutation.AppendPersonality(v)
+	return _u
+}
+
+// SetActivities sets the "activities" field.
+func (_u *ClubUpdate) SetActivities(v []string) *ClubUpdate {
+	_u.mutation.SetActivities(v)
+	return _u
+}
+
+// AppendActivities appends value to the "activities" field.
+func (_u *ClubUpdate) AppendActivities(v []string) *ClubUpdate {
+	_u.mutation.AppendActivities(v)
+	return _u
+}
+
+// SetGenders sets the "genders" field.
+func (_u *ClubUpdate) SetGenders(v []string) *ClubUpdate {
+	_u.mutation.SetGenders(v)
+	return _u
+}
+
+// AppendGenders appends value to the "genders" field.
+func (_u *ClubUpdate) AppendGenders(v []string) *ClubUpdate {
+	_u.mutation.AppendGenders(v)
+	return _u
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_u *ClubUpdate) SetEthnicities(v []string) *ClubUpdate {
+	_u.mutation.SetEthnicities(v)
+	return _u
+}
+
+// AppendEthnicities appends value to the "ethnicities" field.
+func (_u *ClubUpdate) AppendEthnicities(v []string) *ClubUpdate {
+	_u.mutation.AppendEthnicities(v)
+	return _u
+}
+
+// SetReligions sets the "religions" field.
+func (_u *ClubUpdate) SetReligions(v []string) *ClubUpdate {
+	_u.mutation.SetReligions(v)
+	return _u
+}
+
+// AppendReligions appends value to the "religions" field.
+func (_u *ClubUpdate) AppendReligions(v []string) *ClubUpdate {
+	_u.mutation.AppendReligions(v)
+	return _u
+}
+
+// SetStrictGenders sets the "strict_genders" field.
+func (_u *ClubUpdate) SetStrictGenders(v bool) *ClubUpdate {
+	_u.mutation.SetStrictGenders(v)
+	return _u
+}
+
+// SetNillableStrictGenders sets the "strict_genders" field if the given value is not nil.
+func (_u *ClubUpdate) SetNillableStrictGenders(v *bool) *ClubUpdate {
+	if v != nil {
+		_u.SetStrictGenders(*v)
+	}
+	return _u
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_u *ClubUpdate) SetDedicatedMajors(v []string) *ClubUpdate {
+	_u.mutation.SetDedicatedMajors(v)
+	return _u
+}
+
+// AppendDedicatedMajors appends value to the "dedicated_majors" field.
+func (_u *ClubUpdate) AppendDedicatedMajors(v []string) *ClubUpdate {
+	_u.mutation.AppendDedicatedMajors(v)
+	return _u
+}
+
+// SetAssociatedMajors sets the "associated_majors" field.
+func (_u *ClubUpdate) SetAssociatedMajors(v []string) *ClubUpdate {
+	_u.mutation.SetAssociatedMajors(v)
+	return _u
+}
+
+// AppendAssociatedMajors appends value to the "associated_majors" field.
+func (_u *ClubUpdate) AppendAssociatedMajors(v []string) *ClubUpdate {
+	_u.mutation.AppendAssociatedMajors(v)
+	return _u
+}
+
+// SetOther sets the "other" field.
+func (_u *ClubUpdate) SetOther(v []string) *ClubUpdate {
+	_u.mutation.SetOther(v)
+	return _u
+}
+
+// AppendOther appends value to the "other" field.
+func (_u *ClubUpdate) AppendOther(v []string) *ClubUpdate {
+	_u.mutation.AppendOther(v)
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ClubUpdate) SetUpdatedAt(v time.Time) *ClubUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -284,6 +395,73 @@ func (_u *ClubUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.IncludeOfficerEmails(); ok {
 		_spec.SetField(club.FieldIncludeOfficerEmails, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Personality(); ok {
+		_spec.SetField(club.FieldPersonality, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedPersonality(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldPersonality, value)
+		})
+	}
+	if value, ok := _u.mutation.Activities(); ok {
+		_spec.SetField(club.FieldActivities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedActivities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldActivities, value)
+		})
+	}
+	if value, ok := _u.mutation.Genders(); ok {
+		_spec.SetField(club.FieldGenders, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGenders(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldGenders, value)
+		})
+	}
+	if value, ok := _u.mutation.Ethnicities(); ok {
+		_spec.SetField(club.FieldEthnicities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEthnicities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldEthnicities, value)
+		})
+	}
+	if value, ok := _u.mutation.Religions(); ok {
+		_spec.SetField(club.FieldReligions, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedReligions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldReligions, value)
+		})
+	}
+	if value, ok := _u.mutation.StrictGenders(); ok {
+		_spec.SetField(club.FieldStrictGenders, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DedicatedMajors(); ok {
+		_spec.SetField(club.FieldDedicatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDedicatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldDedicatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.AssociatedMajors(); ok {
+		_spec.SetField(club.FieldAssociatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAssociatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldAssociatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.Other(); ok {
+		_spec.SetField(club.FieldOther, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedOther(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldOther, value)
+		})
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(club.FieldUpdatedAt, field.TypeTime, value)
@@ -481,6 +659,116 @@ func (_u *ClubUpdateOne) SetNillableIncludeOfficerEmails(v *bool) *ClubUpdateOne
 	return _u
 }
 
+// SetPersonality sets the "personality" field.
+func (_u *ClubUpdateOne) SetPersonality(v []string) *ClubUpdateOne {
+	_u.mutation.SetPersonality(v)
+	return _u
+}
+
+// AppendPersonality appends value to the "personality" field.
+func (_u *ClubUpdateOne) AppendPersonality(v []string) *ClubUpdateOne {
+	_u.mutation.AppendPersonality(v)
+	return _u
+}
+
+// SetActivities sets the "activities" field.
+func (_u *ClubUpdateOne) SetActivities(v []string) *ClubUpdateOne {
+	_u.mutation.SetActivities(v)
+	return _u
+}
+
+// AppendActivities appends value to the "activities" field.
+func (_u *ClubUpdateOne) AppendActivities(v []string) *ClubUpdateOne {
+	_u.mutation.AppendActivities(v)
+	return _u
+}
+
+// SetGenders sets the "genders" field.
+func (_u *ClubUpdateOne) SetGenders(v []string) *ClubUpdateOne {
+	_u.mutation.SetGenders(v)
+	return _u
+}
+
+// AppendGenders appends value to the "genders" field.
+func (_u *ClubUpdateOne) AppendGenders(v []string) *ClubUpdateOne {
+	_u.mutation.AppendGenders(v)
+	return _u
+}
+
+// SetEthnicities sets the "ethnicities" field.
+func (_u *ClubUpdateOne) SetEthnicities(v []string) *ClubUpdateOne {
+	_u.mutation.SetEthnicities(v)
+	return _u
+}
+
+// AppendEthnicities appends value to the "ethnicities" field.
+func (_u *ClubUpdateOne) AppendEthnicities(v []string) *ClubUpdateOne {
+	_u.mutation.AppendEthnicities(v)
+	return _u
+}
+
+// SetReligions sets the "religions" field.
+func (_u *ClubUpdateOne) SetReligions(v []string) *ClubUpdateOne {
+	_u.mutation.SetReligions(v)
+	return _u
+}
+
+// AppendReligions appends value to the "religions" field.
+func (_u *ClubUpdateOne) AppendReligions(v []string) *ClubUpdateOne {
+	_u.mutation.AppendReligions(v)
+	return _u
+}
+
+// SetStrictGenders sets the "strict_genders" field.
+func (_u *ClubUpdateOne) SetStrictGenders(v bool) *ClubUpdateOne {
+	_u.mutation.SetStrictGenders(v)
+	return _u
+}
+
+// SetNillableStrictGenders sets the "strict_genders" field if the given value is not nil.
+func (_u *ClubUpdateOne) SetNillableStrictGenders(v *bool) *ClubUpdateOne {
+	if v != nil {
+		_u.SetStrictGenders(*v)
+	}
+	return _u
+}
+
+// SetDedicatedMajors sets the "dedicated_majors" field.
+func (_u *ClubUpdateOne) SetDedicatedMajors(v []string) *ClubUpdateOne {
+	_u.mutation.SetDedicatedMajors(v)
+	return _u
+}
+
+// AppendDedicatedMajors appends value to the "dedicated_majors" field.
+func (_u *ClubUpdateOne) AppendDedicatedMajors(v []string) *ClubUpdateOne {
+	_u.mutation.AppendDedicatedMajors(v)
+	return _u
+}
+
+// SetAssociatedMajors sets the "associated_majors" field.
+func (_u *ClubUpdateOne) SetAssociatedMajors(v []string) *ClubUpdateOne {
+	_u.mutation.SetAssociatedMajors(v)
+	return _u
+}
+
+// AppendAssociatedMajors appends value to the "associated_majors" field.
+func (_u *ClubUpdateOne) AppendAssociatedMajors(v []string) *ClubUpdateOne {
+	_u.mutation.AppendAssociatedMajors(v)
+	return _u
+}
+
+// SetOther sets the "other" field.
+func (_u *ClubUpdateOne) SetOther(v []string) *ClubUpdateOne {
+	_u.mutation.SetOther(v)
+	return _u
+}
+
+// AppendOther appends value to the "other" field.
+func (_u *ClubUpdateOne) AppendOther(v []string) *ClubUpdateOne {
+	_u.mutation.AppendOther(v)
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ClubUpdateOne) SetUpdatedAt(v time.Time) *ClubUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -638,6 +926,73 @@ func (_u *ClubUpdateOne) sqlSave(ctx context.Context) (_node *Club, err error) {
 	}
 	if value, ok := _u.mutation.IncludeOfficerEmails(); ok {
 		_spec.SetField(club.FieldIncludeOfficerEmails, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.Personality(); ok {
+		_spec.SetField(club.FieldPersonality, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedPersonality(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldPersonality, value)
+		})
+	}
+	if value, ok := _u.mutation.Activities(); ok {
+		_spec.SetField(club.FieldActivities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedActivities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldActivities, value)
+		})
+	}
+	if value, ok := _u.mutation.Genders(); ok {
+		_spec.SetField(club.FieldGenders, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedGenders(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldGenders, value)
+		})
+	}
+	if value, ok := _u.mutation.Ethnicities(); ok {
+		_spec.SetField(club.FieldEthnicities, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEthnicities(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldEthnicities, value)
+		})
+	}
+	if value, ok := _u.mutation.Religions(); ok {
+		_spec.SetField(club.FieldReligions, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedReligions(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldReligions, value)
+		})
+	}
+	if value, ok := _u.mutation.StrictGenders(); ok {
+		_spec.SetField(club.FieldStrictGenders, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DedicatedMajors(); ok {
+		_spec.SetField(club.FieldDedicatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedDedicatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldDedicatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.AssociatedMajors(); ok {
+		_spec.SetField(club.FieldAssociatedMajors, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedAssociatedMajors(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldAssociatedMajors, value)
+		})
+	}
+	if value, ok := _u.mutation.Other(); ok {
+		_spec.SetField(club.FieldOther, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedOther(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, club.FieldOther, value)
+		})
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(club.FieldUpdatedAt, field.TypeTime, value)

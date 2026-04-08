@@ -28,6 +28,24 @@ const (
 	FieldContactInfo = "contact_info"
 	// FieldIncludeOfficerEmails holds the string denoting the include_officer_emails field in the database.
 	FieldIncludeOfficerEmails = "include_officer_emails"
+	// FieldPersonality holds the string denoting the personality field in the database.
+	FieldPersonality = "personality"
+	// FieldActivities holds the string denoting the activities field in the database.
+	FieldActivities = "activities"
+	// FieldGenders holds the string denoting the genders field in the database.
+	FieldGenders = "genders"
+	// FieldEthnicities holds the string denoting the ethnicities field in the database.
+	FieldEthnicities = "ethnicities"
+	// FieldReligions holds the string denoting the religions field in the database.
+	FieldReligions = "religions"
+	// FieldStrictGenders holds the string denoting the strict_genders field in the database.
+	FieldStrictGenders = "strict_genders"
+	// FieldDedicatedMajors holds the string denoting the dedicated_majors field in the database.
+	FieldDedicatedMajors = "dedicated_majors"
+	// FieldAssociatedMajors holds the string denoting the associated_majors field in the database.
+	FieldAssociatedMajors = "associated_majors"
+	// FieldOther holds the string denoting the other field in the database.
+	FieldOther = "other"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// EdgeLeaders holds the string denoting the leaders edge name in mutations.
@@ -51,6 +69,15 @@ var Columns = []string{
 	FieldExternalLink,
 	FieldContactInfo,
 	FieldIncludeOfficerEmails,
+	FieldPersonality,
+	FieldActivities,
+	FieldGenders,
+	FieldEthnicities,
+	FieldReligions,
+	FieldStrictGenders,
+	FieldDedicatedMajors,
+	FieldAssociatedMajors,
+	FieldOther,
 	FieldUpdatedAt,
 }
 
@@ -73,6 +100,24 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultIncludeOfficerEmails holds the default value on creation for the "include_officer_emails" field.
 	DefaultIncludeOfficerEmails bool
+	// DefaultPersonality holds the default value on creation for the "personality" field.
+	DefaultPersonality []string
+	// DefaultActivities holds the default value on creation for the "activities" field.
+	DefaultActivities []string
+	// DefaultGenders holds the default value on creation for the "genders" field.
+	DefaultGenders []string
+	// DefaultEthnicities holds the default value on creation for the "ethnicities" field.
+	DefaultEthnicities []string
+	// DefaultReligions holds the default value on creation for the "religions" field.
+	DefaultReligions []string
+	// DefaultStrictGenders holds the default value on creation for the "strict_genders" field.
+	DefaultStrictGenders bool
+	// DefaultDedicatedMajors holds the default value on creation for the "dedicated_majors" field.
+	DefaultDedicatedMajors []string
+	// DefaultAssociatedMajors holds the default value on creation for the "associated_majors" field.
+	DefaultAssociatedMajors []string
+	// DefaultOther holds the default value on creation for the "other" field.
+	DefaultOther []string
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
@@ -120,6 +165,11 @@ func ByContactInfo(opts ...sql.OrderTermOption) OrderOption {
 // ByIncludeOfficerEmails orders the results by the include_officer_emails field.
 func ByIncludeOfficerEmails(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIncludeOfficerEmails, opts...).ToFunc()
+}
+
+// ByStrictGenders orders the results by the strict_genders field.
+func ByStrictGenders(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStrictGenders, opts...).ToFunc()
 }
 
 // ByUpdatedAt orders the results by the updated_at field.

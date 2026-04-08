@@ -21,6 +21,15 @@ func (Club) Fields() []ent.Field {
 		field.String("external_link").Optional(),
 		field.Text("contact_info").Optional(),
 		field.Bool("include_officer_emails").Default(false),
+		field.JSON("personality", []string{}).Default([]string{}),
+		field.JSON("activities", []string{}).Default([]string{}),
+		field.JSON("genders", []string{}).Default([]string{}),
+		field.JSON("ethnicities", []string{}).Default([]string{}),
+		field.JSON("religions", []string{}).Default([]string{}),
+		field.Bool("strict_genders").Default(false),
+		field.JSON("dedicated_majors", []string{}).Default([]string{}),
+		field.JSON("associated_majors", []string{}).Default([]string{}),
+		field.JSON("other", []string{}).Default([]string{}),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}
 }

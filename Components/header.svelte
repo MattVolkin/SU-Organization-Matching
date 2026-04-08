@@ -20,7 +20,7 @@
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
  */
-  let { userType = "admin", previewAs = '' } = $props();
+  let { userType = "user", previewAs = '' } = $props();
   const getNavUserType = () => (previewAs || userType);
   let isMenuOpen = $state(false);
   let userEmail = $state('');

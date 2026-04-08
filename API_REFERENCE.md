@@ -91,6 +91,7 @@ Used by:
 - `/api/results`
 - `/api/officer/orgs`
 - `/api/admin/orgs`
+- `/api/admin/create` request body and response body
 - `/api/officer/update` request body
 
 ```json
@@ -702,6 +703,96 @@ Possible errors:
 ```json
 {
   "error": "Failed to fetch orgs"
+}
+```
+
+### `POST /api/admin/create`
+
+Creates a new organization.
+
+Authentication:
+
+- Required.
+- User must have role `admin`.
+
+Headers:
+
+- `Content-Type: application/json`
+
+Request body:
+
+```json
+{
+  "clubName": "New Club",
+  "description": "Club description",
+  "meetingTime": "Fridays at 5:00 PM",
+  "imagePath": "/images/new-club.png",
+  "externalLink": "https://example.com/new-club",
+  "contactInfo": "new-club@example.edu",
+  "includeOfficerEmails": false,
+  "officers": []
+}
+```
+
+Important behavior:
+
+- `clubName` is required and must be non-empty.
+- `id`, `updatedAt`, and `officers` from the request body are ignored by the server.
+
+Success response:
+
+- Status `201 Created`
+- Response body uses the Organization object shape and includes server-generated `id` and `updatedAt`.
+
+Example success body:
+
+```json
+{
+  "id": 34,
+  "clubName": "New Club",
+  "description": "Club description",
+  "meetingTime": "Fridays at 5:00 PM",
+  "imagePath": "/images/new-club.png",
+  "externalLink": "https://example.com/new-club",
+  "contactInfo": "new-club@example.edu",
+  "includeOfficerEmails": false,
+  "updatedAt": "2026-04-06T18:30:00Z",
+  "officers": []
+}
+```
+
+Possible errors:
+
+- `401 Unauthorized` JSON: missing/invalid/expired session
+- `403 Forbidden` JSON:
+
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+- `405 Method Not Allowed` JSON:
+
+```json
+{
+  "error": "Only POST method is allowed"
+}
+```
+
+- `400 Bad Request` JSON:
+
+```json
+{
+  "error": "Invalid JSON"
+}
+```
+
+- `400 Bad Request` JSON when `clubName` is missing/blank:
+
+```json
+{
+  "error": "clubName is required"
 }
 ```
 

@@ -24,6 +24,16 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// Tags holds the value of the "tags" field.
 	Tags []string `json:"tags,omitempty"`
+	// Genders holds the value of the "genders" field.
+	Genders []string `json:"genders,omitempty"`
+	// Ethnicities holds the value of the "ethnicities" field.
+	Ethnicities []string `json:"ethnicities,omitempty"`
+	// Religions holds the value of the "religions" field.
+	Religions []string `json:"religions,omitempty"`
+	// DedicatedMajors holds the value of the "dedicated_majors" field.
+	DedicatedMajors []string `json:"dedicated_majors,omitempty"`
+	// Other holds the value of the "other" field.
+	Other []string `json:"other,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -66,7 +76,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldTags:
+		case user.FieldTags, user.FieldGenders, user.FieldEthnicities, user.FieldReligions, user.FieldDedicatedMajors, user.FieldOther:
 			values[i] = new([]byte)
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
@@ -113,6 +123,46 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &_m.Tags); err != nil {
 					return fmt.Errorf("unmarshal field tags: %w", err)
+				}
+			}
+		case user.FieldGenders:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field genders", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Genders); err != nil {
+					return fmt.Errorf("unmarshal field genders: %w", err)
+				}
+			}
+		case user.FieldEthnicities:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field ethnicities", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Ethnicities); err != nil {
+					return fmt.Errorf("unmarshal field ethnicities: %w", err)
+				}
+			}
+		case user.FieldReligions:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field religions", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Religions); err != nil {
+					return fmt.Errorf("unmarshal field religions: %w", err)
+				}
+			}
+		case user.FieldDedicatedMajors:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field dedicated_majors", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DedicatedMajors); err != nil {
+					return fmt.Errorf("unmarshal field dedicated_majors: %w", err)
+				}
+			}
+		case user.FieldOther:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field other", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Other); err != nil {
+					return fmt.Errorf("unmarshal field other: %w", err)
 				}
 			}
 		case user.FieldCreatedAt:
@@ -175,6 +225,21 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("tags=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Tags))
+	builder.WriteString(", ")
+	builder.WriteString("genders=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Genders))
+	builder.WriteString(", ")
+	builder.WriteString("ethnicities=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Ethnicities))
+	builder.WriteString(", ")
+	builder.WriteString("religions=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Religions))
+	builder.WriteString(", ")
+	builder.WriteString("dedicated_majors=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DedicatedMajors))
+	builder.WriteString(", ")
+	builder.WriteString("other=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Other))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

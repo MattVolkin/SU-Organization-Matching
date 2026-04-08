@@ -20,6 +20,16 @@ const (
 	FieldEmail = "email"
 	// FieldTags holds the string denoting the tags field in the database.
 	FieldTags = "tags"
+	// FieldGenders holds the string denoting the genders field in the database.
+	FieldGenders = "genders"
+	// FieldEthnicities holds the string denoting the ethnicities field in the database.
+	FieldEthnicities = "ethnicities"
+	// FieldReligions holds the string denoting the religions field in the database.
+	FieldReligions = "religions"
+	// FieldDedicatedMajors holds the string denoting the dedicated_majors field in the database.
+	FieldDedicatedMajors = "dedicated_majors"
+	// FieldOther holds the string denoting the other field in the database.
+	FieldOther = "other"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeLedClubs holds the string denoting the led_clubs edge name in mutations.
@@ -48,6 +58,11 @@ var Columns = []string{
 	FieldGoogleID,
 	FieldEmail,
 	FieldTags,
+	FieldGenders,
+	FieldEthnicities,
+	FieldReligions,
+	FieldDedicatedMajors,
+	FieldOther,
 	FieldCreatedAt,
 }
 
@@ -70,6 +85,16 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultTags holds the default value on creation for the "tags" field.
 	DefaultTags []string
+	// DefaultGenders holds the default value on creation for the "genders" field.
+	DefaultGenders []string
+	// DefaultEthnicities holds the default value on creation for the "ethnicities" field.
+	DefaultEthnicities []string
+	// DefaultReligions holds the default value on creation for the "religions" field.
+	DefaultReligions []string
+	// DefaultDedicatedMajors holds the default value on creation for the "dedicated_majors" field.
+	DefaultDedicatedMajors []string
+	// DefaultOther holds the default value on creation for the "other" field.
+	DefaultOther []string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )

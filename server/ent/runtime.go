@@ -27,8 +27,44 @@ func init() {
 	clubDescIncludeOfficerEmails := clubFields[6].Descriptor()
 	// club.DefaultIncludeOfficerEmails holds the default value on creation for the include_officer_emails field.
 	club.DefaultIncludeOfficerEmails = clubDescIncludeOfficerEmails.Default.(bool)
+	// clubDescPersonality is the schema descriptor for personality field.
+	clubDescPersonality := clubFields[7].Descriptor()
+	// club.DefaultPersonality holds the default value on creation for the personality field.
+	club.DefaultPersonality = clubDescPersonality.Default.([]string)
+	// clubDescActivities is the schema descriptor for activities field.
+	clubDescActivities := clubFields[8].Descriptor()
+	// club.DefaultActivities holds the default value on creation for the activities field.
+	club.DefaultActivities = clubDescActivities.Default.([]string)
+	// clubDescGenders is the schema descriptor for genders field.
+	clubDescGenders := clubFields[9].Descriptor()
+	// club.DefaultGenders holds the default value on creation for the genders field.
+	club.DefaultGenders = clubDescGenders.Default.([]string)
+	// clubDescEthnicities is the schema descriptor for ethnicities field.
+	clubDescEthnicities := clubFields[10].Descriptor()
+	// club.DefaultEthnicities holds the default value on creation for the ethnicities field.
+	club.DefaultEthnicities = clubDescEthnicities.Default.([]string)
+	// clubDescReligions is the schema descriptor for religions field.
+	clubDescReligions := clubFields[11].Descriptor()
+	// club.DefaultReligions holds the default value on creation for the religions field.
+	club.DefaultReligions = clubDescReligions.Default.([]string)
+	// clubDescStrictGenders is the schema descriptor for strict_genders field.
+	clubDescStrictGenders := clubFields[12].Descriptor()
+	// club.DefaultStrictGenders holds the default value on creation for the strict_genders field.
+	club.DefaultStrictGenders = clubDescStrictGenders.Default.(bool)
+	// clubDescDedicatedMajors is the schema descriptor for dedicated_majors field.
+	clubDescDedicatedMajors := clubFields[13].Descriptor()
+	// club.DefaultDedicatedMajors holds the default value on creation for the dedicated_majors field.
+	club.DefaultDedicatedMajors = clubDescDedicatedMajors.Default.([]string)
+	// clubDescAssociatedMajors is the schema descriptor for associated_majors field.
+	clubDescAssociatedMajors := clubFields[14].Descriptor()
+	// club.DefaultAssociatedMajors holds the default value on creation for the associated_majors field.
+	club.DefaultAssociatedMajors = clubDescAssociatedMajors.Default.([]string)
+	// clubDescOther is the schema descriptor for other field.
+	clubDescOther := clubFields[15].Descriptor()
+	// club.DefaultOther holds the default value on creation for the other field.
+	club.DefaultOther = clubDescOther.Default.([]string)
 	// clubDescUpdatedAt is the schema descriptor for updated_at field.
-	clubDescUpdatedAt := clubFields[7].Descriptor()
+	clubDescUpdatedAt := clubFields[16].Descriptor()
 	// club.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	club.DefaultUpdatedAt = clubDescUpdatedAt.Default.(func() time.Time)
 	// club.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -45,8 +81,28 @@ func init() {
 	userDescTags := userFields[2].Descriptor()
 	// user.DefaultTags holds the default value on creation for the tags field.
 	user.DefaultTags = userDescTags.Default.([]string)
+	// userDescGenders is the schema descriptor for genders field.
+	userDescGenders := userFields[3].Descriptor()
+	// user.DefaultGenders holds the default value on creation for the genders field.
+	user.DefaultGenders = userDescGenders.Default.([]string)
+	// userDescEthnicities is the schema descriptor for ethnicities field.
+	userDescEthnicities := userFields[4].Descriptor()
+	// user.DefaultEthnicities holds the default value on creation for the ethnicities field.
+	user.DefaultEthnicities = userDescEthnicities.Default.([]string)
+	// userDescReligions is the schema descriptor for religions field.
+	userDescReligions := userFields[5].Descriptor()
+	// user.DefaultReligions holds the default value on creation for the religions field.
+	user.DefaultReligions = userDescReligions.Default.([]string)
+	// userDescDedicatedMajors is the schema descriptor for dedicated_majors field.
+	userDescDedicatedMajors := userFields[6].Descriptor()
+	// user.DefaultDedicatedMajors holds the default value on creation for the dedicated_majors field.
+	user.DefaultDedicatedMajors = userDescDedicatedMajors.Default.([]string)
+	// userDescOther is the schema descriptor for other field.
+	userDescOther := userFields[7].Descriptor()
+	// user.DefaultOther holds the default value on creation for the other field.
+	user.DefaultOther = userDescOther.Default.([]string)
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[3].Descriptor()
+	userDescCreatedAt := userFields[8].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 }

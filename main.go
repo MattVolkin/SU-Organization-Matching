@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	//"./server"
+	"su-organization-matching/server"
 )
 
 // organization defines either an organization or a user with various fields
@@ -23,9 +23,9 @@ type Organization struct {
 
 func main() {
 
-	// // Open the Postgres connection used by Ent queries and mutations.
-	// dbClient := GetDatabaseClient('default')
-	// _, orgs, err := dbClient.Query().FetchAllOrganizationsForSorting()
+	// Open the Postgres connection used by Ent queries and mutations.
+	dbClient := GetDatabaseClient('default')
+	_, orgs, err := dbClient.Query().FetchAllOrganizationsForSorting()
 
 	// hardcoded structs for every organization (for now, will be importing from database, allowing for information to be updated)
 	clubs := [3]Organization{

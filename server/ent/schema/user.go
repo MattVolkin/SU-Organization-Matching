@@ -17,6 +17,11 @@ func (User) Fields() []ent.Field {
 		field.String("google_id").Unique(),
 		field.String("email").Unique(),
 		field.JSON("tags", []string{}).Default([]string{}),
+		field.JSON("genders", []string{}).Default([]string{}),
+		field.JSON("ethnicities", []string{}).Default([]string{}),
+		field.JSON("religions", []string{}).Default([]string{}),
+		field.JSON("dedicated_majors", []string{}).Default([]string{}),
+		field.JSON("other", []string{}).Default([]string{}),
 		field.Time("created_at").Default(time.Now),
 	}
 }
