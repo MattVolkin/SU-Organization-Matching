@@ -32,11 +32,11 @@
 
   const testAdjectives = [
     'Welcoming',
-    'Competitive',
-    'Creative',
-    'Outdoorsy',
-    'Academic',
-    'Community-focused',
+    'Community Service',
+    'Study Group',
+    'Greek Life',
+    'Board Games',
+    'Nerdy',
   ];
 
   function makePreviewImage(label: string, color: string) {
@@ -452,6 +452,7 @@
     margin-bottom: 1rem;
     background: #fafcff;
     box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    color: black;
   }
 
   .club-title {

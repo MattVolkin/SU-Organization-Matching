@@ -178,7 +178,7 @@
         <li>Scavenger hunts</li>
       </ul>
       <h3>Meeting Information </h3>
-      <p> Every Thursday at 6:30 pm in FJS 310 (the CS lounge)</p>
+      <p> Every Thursday at 6:30 pm in FJS 310</p>
           <div class="pager">
         <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
         <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
