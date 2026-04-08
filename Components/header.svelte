@@ -198,9 +198,9 @@
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
     <a href="/" onclick={closeMenu}>Home</a>
-     <a href="/Results" onclick={closeMenu}>Results</a>
-    <a href="/about" onclick={closeMenu}>About This Project</a>
-    <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
+     <a href="/results.html" onclick={closeMenu}>Results</a>
+    <a href="/about.html" onclick={closeMenu}>About This Project</a>
+    <a href="/howto.html" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
     {#if getNavUserType() === 'admin'}
       <a href="/create" onclick={closeMenu}>Create New Club</a>

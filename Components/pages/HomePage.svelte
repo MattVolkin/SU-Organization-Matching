@@ -40,34 +40,55 @@ function goToQuiz() {
 <Header userType={userType} />
 <LoginPopup />
 
-<main class="home-page">
-    <section class="hero-content">
-        <p class="kicker">Southwestern University</p>
-        <h1>Find The Organization That Fits You</h1>
-        <p class="lead">
-            Explore clubs and student organizations based on your interests, activities,
-            and preferences, then get matched with communities where you can thrive.
-        </p>
-    </section>
+<div class="page-shell">
+    <main class="home-page">
+        <section class="hero-content">
+            <p class="kicker">Southwestern University</p>
+            <h1>Find The Organization That Fits You</h1>
+            <p class="lead">
+                Explore clubs and student organizations based on your interests, activities,
+                and preferences, then get matched with communities where you can thrive.
+            </p>
+        </section>
 
-    <section class="info-list" aria-label="How it works">
-        <h2>How It Works</h2>
-        <ul>
-            <li><strong>Take The Quiz:</strong> Answer a short set of questions so we can understand your interests and preferences.</li>
-            <li><strong>Get Matches:</strong> See organizations ranked by compatibility and discover communities that align with you.</li>
-            <li><strong>Connect Faster:</strong> Use your matches to quickly find meeting times, activities, and officers to contact.</li>
-        </ul>
-    </section>
+        <section class="info-list" aria-label="How it works">
+            <h2>How It Works</h2>
+            <ul>
+                <li><strong>Take The Quiz:</strong> Answer a short set of questions so we can understand your interests and preferences.</li>
+                <li><strong>Get Matches:</strong> See organizations ranked by compatibility and discover communities that align with you.</li>
+                <li><strong>Connect Faster:</strong> Use your matches to quickly find meeting times, activities, and officers to contact.</li>
+            </ul>
+        </section>
 
-    <div class="cta-row">
-        <button type="button" onclick={goToQuiz}>Get Started</button>
-        <a href="/Results">View Results</a>
-    </div>
-</main>
+        <div class="cta-row">
+            <button type="button" onclick={goToQuiz}>Get Started</button>
+            <a href="/Results">View Results</a>
+        </div>
+    </main>
 
-<Footer />
+    <Footer />
+</div>
 
 <style>
+    :global(html),
+    :global(body) {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: #0b1220;
+    }
+
+    :global(body) {
+        overflow-x: hidden;
+    }
+
+    .page-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #0b1220;
+    }
+
     .home-page {
         --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
         --text-main: #10243a;
@@ -76,7 +97,8 @@ function goToQuiz() {
         --action-hover: #195d76;
         --focus-ring: #60a5fa;
 
-        min-height: calc(100vh - 220px);
+        flex: 1;
+        min-height: 0;
         background: var(--page-bg);
         color: var(--text-main);
         padding: 2rem 1rem;
