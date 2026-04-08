@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"su-organization-matching/matching"
 	"su-organization-matching/server/ent"
 
 	"github.com/gorilla/mux"
@@ -150,10 +151,7 @@ func main() {
 
 	// Serve static files from the built Svelte distribution directory.
 	if err := os.Chdir("../Webpages/dist"); err != nil {
-		// Fall back to the old location so local development is still possible during migration.
-		if fallbackErr := os.Chdir("../Svelte Examples/plain-svelte-app/dist"); fallbackErr != nil {
-			log.Printf("warning: failed to switch static directory: %v (fallback also failed: %v)", err, fallbackErr)
-		}
+		log.Printf("warning: failed to switch static directory: %v", err)
 	}
 
 	// Register API routes and static site handler.
@@ -214,41 +212,65 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clubs := getClubsFromAnswers(answers) // use the algorithm made by @TannerK7 here to get a list of clubs!
+	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+		return
+	}
 
-	// jsonClubs := Map(clubs, getOrgInfoFromName)
+	sortedClubs := getClubsFromAnswers(answers, clubs)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(clubs)
+	json.NewEncoder(w).Encode(sortedClubs)
 }
 
-// getClubsFromAnswers is a placeholder for the algorithm that would determine club membership based on user answers. TODO: replace with the actual implementation made by @TannerK7.
-func getClubsFromAnswers(answers []DBAnswer) []OrgJSON {
-	jsonClubs := []OrgJSON{
-		{
-			ID:                   0,
-			ClubName:             "CS Club",
-			Description:          "placeholder description yay!",
-			MeetingTime:          "Thursdays at 6:30",
-			ImagePath:            "",
-			ExternalLink:         "",
-			ContactInfo:          "",
-			IncludeOfficerEmails: false,
-			UpdatedAt:            time.Now(),
-		},
-		{
-			ID:                   1,
-			ClubName:             "Physics Club",
-			Description:          "placeholder description yay! This is a longer one to show how text wrapping looks in the frontend.more words to make it even longer and see if it breaks or not! sorry Matt",
-			MeetingTime:          "random",
-			ImagePath:            "",
-			ExternalLink:         "",
-			ContactInfo:          "",
-			IncludeOfficerEmails: false,
-			UpdatedAt:            time.Now(),
-		},
+// getClubsFromAnswers ranks clubs for a user by converting stored answers into
+// matcher input and sorting all clubs by normalized match score.
+func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
+	matchAnswers := make([]matching.Answer, 0, len(answers))
+	for _, a := range answers {
+		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionType: a.QuestionType,
+			AnswerText:   a.AnswerText,
+			Translations: a.Translations,
+		})
 	}
-	return jsonClubs
+
+	matchClubs := make([]matching.Organization, 0, len(clubs))
+	clubsByID := make(map[int]OrgJSON, len(clubs))
+	for _, club := range clubs {
+		if club == nil {
+			continue
+		}
+
+		clubsByID[club.ID] = orgJSONFromEntClub(club)
+		matchClubs = append(matchClubs, matching.Organization{
+			ID:               club.ID,
+			Name:             club.ClubName,
+			Personality:      club.Personality,
+			Activities:       club.Activities,
+			Genders:          club.Genders,
+			Ethnicities:      club.Ethnicities,
+			Religions:        club.Religions,
+			StrictGenders:    club.StrictGenders,
+			DedicatedMajors:  club.DedicatedMajors,
+			AssociatedMajors: club.AssociatedMajors,
+			Other:            club.Other,
+		})
+	}
+
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ordered := make([]OrgJSON, 0, len(ranked))
+	for _, result := range ranked {
+		clubJSON, ok := clubsByID[result.Organization.ID]
+		if !ok {
+			continue
+		}
+		ordered = append(ordered, clubJSON)
+	}
+
+	return ordered
 }
 
 func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
