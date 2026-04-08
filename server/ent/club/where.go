@@ -3,7 +3,7 @@
 package club
 
 import (
-	"server-example/ent/predicate"
+	"su-organization-matching/server/ent/predicate"
 	"time"
 
 	"entgo.io/ent/dialect/sql"

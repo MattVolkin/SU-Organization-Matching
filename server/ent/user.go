@@ -5,8 +5,8 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
-	"server-example/ent/user"
 	"strings"
+	"su-organization-matching/server/ent/user"
 	"time"
 
 	"entgo.io/ent"

@@ -4,8 +4,8 @@ package ent
 
 import (
 	"context"
-	"server-example/ent/predicate"
-	"server-example/ent/user"
+	"su-organization-matching/server/ent/predicate"
+	"su-organization-matching/server/ent/user"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

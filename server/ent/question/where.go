@@ -3,7 +3,7 @@
 package question
 
 import (
-	"server-example/ent/predicate"
+	"su-organization-matching/server/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

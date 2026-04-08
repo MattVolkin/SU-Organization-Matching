@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"server-example/ent/answer"
-	"server-example/ent/question"
+	"su-organization-matching/server/ent/answer"
+	"su-organization-matching/server/ent/question"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"

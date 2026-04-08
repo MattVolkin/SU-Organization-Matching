@@ -5,11 +5,11 @@ package enttest
 import (
 	"context"
 
-	"server-example/ent"
+	"su-organization-matching/server/ent"
 	// required by schema hooks.
-	_ "server-example/ent/runtime"
+	_ "su-organization-matching/server/ent/runtime"
 
-	"server-example/ent/migrate"
+	"su-organization-matching/server/ent/migrate"
 
 	"entgo.io/ent/dialect/sql/schema"
 )

@@ -7,9 +7,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
-	"server-example/ent/club"
-	"server-example/ent/predicate"
-	"server-example/ent/user"
+	"su-organization-matching/server/ent/club"
+	"su-organization-matching/server/ent/predicate"
+	"su-organization-matching/server/ent/user"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

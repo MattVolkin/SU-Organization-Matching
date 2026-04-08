@@ -3,11 +3,11 @@
 package ent
 
 import (
-	"server-example/ent/answer"
-	"server-example/ent/club"
-	"server-example/ent/question"
-	"server-example/ent/schema"
-	"server-example/ent/user"
+	"su-organization-matching/server/ent/answer"
+	"su-organization-matching/server/ent/club"
+	"su-organization-matching/server/ent/question"
+	"su-organization-matching/server/ent/schema"
+	"su-organization-matching/server/ent/user"
 	"time"
 )
 

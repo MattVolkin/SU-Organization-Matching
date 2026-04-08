@@ -4,8 +4,8 @@ package ent
 
 import (
 	"fmt"
-	"server-example/ent/club"
 	"strings"
+	"su-organization-matching/server/ent/club"
 	"time"
 
 	"entgo.io/ent"

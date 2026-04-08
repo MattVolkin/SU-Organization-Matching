@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"server-example/ent"
-	"server-example/ent/answer"
-	"server-example/ent/club"
-	"server-example/ent/question"
-	"server-example/ent/user"
+	"server/ent"
+	"server/ent/answer"
+	"server/ent/club"
+	"server/ent/question"
+	"server/ent/user"
 
 	_ "github.com/lib/pq"
 )

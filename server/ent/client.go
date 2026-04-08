@@ -9,12 +9,12 @@ import (
 	"log"
 	"reflect"
 
-	"server-example/ent/migrate"
+	"su-organization-matching/server/ent/migrate"
 
-	"server-example/ent/answer"
-	"server-example/ent/club"
-	"server-example/ent/question"
-	"server-example/ent/user"
+	"su-organization-matching/server/ent/answer"
+	"su-organization-matching/server/ent/club"
+	"su-organization-matching/server/ent/question"
+	"su-organization-matching/server/ent/user"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"

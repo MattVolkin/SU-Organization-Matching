@@ -5,8 +5,8 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
-	"server-example/ent/question"
 	"strings"
+	"su-organization-matching/server/ent/question"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

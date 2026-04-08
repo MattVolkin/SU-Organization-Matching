@@ -4,10 +4,10 @@ package ent
 
 import (
 	"fmt"
-	"server-example/ent/answer"
-	"server-example/ent/question"
-	"server-example/ent/user"
 	"strings"
+	"su-organization-matching/server/ent/answer"
+	"su-organization-matching/server/ent/question"
+	"su-organization-matching/server/ent/user"
 	"time"
 
 	"entgo.io/ent"
