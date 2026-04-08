@@ -127,8 +127,10 @@ Example:
 {
   "id": 4,
   "question_type": "adjective",
-  "en": "Creative",
-  "es": "Creativo"
+  "translations": {
+    "en": ["Creative", "A trait related to imagination and originality"],
+    "es": []
+  }
 }
 ```
 
@@ -136,7 +138,7 @@ At minimum, each object contains:
 
 - `id: number`
 - `question_type: string`
-- zero or more translation keys such as `en`
+- `translations: object` where each language key maps to `[term, definition]`
 
 ## Endpoint Reference
 

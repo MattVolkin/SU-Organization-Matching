@@ -35,7 +35,7 @@ type DBAnswer struct {
 	SubmittedAt  time.Time
 	QuestionID   int
 	QuestionType string
-	Translations map[string]string
+	Translations map[string][]string
 	IsActive     bool
 }
 
@@ -441,17 +441,14 @@ func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType
 			continue
 		}
 
-		questionPayload := make(map[string]any, len(q.Translations)+2)
+		questionPayload := make(map[string]any, len(q.Translations)+3)
 		questionPayload["id"] = q.ID
 		questionPayload["question_type"] = q.QuestionType
+		questionPayload["translations"] = q.Translations
 
 		if q.Translations == nil {
 			contents = append(contents, questionPayload)
 			continue
-		}
-
-		for k, v := range q.Translations {
-			questionPayload[k] = v
 		}
 
 		contents = append(contents, questionPayload)

@@ -27,7 +27,7 @@ func (_c *QuestionCreate) SetQuestionType(v string) *QuestionCreate {
 }
 
 // SetTranslations sets the "translations" field.
-func (_c *QuestionCreate) SetTranslations(v map[string]string) *QuestionCreate {
+func (_c *QuestionCreate) SetTranslations(v map[string][]string) *QuestionCreate {
 	_c.mutation.SetTranslations(v)
 	return _c
 }

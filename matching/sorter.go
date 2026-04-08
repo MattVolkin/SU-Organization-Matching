@@ -38,7 +38,7 @@ type UserInfo struct {
 type Answer struct {
 	QuestionType string
 	AnswerText   string
-	Translations map[string]string
+	Translations map[string][]string
 }
 
 // MatchResult represents one ranked organization for a user.
@@ -248,11 +248,25 @@ func parseBool(raw string) (bool, bool) {
 
 func preferredAnswerValue(a Answer) string {
 	if a.Translations != nil {
-		if v := strings.TrimSpace(a.Translations["en"]); v != "" {
-			return v
+		if en, ok := a.Translations["en"]; ok && len(en) > 0 {
+			if v := strings.TrimSpace(en[0]); v != "" {
+				return v
+			}
 		}
-		if v := strings.TrimSpace(a.Translations["term"]); v != "" {
-			return v
+		if term, ok := a.Translations["term"]; ok && len(term) > 0 {
+			if v := strings.TrimSpace(term[0]); v != "" {
+				return v
+			}
+		}
+		if en, ok := a.Translations["en"]; ok && len(en) > 1 {
+			if v := strings.TrimSpace(en[1]); v != "" {
+				return v
+			}
+		}
+		if term, ok := a.Translations["term"]; ok && len(term) > 1 {
+			if v := strings.TrimSpace(term[1]); v != "" {
+				return v
+			}
 		}
 	}
 	return strings.TrimSpace(a.AnswerText)

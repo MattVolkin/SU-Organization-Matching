@@ -2055,7 +2055,7 @@ type QuestionMutation struct {
 	typ            string
 	id             *int
 	question_type  *string
-	translations   *map[string]string
+	translations   *map[string][]string
 	is_active      *bool
 	clearedFields  map[string]struct{}
 	answers        map[int]struct{}
@@ -2201,12 +2201,12 @@ func (m *QuestionMutation) ResetQuestionType() {
 }
 
 // SetTranslations sets the "translations" field.
-func (m *QuestionMutation) SetTranslations(value map[string]string) {
+func (m *QuestionMutation) SetTranslations(value map[string][]string) {
 	m.translations = &value
 }
 
 // Translations returns the value of the "translations" field in the mutation.
-func (m *QuestionMutation) Translations() (r map[string]string, exists bool) {
+func (m *QuestionMutation) Translations() (r map[string][]string, exists bool) {
 	v := m.translations
 	if v == nil {
 		return
@@ -2217,7 +2217,7 @@ func (m *QuestionMutation) Translations() (r map[string]string, exists bool) {
 // OldTranslations returns the old "translations" field's value of the Question entity.
 // If the Question object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *QuestionMutation) OldTranslations(ctx context.Context) (v map[string]string, err error) {
+func (m *QuestionMutation) OldTranslations(ctx context.Context) (v map[string][]string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTranslations is only allowed on UpdateOne operations")
 	}
@@ -2416,7 +2416,7 @@ func (m *QuestionMutation) SetField(name string, value ent.Value) error {
 		m.SetQuestionType(v)
 		return nil
 	case question.FieldTranslations:
-		v, ok := value.(map[string]string)
+		v, ok := value.(map[string][]string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
