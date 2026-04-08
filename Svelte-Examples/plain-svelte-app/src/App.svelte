@@ -3,7 +3,7 @@
   import AdminSwitch from '../../../Components/AdminHome.svelte'
   import AdminHome from '../../../Components/AdminHome.svelte';
   import SwipingApp from '../../../Components/SwipingApp.svelte';
-  import SettingsPage from '../../../Components/SettingPage.svelte';
+  import SettingsPage from '../../../Webpages/SettingsPage.svelte';
   import LoginPopup from '../../../Components/login_popup.svelte';
   import ResultsPage from '../../../Components/results.svelte';
   import Multi_Choice from '../../../Components/Mult_choice_demo.svelte';

@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Header from './header.svelte';
-  import Footer from './footer.svelte';
   import { APICreater } from './APIHandler.svelte';
 
   type ClubValue = string | {
@@ -44,9 +42,10 @@
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
-  function enablePreviewMode(requestedClubName: string) {
+  function enablePreviewMode(requestedClubName: string, noticeMessage = '') {
     const requestedTestClub = requestedClubName || 'Test Club';
     isTestMode = true;
+    pageNotice = noticeMessage;
     selectedClubFromUrl = requestedTestClub;
     accessibleClubs = [requestedTestClub];
     allAdjectives = testAdjectives;
@@ -119,6 +118,7 @@
     const response = await APICreater('GET', '/api/officer/orgs', null);
     officerClubs = normalizeClubList(response);
   }
+
   async function saveClubOfficer(club: string, officerEmail: string) {
     const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
     const clubID = clubInfo ? getClubID(clubInfo) : 0;
@@ -342,9 +342,6 @@
   });
 </script>
 
-
-<Header userType="officer"/>
-
 <main class="settings-page">
   <h2>{selectedClubFromUrl ? `${selectedClubFromUrl} Settings` : 'Club Settings'}</h2>
   <p class="warning-banner">All changes on this page are saved immediately after clicking the "Save" button.</p>
@@ -419,8 +416,6 @@
     {/each}
   {/if}
 </main>
-
-<Footer />
 
 <style>
   .settings-page {
