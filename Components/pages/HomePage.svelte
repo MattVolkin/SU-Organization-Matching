@@ -48,11 +48,6 @@ function goToQuiz() {
             Explore clubs and student organizations based on your interests, activities,
             and preferences, then get matched with communities where you can thrive.
         </p>
-
-        <div class="cta-row">
-            <button type="button" onclick={goToQuiz}>Get Started</button>
-            <a href="/Results">View Results</a>
-        </div>
     </section>
 
     <section class="info-list" aria-label="How it works">
@@ -63,29 +58,35 @@ function goToQuiz() {
             <li><strong>Connect Faster:</strong> Use your matches to quickly find meeting times, activities, and officers to contact.</li>
         </ul>
     </section>
+
+    <div class="cta-row">
+        <button type="button" onclick={goToQuiz}>Get Started</button>
+        <a href="/Results">View Results</a>
+    </div>
 </main>
 
 <Footer />
 
 <style>
     .home-page {
-        --page-bg: linear-gradient(180deg, #edf4fb 0%, #f6f9fd 100%);
-        --text-main: #132c45;
-        --text-subtle: #4f6781;
-        --action: #0f6d8c;
-        --action-hover: #0b5972;
+        --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+        --text-main: #10243a;
+        --text-subtle: #31506e;
+        --action: #1f6f8b;
+        --action-hover: #195d76;
         --focus-ring: #60a5fa;
 
         min-height: calc(100vh - 220px);
         background: var(--page-bg);
         color: var(--text-main);
-        padding: 1rem;
+        padding: 2rem 1rem;
+        font-size: 16px;
     }
 
     .hero-content {
-        width: min(100%, 1040px);
+        width: min(100%, 980px);
         margin: 0 auto;
-        padding: 1.25rem;
+        padding: 1.4rem 1rem 1rem;
         text-align: center;
     }
 
@@ -95,35 +96,39 @@ function goToQuiz() {
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        font-size: 0.78rem;
+        font-size: 0.88rem;
     }
 
     h1 {
-        margin: 0.45rem 0 0.75rem 0;
-        font-size: clamp(1.5rem, 2vw + 1rem, 2.4rem);
-        line-height: 1.15;
+        margin: 0.55rem 0 0.9rem 0;
+        font-size: clamp(2rem, 3vw + 1rem, 3.1rem);
+        line-height: 1.12;
     }
 
     .lead {
-        margin: 0;
-        max-width: 70ch;
+        margin: 0 auto;
+        max-width: 54rem;
         color: var(--text-subtle);
-        line-height: 1.55;
+        line-height: 1.65;
+        font-size: 1.12rem;
     }
 
     .cta-row {
-        margin-top: 1rem;
+        width: min(100%, 900px);
+        margin: 0 auto 1.35rem auto;
+        padding: 0 1rem;
         display: flex;
-        gap: 0.7rem;
+        gap: 0.9rem;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: center;
     }
 
     button {
         border: none;
-        border-radius: 0.55rem;
-        padding: 0.55rem 0.95rem;
-        font-size: 0.95rem;
+        border-radius: 0.65rem;
+        padding: 0.72rem 1.2rem;
+        font-size: 1rem;
         font-weight: 700;
         color: #ffffff;
         background: var(--action);
@@ -146,6 +151,7 @@ function goToQuiz() {
         display: inline-block;
         color: #1b4f73;
         font-weight: 600;
+        font-size: 1rem;
         text-decoration: none;
     }
 
@@ -154,37 +160,52 @@ function goToQuiz() {
     }
 
     .info-list {
-        width: min(100%, 1040px);
-        margin: 1rem auto 0 auto;
-        padding: 0 1.25rem 1.25rem;
+        width: min(100%, 900px);
+        margin: 0.6rem auto 0 auto;
+        padding: 1.1rem 1rem 1.4rem;
         text-align: center;
+        border-top: 1px solid #dbe7f3;
     }
 
     .info-list h2 {
-        margin: 0 0 0.45rem 0;
-        font-size: 1.1rem;
+        margin: 0 0 0.65rem 0;
+        font-size: clamp(1.15rem, 1.1vw + 0.9rem, 1.5rem);
     }
 
     .info-list ul {
-        margin: 0;
-        padding-left: 0;
-        list-style-position: inside;
+        margin: 0 auto;
+        padding-left: 1.25rem;
+        width: min(100%, 50rem);
+        text-align: left;
     }
 
     .info-list li {
-        margin: 0.35rem 0;
+        margin: 0.5rem 0;
         color: var(--text-subtle);
-        line-height: 1.5;
+        line-height: 1.6;
+        font-size: 1.02rem;
+    }
+
+    .info-list li::marker {
+        color: var(--action);
     }
 
     @media (max-width: 640px) {
         .home-page {
-            padding: 0.85rem;
+            padding: 1rem 0.85rem;
         }
 
         .hero-content,
         .info-list {
-            padding: 0.9rem;
+            padding: 1rem 0.9rem;
+        }
+
+        h1 {
+            font-size: clamp(1.65rem, 7vw, 2.25rem);
+        }
+
+        .lead {
+            font-size: 1rem;
         }
 
         .cta-row {
@@ -194,6 +215,21 @@ function goToQuiz() {
 
         button {
             width: 100%;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .home-page {
+            --page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+            --text-main: #e5edf8;
+            --text-subtle: #b6c7df;
+            --action: #2b8fb5;
+            --action-hover: #3aa3cb;
+            --focus-ring: #93c5fd;
+        }
+
+        .info-list {
+            border-top-color: #273449;
         }
     }
 </style>
