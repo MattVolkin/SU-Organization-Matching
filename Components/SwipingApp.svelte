@@ -172,8 +172,9 @@
 	<!-- <h2>Activities you like: {activities} </h2>
 	<h2>Personality traits you like: {personality} </h2>
 	<h2> {count} </h2> -->
-
+	
 	<Bar maxLimit = 36 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+
 
 
 <section
@@ -233,9 +234,9 @@ background: linear-gradient(90deg,rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 33%, r
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		height: 100vh;
 
-		width: 95vw;
-		height: 100vw;
+		width: 100vw;
 
 		overflow: hidden;
 

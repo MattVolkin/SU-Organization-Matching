@@ -190,7 +190,7 @@
 
 	:root {
 		/* shared variables */
-  --card-width: 50vw;
+  	--card-width: 50vw;
 	--card-height: 60vw;
 	--card--color: #1a1a1a;
 
@@ -235,7 +235,7 @@
     height: var(--card-height);
     background: var(--card--color);
 		
-    border: 5px solid #ccc; /* offset bottom cards so the cards look like they are in a stack*/
+    border: 2px solid #ccc; /* offset bottom cards so the cards look like they are in a stack*/
     border-radius: 8px;
     transition: transform 0.3s ease;
 		margin-bottom: 160px;

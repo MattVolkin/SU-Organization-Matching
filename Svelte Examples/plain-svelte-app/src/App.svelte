@@ -57,6 +57,7 @@
  <!-- <SettingsPage/> -->
   <!-- <ResultsPage/> -->
    <!-- <MultChoiceDemo/> -->
+    <SwipingApp />
  <div class="parent">
 
   
