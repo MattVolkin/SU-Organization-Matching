@@ -56,7 +56,7 @@
   <!-- <LoginPopup/> -->
  <!-- <SettingsPage/> -->
   <!-- <ResultsPage/> -->
-   <MultChoiceDemo/>
+   <!-- <MultChoiceDemo/> -->
  <div class="parent">
 
   

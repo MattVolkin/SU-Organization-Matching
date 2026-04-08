@@ -116,7 +116,7 @@ import Footer from './footer.svelte'
 
 <main>
   <section class="settings-page">
-    <h2>Club Form</h2>
+    <h2>Demographics</h2>
    
 
     <section class="club-settings-card">
@@ -167,11 +167,11 @@ import Footer from './footer.svelte'
 			<div class="option-grid majors">
 				{#each majorOptions as option}
 				  <label>
-				    {#if option === 'Undecided'}
+				    <!-- {#if option === 'Undecided'}
 				      <input type="radio" name="major" value={option} bind:group={major} required />
-				    {:else}
+				    {:else} -->
 				      <input type="checkbox" name="major" value={option} bind:group={major} />
-				    {/if}
+				    <!-- {/if} -->
 				    <span>{option}</span>
 				  </label>
 				{/each}
