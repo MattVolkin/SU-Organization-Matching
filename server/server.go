@@ -72,6 +72,7 @@ type OrgJSON struct {
 	ExternalLink         string    `json:"externalLink"`
 	ContactInfo          string    `json:"contactInfo"`
 	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
+	Officers             []string  `json:"officers"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
@@ -85,6 +86,7 @@ type OrgUpdatePayload struct {
 	ExternalLink         *string `json:"externalLink,omitempty"`
 	ContactInfo          *string `json:"contactInfo,omitempty"`
 	IncludeOfficerEmails *bool   `json:"includeOfficerEmails,omitempty"`
+	Officers             *[]string `json:"officers,omitempty"`
 }
 
 type OrgDeletePayload struct {
@@ -408,8 +410,29 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		ExternalLink:         club.ExternalLink,
 		ContactInfo:          club.ContactInfo,
 		IncludeOfficerEmails: club.IncludeOfficerEmails,
+		Officers:             officerEmailsFromClub(club),
 		UpdatedAt:            club.UpdatedAt,
 	}
+}
+
+func officerEmailsFromClub(club *ent.Club) []string {
+	if club == nil || len(club.Edges.Leaders) == 0 {
+		return []string{}
+	}
+
+	emails := make([]string, 0, len(club.Edges.Leaders))
+	for _, leader := range club.Edges.Leaders {
+		if leader == nil {
+			continue
+		}
+		email := strings.TrimSpace(leader.Email)
+		if email == "" {
+			continue
+		}
+		emails = append(emails, email)
+	}
+
+	return emails
 }
 
 // decodeOrgJSONs decodes a request body with the same JSON format used

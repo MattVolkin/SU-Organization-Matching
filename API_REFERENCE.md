@@ -109,13 +109,15 @@ Used by:
   "externalLink": "https://example.com",
   "contactInfo": "club@example.edu",
   "includeOfficerEmails": false,
+  "officers": ["president@example.edu", "vp@example.edu"],
   "updatedAt": "2026-04-09T18:30:00Z"
 }
 ```
 
 Notes:
 
-- The current wire format does not include `officers`, `personalityTraits`, or `activities`.
+- `officers` is an array of officer email addresses derived from the club leaders relationship.
+- `personalityTraits` and `activities` are not part of the current wire format.
 - `updatedAt` is returned by read endpoints and create/patch responses.
 
 ### Organization PATCH body
@@ -138,7 +140,8 @@ Only include fields that should change:
   "imagePath": "/images/new-image.png",
   "externalLink": "https://example.com",
   "contactInfo": "updated@example.edu",
-  "includeOfficerEmails": true
+  "includeOfficerEmails": true,
+  "officers": ["president@example.edu", "vp@example.edu"]
 }
 ```
 
@@ -146,6 +149,8 @@ Rules:
 
 - At least one field must be present.
 - Any omitted field is left unchanged.
+- If `officers` is included, it replaces the club's full officer list.
+- Every officer email provided must already belong to an existing user record.
 
 ### Swipe question object
 
@@ -583,13 +588,15 @@ Request body:
   "imagePath": "/images/new-club.png",
   "externalLink": "https://example.com/new-club",
   "contactInfo": "new-club@example.edu",
-  "includeOfficerEmails": false
+  "includeOfficerEmails": false,
+  "officers": ["president@example.edu"]
 }
 ```
 
 Rules:
 
 - `clubName` is required and must be non-empty.
+- If `officers` is provided, every email must belong to an existing user record.
 
 Success response:
 

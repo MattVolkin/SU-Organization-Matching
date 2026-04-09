@@ -511,7 +511,7 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().All(ctx)
+	clubs, err := next.client.Club.Query().WithLeaders().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
 }
@@ -598,12 +598,30 @@ func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, pat
 		update.SetIncludeOfficerEmails(*patch.IncludeOfficerEmails)
 		hasUpdate = true
 	}
+	if patch.Officers != nil {
+		leaders, err := next.resolveUsersByEmail(ctx, *patch.Officers)
+		if err != nil {
+			next.lastErr = err
+			return next, nil, err
+		}
+		update.ClearLeaders()
+		if len(leaders) > 0 {
+			update.AddLeaders(leaders...)
+		}
+		hasUpdate = true
+	}
 	if !hasUpdate {
 		next.lastErr = fmt.Errorf("at least one field must be provided for update")
 		return next, nil, next.lastErr
 	}
 
 	updatedClub, err := update.Save(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	updatedClub, err = next.client.Club.Query().Where(club.IDEQ(updatedClub.ID)).WithLeaders().Only(ctx)
 	next.lastErr = err
 	if err != nil {
 		return next, nil, err
@@ -632,17 +650,33 @@ func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *O
 		return next, nil, next.lastErr
 	}
 
-	createdClub, err := next.client.Club.Create().
+	create := next.client.Club.Create().
 		SetClubName(clubName).
 		SetDescription(strings.TrimSpace(newClubInfo.Description)).
 		SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime)).
 		SetImagePath(strings.TrimSpace(newClubInfo.ImagePath)).
 		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
 		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
-		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
-		Save(ctx)
+		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
+
+	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)
 	if err != nil {
 		next.lastErr = err
+		return next, nil, err
+	}
+	if len(leaders) > 0 {
+		create.AddLeaders(leaders...)
+	}
+
+	createdClub, err := create.Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	createdClub, err = next.client.Club.Query().Where(club.IDEQ(createdClub.ID)).WithLeaders().Only(ctx)
+	next.lastErr = err
+	if err != nil {
 		return next, nil, err
 	}
 
@@ -689,10 +723,59 @@ func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, emai
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).All(ctx)
+	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).WithLeaders().All(ctx)
 	next.userEmail = lookupEmail
 	next.lastErr = err
 	return next, clubs, err
+}
+
+func (db *DatabaseClient) resolveUsersByEmail(ctx context.Context, emails []string) ([]*ent.User, error) {
+	if len(emails) == 0 {
+		return []*ent.User{}, nil
+	}
+
+	normalizedEmails := make([]string, 0, len(emails))
+	seen := make(map[string]struct{}, len(emails))
+	for _, email := range emails {
+		trimmed := strings.TrimSpace(email)
+		if trimmed == "" {
+			continue
+		}
+		key := strings.ToLower(trimmed)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalizedEmails = append(normalizedEmails, trimmed)
+	}
+
+	if len(normalizedEmails) == 0 {
+		return []*ent.User{}, nil
+	}
+
+	usersByEmail, err := db.client.User.Query().Where(user.EmailIn(normalizedEmails...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resolved := make(map[string]*ent.User, len(usersByEmail))
+	for _, storedUser := range usersByEmail {
+		if storedUser == nil {
+			continue
+		}
+		resolved[strings.ToLower(strings.TrimSpace(storedUser.Email))] = storedUser
+	}
+
+	users := make([]*ent.User, 0, len(normalizedEmails))
+	for _, email := range normalizedEmails {
+		storedUser, ok := resolved[strings.ToLower(strings.TrimSpace(email))]
+		if !ok {
+			return nil, fmt.Errorf("officer with email %q not found", email)
+		}
+		users = append(users, storedUser)
+	}
+
+	return users, nil
 }
 
 func (db *DatabaseClient) IsUserStudentLifeByEmail(ctx context.Context, email string) (*DatabaseClient, bool, error) {
