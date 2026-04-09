@@ -13,8 +13,8 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "answer_text", Type: field.TypeString, Size: 2147483647},
 		{Name: "submitted_at", Type: field.TypeTime},
-		{Name: "question_answers", Type: field.TypeInt},
-		{Name: "user_answers", Type: field.TypeInt},
+		{Name: "question_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
 	}
 	// AnswersTable holds the schema information for the "answers" table.
 	AnswersTable = &schema.Table{

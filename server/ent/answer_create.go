@@ -22,6 +22,18 @@ type AnswerCreate struct {
 	hooks    []Hook
 }
 
+// SetQuestionID sets the "question_id" field.
+func (_c *AnswerCreate) SetQuestionID(v int) *AnswerCreate {
+	_c.mutation.SetQuestionID(v)
+	return _c
+}
+
+// SetUserID sets the "user_id" field.
+func (_c *AnswerCreate) SetUserID(v int) *AnswerCreate {
+	_c.mutation.SetUserID(v)
+	return _c
+}
+
 // SetAnswerText sets the "answer_text" field.
 func (_c *AnswerCreate) SetAnswerText(v string) *AnswerCreate {
 	_c.mutation.SetAnswerText(v)
@@ -42,21 +54,9 @@ func (_c *AnswerCreate) SetNillableSubmittedAt(v *time.Time) *AnswerCreate {
 	return _c
 }
 
-// SetQuestionID sets the "question" edge to the Question entity by ID.
-func (_c *AnswerCreate) SetQuestionID(id int) *AnswerCreate {
-	_c.mutation.SetQuestionID(id)
-	return _c
-}
-
 // SetQuestion sets the "question" edge to the Question entity.
 func (_c *AnswerCreate) SetQuestion(v *Question) *AnswerCreate {
 	return _c.SetQuestionID(v.ID)
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_c *AnswerCreate) SetUserID(id int) *AnswerCreate {
-	_c.mutation.SetUserID(id)
-	return _c
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -107,6 +107,12 @@ func (_c *AnswerCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AnswerCreate) check() error {
+	if _, ok := _c.mutation.QuestionID(); !ok {
+		return &ValidationError{Name: "question_id", err: errors.New(`ent: missing required field "Answer.question_id"`)}
+	}
+	if _, ok := _c.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Answer.user_id"`)}
+	}
 	if _, ok := _c.mutation.AnswerText(); !ok {
 		return &ValidationError{Name: "answer_text", err: errors.New(`ent: missing required field "Answer.answer_text"`)}
 	}
@@ -167,7 +173,7 @@ func (_c *AnswerCreate) createSpec() (*Answer, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.question_answers = &nodes[0]
+		_node.QuestionID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
@@ -184,7 +190,7 @@ func (_c *AnswerCreate) createSpec() (*Answer, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_answers = &nodes[0]
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

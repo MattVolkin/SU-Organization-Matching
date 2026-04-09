@@ -28,7 +28,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "answer" package.
 	AnswersInverseTable = "answers"
 	// AnswersColumn is the table column denoting the answers relation/edge.
-	AnswersColumn = "question_answers"
+	AnswersColumn = "question_id"
 )
 
 // Columns holds all SQL columns for question fields.

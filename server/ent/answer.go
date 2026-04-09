@@ -19,16 +19,18 @@ type Answer struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// QuestionID holds the value of the "question_id" field.
+	QuestionID int `json:"question_id,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID int `json:"user_id,omitempty"`
 	// AnswerText holds the value of the "answer_text" field.
 	AnswerText string `json:"answer_text,omitempty"`
 	// SubmittedAt holds the value of the "submitted_at" field.
 	SubmittedAt time.Time `json:"submitted_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AnswerQuery when eager-loading is set.
-	Edges            AnswerEdges `json:"edges"`
-	question_answers *int
-	user_answers     *int
-	selectValues     sql.SelectValues
+	Edges        AnswerEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // AnswerEdges holds the relations/edges for other nodes in the graph.
@@ -69,16 +71,12 @@ func (*Answer) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case answer.FieldID:
+		case answer.FieldID, answer.FieldQuestionID, answer.FieldUserID:
 			values[i] = new(sql.NullInt64)
 		case answer.FieldAnswerText:
 			values[i] = new(sql.NullString)
 		case answer.FieldSubmittedAt:
 			values[i] = new(sql.NullTime)
-		case answer.ForeignKeys[0]: // question_answers
-			values[i] = new(sql.NullInt64)
-		case answer.ForeignKeys[1]: // user_answers
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -100,6 +98,18 @@ func (_m *Answer) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
+		case answer.FieldQuestionID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field question_id", values[i])
+			} else if value.Valid {
+				_m.QuestionID = int(value.Int64)
+			}
+		case answer.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				_m.UserID = int(value.Int64)
+			}
 		case answer.FieldAnswerText:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field answer_text", values[i])
@@ -111,20 +121,6 @@ func (_m *Answer) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field submitted_at", values[i])
 			} else if value.Valid {
 				_m.SubmittedAt = value.Time
-			}
-		case answer.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field question_answers", value)
-			} else if value.Valid {
-				_m.question_answers = new(int)
-				*_m.question_answers = int(value.Int64)
-			}
-		case answer.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_answers", value)
-			} else if value.Valid {
-				_m.user_answers = new(int)
-				*_m.user_answers = int(value.Int64)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -172,6 +168,12 @@ func (_m *Answer) String() string {
 	var builder strings.Builder
 	builder.WriteString("Answer(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("question_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.QuestionID))
+	builder.WriteString(", ")
+	builder.WriteString("user_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
+	builder.WriteString(", ")
 	builder.WriteString("answer_text=")
 	builder.WriteString(_m.AnswerText)
 	builder.WriteString(", ")

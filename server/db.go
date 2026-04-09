@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -778,6 +779,141 @@ func (db *DatabaseClient) resolveUsersByEmail(ctx context.Context, emails []stri
 	return users, nil
 }
 
+// SetUserRoleForTesting updates the persisted fields that determine effective role.
+// - admin: adds student_life tag
+// - officer: removes student_life tag and adds user as leader of officerClubName
+// - member: removes student_life tag and clears all led clubs
+func (db *DatabaseClient) SetUserRoleForTesting(ctx context.Context, email string, role string, officerClubName string) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+
+	normalizedRole := strings.ToLower(strings.TrimSpace(role))
+	if normalizedRole == "" {
+		next.lastErr = fmt.Errorf("role is required")
+		return next, next.lastErr
+	}
+
+	tx, err := next.client.Tx(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	defer func() {
+		if next.lastErr != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	storedUser, err := tx.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	switch normalizedRole {
+	case "admin":
+		tags := withStudentLifeTag(storedUser.Tags, true)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+	case "officer":
+		tags := withStudentLifeTag(storedUser.Tags, false)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+		clubName := strings.TrimSpace(officerClubName)
+		if clubName == "" {
+			next.lastErr = fmt.Errorf("officer club name is required")
+			return next, next.lastErr
+		}
+
+		csClub, queryErr := tx.Club.Query().Where(club.ClubNameEQ(clubName)).Only(ctx)
+		if queryErr != nil {
+			next.lastErr = fmt.Errorf("officer club %q not found", clubName)
+			return next, next.lastErr
+		}
+
+		alreadyLeader, queryErr := tx.Club.Query().
+			Where(club.IDEQ(csClub.ID), club.HasLeadersWith(user.IDEQ(storedUser.ID))).
+			Exist(ctx)
+		if queryErr != nil {
+			next.lastErr = queryErr
+			return next, queryErr
+		}
+		if !alreadyLeader {
+			err = tx.Club.UpdateOneID(csClub.ID).AddLeaderIDs(storedUser.ID).Exec(ctx)
+			if err != nil {
+				next.lastErr = err
+				return next, err
+			}
+		}
+
+	case "member":
+		tags := withStudentLifeTag(storedUser.Tags, false)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).ClearLedClubs().Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+	default:
+		next.lastErr = fmt.Errorf("unsupported role %q", role)
+		return next, next.lastErr
+	}
+
+	if err = tx.Commit(); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.lastErr = nil
+	next.userEmail = lookupEmail
+	return next, nil
+}
+
+func withStudentLifeTag(tags []string, enabled bool) []string {
+	filtered := make([]string, 0, len(tags)+1)
+	hasStudentLife := false
+	for _, rawTag := range tags {
+		tag := strings.TrimSpace(rawTag)
+		if tag == "" {
+			continue
+		}
+		if strings.EqualFold(tag, "student_life") {
+			hasStudentLife = true
+			if !enabled {
+				continue
+			}
+			tag = "student_life"
+		}
+		filtered = append(filtered, tag)
+	}
+
+	if enabled && !hasStudentLife {
+		filtered = append(filtered, "student_life")
+	}
+
+	return filtered
+}
+
 func (db *DatabaseClient) IsUserStudentLifeByEmail(ctx context.Context, email string) (*DatabaseClient, bool, error) {
 	next := db.clone()
 	if next.lastErr != nil {
@@ -859,6 +995,70 @@ func (db *DatabaseClient) FetchAnswerByID(ctx context.Context, id int) (*Databas
 	a, err := next.client.Answer.Query().Where(answer.IDEQ(id)).Only(ctx)
 	next.lastErr = err
 	return next, a, err
+}
+
+// UpsertSurveyResponseByUserEmail stores one boolean response for a user/question pair.
+// Existing answers are updated in place, otherwise a new answer row is created.
+func (db *DatabaseClient) UpsertSurveyResponseByUserEmail(ctx context.Context, email string, questionID int, answerValue bool) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+	if questionID <= 0 {
+		next.lastErr = fmt.Errorf("question id must be positive")
+		return next, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if _, err = next.client.Question.Query().Where(question.IDEQ(questionID)).Only(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	answerText := strconv.FormatBool(answerValue)
+	now := time.Now()
+
+	updatedCount, err := next.client.Answer.Update().
+		Where(
+			answer.HasUserWith(user.IDEQ(storedUser.ID)),
+			answer.HasQuestionWith(question.IDEQ(questionID)),
+		).
+		SetAnswerText(answerText).
+		SetSubmittedAt(now).
+		Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if updatedCount > 0 {
+		next.lastErr = nil
+		return next, nil
+	}
+
+	_, err = next.client.Answer.Create().
+		SetAnswerText(answerText).
+		SetQuestionID(questionID).
+		SetUserID(storedUser.ID).
+		SetSubmittedAt(now).
+		Save(ctx)
+	next.lastErr = err
+	return next, err
 }
 
 // FetchAnswersByQuestionID returns all answers belonging to one question.

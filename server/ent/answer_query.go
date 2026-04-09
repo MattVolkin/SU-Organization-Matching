@@ -26,7 +26,6 @@ type AnswerQuery struct {
 	predicates   []predicate.Answer
 	withQuestion *QuestionQuery
 	withUser     *UserQuery
-	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -335,12 +334,12 @@ func (_q *AnswerQuery) WithUser(opts ...func(*UserQuery)) *AnswerQuery {
 // Example:
 //
 //	var v []struct {
-//		AnswerText string `json:"answer_text,omitempty"`
+//		QuestionID int `json:"question_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Answer.Query().
-//		GroupBy(answer.FieldAnswerText).
+//		GroupBy(answer.FieldQuestionID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *AnswerQuery) GroupBy(field string, fields ...string) *AnswerGroupBy {
@@ -358,11 +357,11 @@ func (_q *AnswerQuery) GroupBy(field string, fields ...string) *AnswerGroupBy {
 // Example:
 //
 //	var v []struct {
-//		AnswerText string `json:"answer_text,omitempty"`
+//		QuestionID int `json:"question_id,omitempty"`
 //	}
 //
 //	client.Answer.Query().
-//		Select(answer.FieldAnswerText).
+//		Select(answer.FieldQuestionID).
 //		Scan(ctx, &v)
 func (_q *AnswerQuery) Select(fields ...string) *AnswerSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -406,19 +405,12 @@ func (_q *AnswerQuery) prepareQuery(ctx context.Context) error {
 func (_q *AnswerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Answer, error) {
 	var (
 		nodes       = []*Answer{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
 			_q.withQuestion != nil,
 			_q.withUser != nil,
 		}
 	)
-	if _q.withQuestion != nil || _q.withUser != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, answer.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Answer).scanValues(nil, columns)
 	}
@@ -456,10 +448,7 @@ func (_q *AnswerQuery) loadQuestion(ctx context.Context, query *QuestionQuery, n
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Answer)
 	for i := range nodes {
-		if nodes[i].question_answers == nil {
-			continue
-		}
-		fk := *nodes[i].question_answers
+		fk := nodes[i].QuestionID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -476,7 +465,7 @@ func (_q *AnswerQuery) loadQuestion(ctx context.Context, query *QuestionQuery, n
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "question_answers" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "question_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -488,10 +477,7 @@ func (_q *AnswerQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Answer)
 	for i := range nodes {
-		if nodes[i].user_answers == nil {
-			continue
-		}
-		fk := *nodes[i].user_answers
+		fk := nodes[i].UserID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -508,7 +494,7 @@ func (_q *AnswerQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_answers" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -541,6 +527,12 @@ func (_q *AnswerQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != answer.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withQuestion != nil {
+			_spec.Node.AddColumnOnce(answer.FieldQuestionID)
+		}
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(answer.FieldUserID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

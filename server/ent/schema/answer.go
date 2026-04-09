@@ -14,6 +14,8 @@ type Answer struct {
 
 func (Answer) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int("question_id"),
+		field.Int("user_id"),
 		field.Text("answer_text"),
 		field.Time("submitted_at").Default(time.Now),
 	}
@@ -21,7 +23,7 @@ func (Answer) Fields() []ent.Field {
 
 func (Answer) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("question", Question.Type).Ref("answers").Unique().Required(),
-		edge.From("user", User.Type).Ref("answers").Unique().Required(),
+		edge.From("question", Question.Type).Ref("answers").Field("question_id").Unique().Required(),
+		edge.From("user", User.Type).Ref("answers").Field("user_id").Unique().Required(),
 	}
 }

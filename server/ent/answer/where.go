@@ -55,6 +55,16 @@ func IDLTE(id int) predicate.Answer {
 	return predicate.Answer(sql.FieldLTE(FieldID, id))
 }
 
+// QuestionID applies equality check predicate on the "question_id" field. It's identical to QuestionIDEQ.
+func QuestionID(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldEQ(FieldQuestionID, v))
+}
+
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldEQ(FieldUserID, v))
+}
+
 // AnswerText applies equality check predicate on the "answer_text" field. It's identical to AnswerTextEQ.
 func AnswerText(v string) predicate.Answer {
 	return predicate.Answer(sql.FieldEQ(FieldAnswerText, v))
@@ -63,6 +73,46 @@ func AnswerText(v string) predicate.Answer {
 // SubmittedAt applies equality check predicate on the "submitted_at" field. It's identical to SubmittedAtEQ.
 func SubmittedAt(v time.Time) predicate.Answer {
 	return predicate.Answer(sql.FieldEQ(FieldSubmittedAt, v))
+}
+
+// QuestionIDEQ applies the EQ predicate on the "question_id" field.
+func QuestionIDEQ(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldEQ(FieldQuestionID, v))
+}
+
+// QuestionIDNEQ applies the NEQ predicate on the "question_id" field.
+func QuestionIDNEQ(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldNEQ(FieldQuestionID, v))
+}
+
+// QuestionIDIn applies the In predicate on the "question_id" field.
+func QuestionIDIn(vs ...int) predicate.Answer {
+	return predicate.Answer(sql.FieldIn(FieldQuestionID, vs...))
+}
+
+// QuestionIDNotIn applies the NotIn predicate on the "question_id" field.
+func QuestionIDNotIn(vs ...int) predicate.Answer {
+	return predicate.Answer(sql.FieldNotIn(FieldQuestionID, vs...))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldEQ(FieldUserID, v))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v int) predicate.Answer {
+	return predicate.Answer(sql.FieldNEQ(FieldUserID, v))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...int) predicate.Answer {
+	return predicate.Answer(sql.FieldIn(FieldUserID, vs...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...int) predicate.Answer {
+	return predicate.Answer(sql.FieldNotIn(FieldUserID, vs...))
 }
 
 // AnswerTextEQ applies the EQ predicate on the "answer_text" field.

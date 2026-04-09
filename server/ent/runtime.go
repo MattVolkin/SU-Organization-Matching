@@ -18,7 +18,7 @@ func init() {
 	answerFields := schema.Answer{}.Fields()
 	_ = answerFields
 	// answerDescSubmittedAt is the schema descriptor for submitted_at field.
-	answerDescSubmittedAt := answerFields[1].Descriptor()
+	answerDescSubmittedAt := answerFields[3].Descriptor()
 	// answer.DefaultSubmittedAt holds the default value on creation for the submitted_at field.
 	answer.DefaultSubmittedAt = answerDescSubmittedAt.Default.(func() time.Time)
 	clubFields := schema.Club{}.Fields()

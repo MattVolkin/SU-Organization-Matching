@@ -149,6 +149,78 @@ func (m *AnswerMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
+// SetQuestionID sets the "question_id" field.
+func (m *AnswerMutation) SetQuestionID(i int) {
+	m.question = &i
+}
+
+// QuestionID returns the value of the "question_id" field in the mutation.
+func (m *AnswerMutation) QuestionID() (r int, exists bool) {
+	v := m.question
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuestionID returns the old "question_id" field's value of the Answer entity.
+// If the Answer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AnswerMutation) OldQuestionID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuestionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuestionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuestionID: %w", err)
+	}
+	return oldValue.QuestionID, nil
+}
+
+// ResetQuestionID resets all changes to the "question_id" field.
+func (m *AnswerMutation) ResetQuestionID() {
+	m.question = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *AnswerMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *AnswerMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Answer entity.
+// If the Answer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AnswerMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *AnswerMutation) ResetUserID() {
+	m.user = nil
+}
+
 // SetAnswerText sets the "answer_text" field.
 func (m *AnswerMutation) SetAnswerText(s string) {
 	m.answer_text = &s
@@ -221,27 +293,15 @@ func (m *AnswerMutation) ResetSubmittedAt() {
 	m.submitted_at = nil
 }
 
-// SetQuestionID sets the "question" edge to the Question entity by id.
-func (m *AnswerMutation) SetQuestionID(id int) {
-	m.question = &id
-}
-
 // ClearQuestion clears the "question" edge to the Question entity.
 func (m *AnswerMutation) ClearQuestion() {
 	m.clearedquestion = true
+	m.clearedFields[answer.FieldQuestionID] = struct{}{}
 }
 
 // QuestionCleared reports if the "question" edge to the Question entity was cleared.
 func (m *AnswerMutation) QuestionCleared() bool {
 	return m.clearedquestion
-}
-
-// QuestionID returns the "question" edge ID in the mutation.
-func (m *AnswerMutation) QuestionID() (id int, exists bool) {
-	if m.question != nil {
-		return *m.question, true
-	}
-	return
 }
 
 // QuestionIDs returns the "question" edge IDs in the mutation.
@@ -260,27 +320,15 @@ func (m *AnswerMutation) ResetQuestion() {
 	m.clearedquestion = false
 }
 
-// SetUserID sets the "user" edge to the User entity by id.
-func (m *AnswerMutation) SetUserID(id int) {
-	m.user = &id
-}
-
 // ClearUser clears the "user" edge to the User entity.
 func (m *AnswerMutation) ClearUser() {
 	m.cleareduser = true
+	m.clearedFields[answer.FieldUserID] = struct{}{}
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
 func (m *AnswerMutation) UserCleared() bool {
 	return m.cleareduser
-}
-
-// UserID returns the "user" edge ID in the mutation.
-func (m *AnswerMutation) UserID() (id int, exists bool) {
-	if m.user != nil {
-		return *m.user, true
-	}
-	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
@@ -333,7 +381,13 @@ func (m *AnswerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AnswerMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 4)
+	if m.question != nil {
+		fields = append(fields, answer.FieldQuestionID)
+	}
+	if m.user != nil {
+		fields = append(fields, answer.FieldUserID)
+	}
 	if m.answer_text != nil {
 		fields = append(fields, answer.FieldAnswerText)
 	}
@@ -348,6 +402,10 @@ func (m *AnswerMutation) Fields() []string {
 // schema.
 func (m *AnswerMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case answer.FieldQuestionID:
+		return m.QuestionID()
+	case answer.FieldUserID:
+		return m.UserID()
 	case answer.FieldAnswerText:
 		return m.AnswerText()
 	case answer.FieldSubmittedAt:
@@ -361,6 +419,10 @@ func (m *AnswerMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *AnswerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case answer.FieldQuestionID:
+		return m.OldQuestionID(ctx)
+	case answer.FieldUserID:
+		return m.OldUserID(ctx)
 	case answer.FieldAnswerText:
 		return m.OldAnswerText(ctx)
 	case answer.FieldSubmittedAt:
@@ -374,6 +436,20 @@ func (m *AnswerMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *AnswerMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case answer.FieldQuestionID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuestionID(v)
+		return nil
+	case answer.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
 	case answer.FieldAnswerText:
 		v, ok := value.(string)
 		if !ok {
@@ -395,13 +471,16 @@ func (m *AnswerMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *AnswerMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *AnswerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
 	return nil, false
 }
 
@@ -437,6 +516,12 @@ func (m *AnswerMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *AnswerMutation) ResetField(name string) error {
 	switch name {
+	case answer.FieldQuestionID:
+		m.ResetQuestionID()
+		return nil
+	case answer.FieldUserID:
+		m.ResetUserID()
+		return nil
 	case answer.FieldAnswerText:
 		m.ResetAnswerText()
 		return nil
