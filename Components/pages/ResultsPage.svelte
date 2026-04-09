@@ -35,3 +35,5 @@
 </script>
 <LoginPopup/>
 <Header userType={userType} />
+<Results userType={userType} />
+<Footer />

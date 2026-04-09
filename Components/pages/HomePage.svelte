@@ -33,7 +33,7 @@ onMount(() => {
 });
 
 function goToQuiz() {
-    window.location.href = '/demographicQuiz';
+    window.location.href = '/demographic-quiz.html';
 }
 </script>
 
@@ -62,7 +62,7 @@ function goToQuiz() {
 
         <div class="cta-row">
             <button type="button" onclick={goToQuiz}>Get Started</button>
-            <a href="/Results">View Results</a>
+            <a href="/results.html">View Results</a>
         </div>
     </main>
 

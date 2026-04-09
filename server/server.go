@@ -75,6 +75,22 @@ type OrgJSON struct {
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
+// OrgUpdatePayload contains only mutable club fields for PATCH requests.
+type OrgUpdatePayload struct {
+	ID                   int     `json:"id"`
+	ClubName             *string `json:"clubName,omitempty"`
+	Description          *string `json:"description,omitempty"`
+	MeetingTime          *string `json:"meetingTime,omitempty"`
+	ImagePath            *string `json:"imagePath,omitempty"`
+	ExternalLink         *string `json:"externalLink,omitempty"`
+	ContactInfo          *string `json:"contactInfo,omitempty"`
+	IncludeOfficerEmails *bool   `json:"includeOfficerEmails,omitempty"`
+}
+
+type OrgDeletePayload struct {
+	ID int `json:"id"`
+}
+
 // organization defines either an organization or a user with various fields
 // corresponding with the questions asked on the quiz.
 type Organization struct {
@@ -157,43 +173,45 @@ func main() {
 	// Register API routes and static site handler.
 	router := mux.NewRouter()
 
-	router.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg))
-	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg))
-	router.HandleFunc("/api/user", makeCurrentUserHandler())
-	router.HandleFunc("/logout", makeLogoutHandler())
+	router.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg)).Methods(http.MethodGet)
+	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user", makeCurrentUserHandler()).Methods(http.MethodGet)
+	router.HandleFunc("/logout", makeLogoutHandler()).Methods(http.MethodPost)
 
-	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission)))
+	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission))).Methods(http.MethodPost)
 
-	submitHandler := requirePostMethod(http.HandlerFunc(handleDemographicsSubmission))
+	submitHandler := http.Handler(http.HandlerFunc(handleDemographicsSubmission))
 	if submitRequiresAuth {
 		submitHandler = requireAuthenticatedSession(submitHandler)
 	}
-	router.Handle("/submit", submitHandler)
+	router.Handle("/submit", submitHandler).Methods(http.MethodPost)
 
 	// All /api/ endpoints require an authenticated session, but only some require specific roles.
 	apiRouter := router.PathPrefix("/api/").Subrouter()
 	apiRouter.Use(requireAuthenticatedSession)
 
-	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler())
+	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler()).Methods(http.MethodGet)
 
-	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest)).Methods(http.MethodGet)
 
-	apiRouter.HandleFunc("/results", getUserOrgsHandler)
+	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
 	// Officer-only endpoints are nested under /api/officer/ and use additional role-checking middleware.
 	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
 
 	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
 
-	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest)
-
-	officerRouter.HandleFunc("/update", handleOfficerUpdateRequest)
+	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest).Methods(http.MethodGet)
+	officerRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
 
 	// Admin-only endpoints are nested under /api/admin/ and use additional role-checking middleware.
 	adminRouter := apiRouter.PathPrefix("/admin/").Subrouter()
 	adminRouter.Use(makeRequireUserRoleHandlerMiddleware(Admin))
 
-	adminRouter.HandleFunc("/orgs", handleAdminOrgsRequest)
+	adminRouter.HandleFunc("/orgs", handleAdminOrgsRequest).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/orgs", handleAdminCreateOrgRequest).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
+	adminRouter.HandleFunc("/orgs", handleAdminDeleteOrgRequest).Methods(http.MethodDelete)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -287,19 +305,70 @@ func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(jsonClubs)
 }
 
-func handleOfficerUpdateRequest(w http.ResponseWriter, r *http.Request) {
+func handleAdminCreateOrgRequest(w http.ResponseWriter, r *http.Request) {
 	var payload OrgJSON
 	if !decodeJSONBody(w, r, &payload) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
 		return
 	}
 
-	dbClient.Query().UpdateClubFromJSON(r.Context(), &payload)
+	_, createdClub, err := dbClient.Query().CreateClubFromJSON(r.Context(), &payload)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(orgJSONFromEntClub(createdClub))
+}
+
+func handlePatchOrgRequest(w http.ResponseWriter, r *http.Request) {
+	var payload OrgUpdatePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+	if payload.ID <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a positive integer"})
+		return
+	}
+
+	_, updatedClub, err := dbClient.Query().PatchClubFromJSON(r.Context(), payload.ID, &payload)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(orgJSONFromEntClub(updatedClub))
+}
+
+func handleAdminDeleteOrgRequest(w http.ResponseWriter, r *http.Request) {
+	var payload OrgDeletePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+	if payload.ID <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a positive integer"})
+		return
+	}
+
+	if _, err := dbClient.Query().DeleteClubByID(r.Context(), payload.ID); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -409,28 +478,9 @@ func makeRequireUserRoleHandlerMiddleware(requiredRole UserRole) func(next http.
 	}
 }
 
-// requirePostMethod enforces POST-only semantics for endpoints
-// expecting JSON form submissions.
-func requirePostMethod(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Only POST method is allowed"})
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 // handleSurveyResponseSubmission validates and echoes a response payload from an
 // authenticated user.
 func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Only POST method is allowed"})
-		return
-	}
-
 	var payload SurveyResponsePayload
 	if !decodeJSONBody(w, r, &payload) {
 		return

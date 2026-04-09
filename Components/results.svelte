@@ -141,7 +141,6 @@
     
 </script>
 
-<Header/>
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page">
@@ -187,7 +186,6 @@
   {/if}
 </main>
 
-<Footer />
 
 <style>
   .results-page {

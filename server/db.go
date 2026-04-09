@@ -550,6 +550,124 @@ func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *O
 	return next, err
 }
 
+func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, patch *OrgUpdatePayload) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if patch == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, nil, next.lastErr
+	}
+	if clubID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	update := next.client.Club.UpdateOneID(clubID)
+	hasUpdate := false
+	if patch.ClubName != nil {
+		update.SetClubName(strings.TrimSpace(*patch.ClubName))
+		hasUpdate = true
+	}
+	if patch.Description != nil {
+		update.SetDescription(strings.TrimSpace(*patch.Description))
+		hasUpdate = true
+	}
+	if patch.MeetingTime != nil {
+		update.SetMeetingTime(strings.TrimSpace(*patch.MeetingTime))
+		hasUpdate = true
+	}
+	if patch.ImagePath != nil {
+		update.SetImagePath(strings.TrimSpace(*patch.ImagePath))
+		hasUpdate = true
+	}
+	if patch.ExternalLink != nil {
+		update.SetExternalLink(strings.TrimSpace(*patch.ExternalLink))
+		hasUpdate = true
+	}
+	if patch.ContactInfo != nil {
+		update.SetContactInfo(strings.TrimSpace(*patch.ContactInfo))
+		hasUpdate = true
+	}
+	if patch.IncludeOfficerEmails != nil {
+		update.SetIncludeOfficerEmails(*patch.IncludeOfficerEmails)
+		hasUpdate = true
+	}
+	if !hasUpdate {
+		next.lastErr = fmt.Errorf("at least one field must be provided for update")
+		return next, nil, next.lastErr
+	}
+
+	updatedClub, err := update.Save(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	return next, updatedClub, nil
+}
+
+func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if newClubInfo == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, nil, next.lastErr
+	}
+
+	clubName := strings.TrimSpace(newClubInfo.ClubName)
+	if clubName == "" {
+		next.lastErr = fmt.Errorf("clubName is required")
+		return next, nil, next.lastErr
+	}
+
+	createdClub, err := next.client.Club.Create().
+		SetClubName(clubName).
+		SetDescription(strings.TrimSpace(newClubInfo.Description)).
+		SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime)).
+		SetImagePath(strings.TrimSpace(newClubInfo.ImagePath)).
+		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
+		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
+		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
+		Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	return next, createdClub, nil
+}
+
+func (db *DatabaseClient) DeleteClubByID(ctx context.Context, clubID int) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+	if clubID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, next.lastErr
+	}
+
+	err := next.client.Club.DeleteOneID(clubID).Exec(ctx)
+	next.lastErr = err
+	return next, err
+}
+
 // FetchOfficerClubsByUserEmail returns all clubs where the given user is listed
 // as a leader/officer. The user is identified by email.
 func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Club, error) {
