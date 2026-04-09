@@ -78,19 +78,30 @@ type OrgJSON struct {
 
 // OrgUpdatePayload contains only mutable club fields for PATCH requests.
 type OrgUpdatePayload struct {
-	ID                   int     `json:"id"`
-	ClubName             *string `json:"clubName,omitempty"`
-	Description          *string `json:"description,omitempty"`
-	MeetingTime          *string `json:"meetingTime,omitempty"`
-	ImagePath            *string `json:"imagePath,omitempty"`
-	ExternalLink         *string `json:"externalLink,omitempty"`
-	ContactInfo          *string `json:"contactInfo,omitempty"`
-	IncludeOfficerEmails *bool   `json:"includeOfficerEmails,omitempty"`
+	ID                   int       `json:"id"`
+	ClubName             *string   `json:"clubName,omitempty"`
+	Description          *string   `json:"description,omitempty"`
+	MeetingTime          *string   `json:"meetingTime,omitempty"`
+	ImagePath            *string   `json:"imagePath,omitempty"`
+	ExternalLink         *string   `json:"externalLink,omitempty"`
+	ContactInfo          *string   `json:"contactInfo,omitempty"`
+	IncludeOfficerEmails *bool     `json:"includeOfficerEmails,omitempty"`
 	Officers             *[]string `json:"officers,omitempty"`
 }
 
 type OrgDeletePayload struct {
 	ID int `json:"id"`
+}
+
+type OrgMatchJSON struct {
+	ID              int     `json:"id"`
+	ClubName        string  `json:"clubName"`
+	MatchPercentage float32 `json:"matchPercentage"`
+}
+
+type RoleSwitchTestPayload struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -110,6 +121,15 @@ type Organization struct {
 }
 
 var dbClient *DatabaseClient
+
+const testOfficerClubName = "Computer Science Club"
+
+var testRoleSwitchAllowlist = map[string]struct{}{
+	"mckallipb@southwestern.edu": {},
+	"volkinm@southwestern.edu":   {},
+	"kleinj@southwestern.edu":    {},
+	"balakrisa@southwestern.edu": {},
+}
 
 // main wires up OAuth, database connectivity, middleware-protected routes,
 // and static file serving for the Svelte frontend.
@@ -195,6 +215,7 @@ func main() {
 	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler()).Methods(http.MethodGet)
 
 	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest)).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/test/role", handleTestRoleSwitchRequest).Methods(http.MethodPost)
 
 	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
@@ -228,21 +249,25 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	_, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "No user answers found"})
 		return
 	}
 
 	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch orgs"})
 		return
 	}
 
-	sortedClubs := getClubsFromAnswers(answers, clubs)
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sortedClubs)
+	includeScores := strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("includeScores")), "true") || strings.TrimSpace(r.URL.Query().Get("includeScores")) == "1"
+	if includeScores {
+		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, clubs))
+		return
+	}
+
+	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, clubs))
 }
 
 // getClubsFromAnswers ranks clubs for a user by converting stored answers into
@@ -288,6 +313,50 @@ func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 			continue
 		}
 		ordered = append(ordered, clubJSON)
+	}
+
+	return ordered
+}
+
+func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatchJSON {
+	matchAnswers := make([]matching.Answer, 0, len(answers))
+	for _, a := range answers {
+		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionType: a.QuestionType,
+			AnswerText:   a.AnswerText,
+			Translations: a.Translations,
+		})
+	}
+
+	matchClubs := make([]matching.Organization, 0, len(clubs))
+	for _, club := range clubs {
+		if club == nil {
+			continue
+		}
+
+		matchClubs = append(matchClubs, matching.Organization{
+			ID:               club.ID,
+			Name:             club.ClubName,
+			Personality:      club.Personality,
+			Activities:       club.Activities,
+			Genders:          club.Genders,
+			Ethnicities:      club.Ethnicities,
+			Religions:        club.Religions,
+			StrictGenders:    club.StrictGenders,
+			DedicatedMajors:  club.DedicatedMajors,
+			AssociatedMajors: club.AssociatedMajors,
+			Other:            club.Other,
+		})
+	}
+
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ordered := make([]OrgMatchJSON, 0, len(ranked))
+	for _, result := range ranked {
+		ordered = append(ordered, OrgMatchJSON{
+			ID:              result.Organization.ID,
+			ClubName:        result.Organization.Name,
+			MatchPercentage: result.NormalizedScore,
+		})
 	}
 
 	return ordered
@@ -456,6 +525,71 @@ func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(adjectives)
 }
 
+func handleTestRoleSwitchRequest(w http.ResponseWriter, r *http.Request) {
+	actorEmail := strings.ToLower(strings.TrimSpace(r.Header.Get("X-User-Email")))
+	if !isAllowedRoleTestEmail(actorEmail) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: role switch endpoint is restricted to approved test users"})
+		return
+	}
+
+	var payload RoleSwitchTestPayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+
+	targetEmail := strings.ToLower(strings.TrimSpace(payload.Email))
+	if targetEmail == "" {
+		targetEmail = actorEmail
+	}
+	if !isAllowedRoleTestEmail(targetEmail) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "target email is not allowed for role switching"})
+		return
+	}
+
+	requestedRole := strings.ToLower(strings.TrimSpace(payload.Role))
+	switch requestedRole {
+	case "admin", "officer", "member":
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "role must be one of: admin, officer, member"})
+		return
+	}
+
+	if _, err := dbClient.Query().SetUserRoleForTesting(r.Context(), targetEmail, requestedRole, testOfficerClubName); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	effectiveRole := dbClient.Query().getUserRole(r.Context(), targetEmail)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":         "Role updated for testing",
+		"actorEmail":      actorEmail,
+		"targetEmail":     targetEmail,
+		"requestedRole":   requestedRole,
+		"effectiveRole":   effectiveRole,
+		"officerClubName": testOfficerClubName,
+	})
+}
+
+func isAllowedRoleTestEmail(email string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if normalized == "" {
+		return false
+	}
+	_, ok := testRoleSwitchAllowlist[normalized]
+	return ok
+}
+
 // requireAuthenticatedSession rejects requests that do not carry a valid session
 // token, and forwards the authenticated email to downstream handlers.
 func requireAuthenticatedSession(next http.Handler) http.Handler {
@@ -514,14 +648,21 @@ func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if _, err := dbClient.Query().UpsertSurveyResponseByUserEmail(r.Context(), email, payload.QuestionID, payload.Answer); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
 	// Return a confirmation payload so the client can verify what was stored.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"email":      r.Header.Get("X-User-Email"),
+		"email":      email,
 		"questionId": payload.QuestionID,
 		"answer":     payload.Answer,
-		"message":    "Response accepted",
+		"message":    "Response accepted and stored",
 	})
 }
 
