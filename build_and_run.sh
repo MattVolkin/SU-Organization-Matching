@@ -33,4 +33,5 @@ if [ "$NODE_MAJOR" -lt 24 ]; then
 fi
 
 npm run build
+cp Webpages/api-test.html Webpages/dist/
 cd 'server' && go mod tidy && go build -o server . && chmod +x server && ./server > server.log 2>&1 &

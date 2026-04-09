@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Test Harness</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #f3f4f6;
+      color: #111;
+    }
+
+    header {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.2rem; flex: 1; }
+    #auth-status { font-size: 0.85rem; opacity: 0.85; }
+
+    main {
+      max-width: 860px;
+      margin: 1.5rem auto;
+      padding: 0 1rem 4rem;
+    }
+
+    /* ── section cards ── */
+    .section {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.75rem;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 0.6rem 1rem;
+      background: #e8edf3;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header h2 { margin: 0; font-size: 0.95rem; flex: 1; }
+    .method-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .GET    { background: #d1fae5; color: #065f46; }
+    .POST   { background: #dbeafe; color: #1e40af; }
+    .PATCH  { background: #fef9c3; color: #78350f; }
+    .DELETE { background: #fee2e2; color: #991b1b; }
+
+    .section-body { padding: 1rem; display: none; }
+    .section-body.open { display: block; }
+
+    /* ── form controls ── */
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+    textarea, input[type="text"], input[type="number"] {
+      width: 100%;
+      font-family: monospace;
+      font-size: 0.8rem;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.4rem;
+      background: #f9fafb;
+      resize: vertical;
+    }
+    textarea { min-height: 90px; }
+
+    /* ── buttons ── */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 0.4rem;
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .btn-primary   { background: #1e3a5f; color: #fff; }
+    .btn-secondary { background: #e5e7eb; color: #111; }
+    .btn-danger    { background: #dc2626; color: #fff; }
+    .btn-google    { background: #4285f4; color: #fff; font-size: 0.9rem; padding: 0.5rem 1.2rem; }
+    .btn-logout    { background: #6b7280; color: #fff; }
+
+    /* ── result box ── */
+    .result {
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.4rem;
+      font-family: monospace;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .result.show { display: block; }
+    .result.ok  { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+    .result.err { background: #fff1f2; border: 1px solid #fca5a5; color: #7f1d1d; }
+
+    .controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .hint { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem; }
+    .field-group { margin-bottom: 0.6rem; }
+    .user-role-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+    }
+    .user-role-row {
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 0.6rem;
+      background: #f9fafb;
+    }
+    .user-role-email {
+      font-family: monospace;
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+      color: #374151;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>API Test Harness</h1>
+  <span id="auth-status">Not logged in</span>
+  <button class="btn-google" id="btn-login">Sign in with Google</button>
+  <button class="btn-logout" id="btn-logout" style="display:none">Logout</button>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════════════════════════════════════
+       AUTH / SESSION
+  ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section" id="sec-user">
+    <div class="section-header" onclick="toggleSection('sec-user')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/user — Current user &amp; role</h2>
+    </div>
+    <div class="section-body open">
+      <p class="hint">Returns the authenticated user's email and role.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runUser()">Run</button>
+      </div>
+      <div class="result" id="res-user"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-prefill">
+    <div class="section-header" onclick="toggleSection('sec-prefill')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/prefill — Prefill fields</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Returns email and name fields for prefilling forms.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runPrefill()">Run</button>
+      </div>
+      <div class="result" id="res-prefill"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-role-switch">
+    <div class="section-header" onclick="toggleSection('sec-role-switch')">
+      <span class="method-badge POST">POST</span>
+      <h2>/api/test/role — Switch role for testing</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Restricted testing endpoint for approved emails. Roles: admin, officer (as CS Club officer), or member.</p>
+      <div class="user-role-grid">
+        <div class="user-role-row">
+          <div class="user-role-email">mckallipb@southwestern.edu</div>
+          <div class="controls">
+            <button class="btn-primary" onclick="runRoleSwitch('mckallipb@southwestern.edu', 'admin')">Set Admin</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('mckallipb@southwestern.edu', 'officer')">Set Officer (CS Club)</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('mckallipb@southwestern.edu', 'member')">Set Member</button>
+          </div>
+        </div>
+
+        <div class="user-role-row">
+          <div class="user-role-email">volkinm@southwestern.edu</div>
+          <div class="controls">
+            <button class="btn-primary" onclick="runRoleSwitch('volkinm@southwestern.edu', 'admin')">Set Admin</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('volkinm@southwestern.edu', 'officer')">Set Officer (CS Club)</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('volkinm@southwestern.edu', 'member')">Set Member</button>
+          </div>
+        </div>
+
+        <div class="user-role-row">
+          <div class="user-role-email">kleinj@southwestern.edu</div>
+          <div class="controls">
+            <button class="btn-primary" onclick="runRoleSwitch('kleinj@southwestern.edu', 'admin')">Set Admin</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('kleinj@southwestern.edu', 'officer')">Set Officer (CS Club)</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('kleinj@southwestern.edu', 'member')">Set Member</button>
+          </div>
+        </div>
+
+        <div class="user-role-row">
+          <div class="user-role-email">balakrisa@southwestern.edu</div>
+          <div class="controls">
+            <button class="btn-primary" onclick="runRoleSwitch('balakrisa@southwestern.edu', 'admin')">Set Admin</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('balakrisa@southwestern.edu', 'officer')">Set Officer (CS Club)</button>
+            <button class="btn-secondary" onclick="runRoleSwitch('balakrisa@southwestern.edu', 'member')">Set Member</button>
+          </div>
+        </div>
+      </div>
+      <div class="result" id="res-role-switch"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SURVEY / QUIZ
+  ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section" id="sec-adjectives">
+    <div class="section-header" onclick="toggleSection('sec-adjectives')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/adjectives — Swipe questions</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Returns adjective / personality-trait swipe questions from the database.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runAdjectives()">Run</button>
+      </div>
+      <div class="result" id="res-adjectives"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-response">
+    <div class="section-header" onclick="toggleSection('sec-response')">
+      <span class="method-badge POST">POST</span>
+      <h2>/response — Submit one swipe answer</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Validates and echoes one survey answer. Does not persist.</p>
+      <div class="field-group">
+        <label for="resp-questionId">questionId (positive integer)</label>
+        <input type="number" id="resp-questionId" value="1" min="1" />
+      </div>
+      <div class="field-group">
+        <label for="resp-answer">answer (true / false)</label>
+        <select id="resp-answer" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #d1d5db;border-radius:0.4rem;background:#f9fafb;font-size:0.8rem;">
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="runResponse()">Run</button>
+      </div>
+      <div class="result" id="res-response"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-submit">
+    <div class="section-header" onclick="toggleSection('sec-submit')">
+      <span class="method-badge POST">POST</span>
+      <h2>/submit — Demographics form</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Validates and echoes demographics data. Does not persist.</p>
+      <div class="field-group">
+        <label for="submit-body">Request body (JSON)</label>
+        <textarea id="submit-body">{
+  "name": "Test Student",
+  "gender": "Woman",
+  "race": ["Asian"],
+  "religion": "None",
+  "major": ["Computer Science"]
+}</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="runSubmit()">Run</button>
+      </div>
+      <div class="result" id="res-submit"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       RESULTS
+  ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section" id="sec-results">
+    <div class="section-header" onclick="toggleSection('sec-results')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/results — Ranked matches</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Returns clubs ranked by match score for the current user's stored answers.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runResults()">Run</button>
+      </div>
+      <div class="result" id="res-results"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-example-sort">
+    <div class="section-header" onclick="toggleSection('sec-example-sort')">
+      <span class="method-badge POST">POST+GET</span>
+      <h2>Example User Sort Test (from sorting.go)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Loads adjectives, maps Example User answers from sorting.go, submits them to <code>/response</code>, then fetches scored matches from <code>/api/results?includeScores=true</code>.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runExampleUserSortTest()">Run Example User Match</button>
+      </div>
+      <div class="result" id="res-example-sort"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       OFFICER
+  ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section" id="sec-officer-orgs">
+    <div class="section-header" onclick="toggleSection('sec-officer-orgs')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/officer/orgs — Officer's clubs</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Returns the clubs managed by the authenticated officer.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runOfficerOrgs()">Run</button>
+      </div>
+      <div class="result" id="res-officer-orgs"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-officer-patch">
+    <div class="section-header" onclick="toggleSection('sec-officer-patch')">
+      <span class="method-badge PATCH">PATCH</span>
+      <h2>/api/officer/orgs — Update own club</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Partially updates a club the officer manages. Only include fields that should change. <code>id</code> is required.</p>
+      <div class="field-group">
+        <label for="officer-patch-body">Request body (JSON)</label>
+        <textarea id="officer-patch-body">{
+  "id": 1,
+  "description": "Updated by officer"
+}</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="runOfficerPatch()">Run</button>
+      </div>
+      <div class="result" id="res-officer-patch"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       ADMIN
+  ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section" id="sec-admin-orgs">
+    <div class="section-header" onclick="toggleSection('sec-admin-orgs')">
+      <span class="method-badge GET">GET</span>
+      <h2>/api/admin/orgs — All clubs (admin)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Returns every club. Requires admin role.</p>
+      <div class="controls">
+        <button class="btn-primary" onclick="runAdminOrgs()">Run</button>
+      </div>
+      <div class="result" id="res-admin-orgs"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-admin-create">
+    <div class="section-header" onclick="toggleSection('sec-admin-create')">
+      <span class="method-badge POST">POST</span>
+      <h2>/api/admin/orgs — Create club (admin)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint"><code>clubName</code> is required. Officer emails in <code>officers</code> must belong to existing users.</p>
+      <div class="field-group">
+        <label for="admin-create-body">Request body (JSON)</label>
+        <textarea id="admin-create-body">{
+  "clubName": "Test Club",
+  "description": "A club created via the test harness",
+  "meetingTime": "Mondays at 7:00 PM",
+  "imagePath": "/images/test-club.png",
+  "externalLink": "https://example.com/test-club",
+  "contactInfo": "test-club@example.edu",
+  "includeOfficerEmails": false,
+  "officers": []
+}</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="runAdminCreate()">Run</button>
+      </div>
+      <div class="result" id="res-admin-create"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-admin-patch">
+    <div class="section-header" onclick="toggleSection('sec-admin-patch')">
+      <span class="method-badge PATCH">PATCH</span>
+      <h2>/api/admin/orgs — Update club (admin)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Partially updates any club. <code>id</code> is required. Only include fields that should change.</p>
+      <div class="field-group">
+        <label for="admin-patch-body">Request body (JSON)</label>
+        <textarea id="admin-patch-body">{
+  "id": 1,
+  "description": "Updated by admin",
+  "meetingTime": "Tuesdays at 6:00 PM"
+}</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="runAdminPatch()">Run</button>
+      </div>
+      <div class="result" id="res-admin-patch"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-admin-delete">
+    <div class="section-header" onclick="toggleSection('sec-admin-delete')">
+      <span class="method-badge DELETE">DELETE</span>
+      <h2>/api/admin/orgs — Delete club (admin)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Permanently deletes a club by id. This cannot be undone.</p>
+      <div class="field-group">
+        <label for="admin-delete-id">Club id</label>
+        <input type="number" id="admin-delete-id" value="1" min="1" />
+      </div>
+      <div class="controls">
+        <button class="btn-danger" onclick="runAdminDelete()">Delete</button>
+      </div>
+      <div class="result" id="res-admin-delete"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* ────────────────────────────────────────────────────────────────
+     Auth state
+  ──────────────────────────────────────────────────────────────── */
+  let authToken = localStorage.getItem('authToken') || '';
+
+  function updateAuthUI(email) {
+    const status = document.getElementById('auth-status');
+    const loginBtn = document.getElementById('btn-login');
+    const logoutBtn = document.getElementById('btn-logout');
+    if (email) {
+      status.textContent = `Signed in as ${email}`;
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = '';
+    } else {
+      status.textContent = 'Not logged in';
+      loginBtn.style.display = '';
+      logoutBtn.style.display = 'none';
+    }
+  }
+
+  /* Check if we already have a stored session. */
+  (async function init() {
+    if (!authToken) return;
+    try {
+      const response = await api('GET', '/api/user');
+      if (response.ok && response.data && response.data.email) {
+        updateAuthUI(response.data.email);
+      }
+    } catch {
+      authToken = '';
+      localStorage.removeItem('authToken');
+    }
+  })();
+
+  /* ── Google popup login (mirrors login_popup.svelte) ── */
+  document.getElementById('btn-login').addEventListener('click', () => {
+    const popup = window.open(
+      '/login?popup=1',
+      'google-login',
+      'width=520,height=640,menubar=no,toolbar=no,location=yes,resizable=yes,scrollbars=yes,status=no'
+    );
+    if (!popup) {
+      alert('Popup blocked. Allow popups for this site, then try again.');
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type !== 'google-auth-success') return;
+    if (event.data.token) {
+      authToken = event.data.token;
+      localStorage.setItem('authToken', authToken);
+    }
+    updateAuthUI(event.data.email || '');
+  });
+
+  /* ── Logout ── */
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    await fetch('/logout', { method: 'POST', credentials: 'include', headers });
+    authToken = '';
+    localStorage.removeItem('authToken');
+    updateAuthUI('');
+  });
+
+  /* ────────────────────────────────────────────────────────────────
+     Generic fetch helper
+  ──────────────────────────────────────────────────────────────── */
+  async function api(method, url, body) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    const opts = { method, headers, credentials: 'include' };
+    if (body !== undefined && body !== null && method !== 'GET') {
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, opts);
+    const status = res.status;
+    let data;
+    const text = await res.text();
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    return { status, data, ok: res.ok };
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     Result rendering
+  ──────────────────────────────────────────────────────────────── */
+  function showResult(id, result) {
+    const el = document.getElementById(id);
+    if (result instanceof Error) {
+      el.textContent = `Network error: ${result.message}`;
+      el.className = 'result show err';
+      return;
+    }
+    const { status, data, ok } = result;
+    el.textContent = `HTTP ${status}\n\n${JSON.stringify(data, null, 2)}`;
+    el.className = `result show ${ok ? 'ok' : 'err'}`;
+  }
+
+  function parseBodyField(id) {
+    const raw = document.getElementById(id).value;
+    try {
+      return { ok: true, value: JSON.parse(raw) };
+    } catch (e) {
+      return { ok: false, error: `Invalid JSON: ${e.message}` };
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     Section toggle
+  ──────────────────────────────────────────────────────────────── */
+  function toggleSection(id) {
+    const body = document.querySelector(`#${id} .section-body`);
+    body.classList.toggle('open');
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     Test runners
+  ──────────────────────────────────────────────────────────────── */
+
+  const exampleUserFromSortingGo = {
+    personality: [
+      'Welcoming',
+      'Hard Working',
+      'Caring',
+      'Creative',
+      'Nerdy',
+      'Fun',
+    ],
+    activities: [
+      'Board Games',
+      'Video Games',
+      'Giving Presentations',
+    ],
+    demographics: {
+      name: 'Example User',
+      gender: 'Man',
+      race: ['White'],
+      religion: 'No Religion',
+      major: ['Computer Science'],
+    },
+  };
+
+  function normalizeTerm(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function extractQuestionTerm(question) {
+    const translations = question && question.translations ? question.translations : {};
+    const english = Array.isArray(translations.en) ? translations.en : [];
+    if (english.length > 0 && String(english[0]).trim() !== '') {
+      return String(english[0]).trim();
+    }
+    const term = Array.isArray(translations.term) ? translations.term : [];
+    if (term.length > 0 && String(term[0]).trim() !== '') {
+      return String(term[0]).trim();
+    }
+    return '';
+  }
+
+  function determineExampleAnswer(questionType, adjectiveTerm) {
+    const normalizedType = normalizeTerm(questionType).replaceAll('_', '');
+    const normalizedTerm = normalizeTerm(adjectiveTerm);
+    const personalitySet = new Set(exampleUserFromSortingGo.personality.map(normalizeTerm));
+    const activitiesSet = new Set(exampleUserFromSortingGo.activities.map(normalizeTerm));
+
+    if (normalizedType === 'personalitytraits' || normalizedType === 'personalitytrait' || normalizedType === 'personality') {
+      return personalitySet.has(normalizedTerm);
+    }
+
+    if (normalizedType === 'adjective' || normalizedType === 'activity' || normalizedType === 'activities') {
+      return activitiesSet.has(normalizedTerm);
+    }
+
+    return personalitySet.has(normalizedTerm) || activitiesSet.has(normalizedTerm);
+  }
+
+  function formatScoredResults(matches) {
+    if (!Array.isArray(matches) || matches.length === 0) {
+      return 'No matches were returned.';
+    }
+
+    const lines = [];
+    lines.push('Sorting Results (Org Name + Match Percentage)');
+    lines.push('');
+    matches.forEach((entry, index) => {
+      const orgName = entry.clubName || entry.name || `Org ${index + 1}`;
+      const pctRaw = Number(entry.matchPercentage);
+      const pct = Number.isFinite(pctRaw) ? pctRaw.toFixed(2) : '0.00';
+      lines.push(`${index + 1}. ${orgName} (${pct}%)`);
+    });
+    return lines.join('\n');
+  }
+
+  async function runUser() {
+    try { showResult('res-user', await api('GET', '/api/user')); }
+    catch (e) { showResult('res-user', e); }
+  }
+
+  async function runPrefill() {
+    try { showResult('res-prefill', await api('GET', '/api/prefill')); }
+    catch (e) { showResult('res-prefill', e); }
+  }
+
+  async function runRoleSwitch(email, role) {
+    try {
+      showResult('res-role-switch', await api('POST', '/api/test/role', { email, role }));
+    } catch (e) {
+      showResult('res-role-switch', e);
+    }
+  }
+
+  async function runAdjectives() {
+    try { showResult('res-adjectives', await api('GET', '/api/adjectives')); }
+    catch (e) { showResult('res-adjectives', e); }
+  }
+
+  async function runResponse() {
+    const questionId = parseInt(document.getElementById('resp-questionId').value, 10);
+    const answer = document.getElementById('resp-answer').value === 'true';
+    try { showResult('res-response', await api('POST', '/response', { questionId, answer })); }
+    catch (e) { showResult('res-response', e); }
+  }
+
+  async function runSubmit() {
+    const parsed = parseBodyField('submit-body');
+    if (!parsed.ok) { showResult('res-submit', { status: 0, data: parsed.error, ok: false }); return; }
+    try { showResult('res-submit', await api('POST', '/submit', parsed.value)); }
+    catch (e) { showResult('res-submit', e); }
+  }
+
+  async function runResults() {
+    try { showResult('res-results', await api('GET', '/api/results')); }
+    catch (e) { showResult('res-results', e); }
+  }
+
+  async function runExampleUserSortTest() {
+    const resultId = 'res-example-sort';
+    const resultEl = document.getElementById(resultId);
+
+    try {
+      const adjectivesResponse = await api('GET', '/api/adjectives');
+      if (!adjectivesResponse.ok || !Array.isArray(adjectivesResponse.data)) {
+        showResult(resultId, {
+          status: adjectivesResponse.status,
+          ok: false,
+          data: {
+            error: 'Failed to load adjectives',
+            response: adjectivesResponse.data,
+          },
+        });
+        return;
+      }
+
+      const adjectiveQuestions = adjectivesResponse.data.filter((q) => q && Number(q.id) > 0);
+      const submitted = [];
+      let submitFailures = 0;
+      let firstFailure = null;
+
+      for (const question of adjectiveQuestions) {
+        const term = extractQuestionTerm(question);
+        const answerValue = determineExampleAnswer(question.question_type, term);
+        const responsePayload = {
+          questionId: Number(question.id),
+          answer: answerValue,
+        };
+
+        const submitResponse = await api('POST', '/response', responsePayload);
+        if (!submitResponse.ok) {
+          submitFailures += 1;
+          if (!firstFailure) {
+            firstFailure = {
+              questionId: responsePayload.questionId,
+              term,
+              answer: answerValue,
+              status: submitResponse.status,
+              response: submitResponse.data,
+            };
+          }
+          continue;
+        }
+
+        submitted.push({
+          questionId: responsePayload.questionId,
+          questionType: question.question_type,
+          term,
+          answer: answerValue,
+        });
+      }
+
+      // Keep demographic payload aligned with the example user as part of the simulation flow.
+      await api('POST', '/submit', exampleUserFromSortingGo.demographics);
+
+      const scoredResultsResponse = await api('GET', '/api/results?includeScores=true');
+      if (!scoredResultsResponse.ok) {
+        showResult(resultId, {
+          status: scoredResultsResponse.status,
+          ok: false,
+          data: {
+            error: 'Failed to fetch scored results',
+            submittedCount: submitted.length,
+            submitFailures,
+            response: scoredResultsResponse.data,
+          },
+        });
+        return;
+      }
+
+      const summaryText = formatScoredResults(scoredResultsResponse.data);
+      const lines = [
+        'HTTP 200',
+        '',
+        `Submitted adjective/personality responses: ${submitted.length}/${adjectiveQuestions.length}`,
+        `Submit failures: ${submitFailures}`,
+        firstFailure ? `First failure: ${JSON.stringify(firstFailure, null, 2)}` : 'First failure: none',
+        '',
+        summaryText,
+      ];
+
+      resultEl.textContent = lines.join('\n');
+      resultEl.className = 'result show ok';
+    } catch (e) {
+      showResult(resultId, e);
+    }
+  }
+
+  async function runOfficerOrgs() {
+    try { showResult('res-officer-orgs', await api('GET', '/api/officer/orgs')); }
+    catch (e) { showResult('res-officer-orgs', e); }
+  }
+
+  async function runOfficerPatch() {
+    const parsed = parseBodyField('officer-patch-body');
+    if (!parsed.ok) { showResult('res-officer-patch', { status: 0, data: parsed.error, ok: false }); return; }
+    try { showResult('res-officer-patch', await api('PATCH', '/api/officer/orgs', parsed.value)); }
+    catch (e) { showResult('res-officer-patch', e); }
+  }
+
+  async function runAdminOrgs() {
+    try { showResult('res-admin-orgs', await api('GET', '/api/admin/orgs')); }
+    catch (e) { showResult('res-admin-orgs', e); }
+  }
+
+  async function runAdminCreate() {
+    const parsed = parseBodyField('admin-create-body');
+    if (!parsed.ok) { showResult('res-admin-create', { status: 0, data: parsed.error, ok: false }); return; }
+    try { showResult('res-admin-create', await api('POST', '/api/admin/orgs', parsed.value)); }
+    catch (e) { showResult('res-admin-create', e); }
+  }
+
+  async function runAdminPatch() {
+    const parsed = parseBodyField('admin-patch-body');
+    if (!parsed.ok) { showResult('res-admin-patch', { status: 0, data: parsed.error, ok: false }); return; }
+    try { showResult('res-admin-patch', await api('PATCH', '/api/admin/orgs', parsed.value)); }
+    catch (e) { showResult('res-admin-patch', e); }
+  }
+
+  async function runAdminDelete() {
+    const id = parseInt(document.getElementById('admin-delete-id').value, 10);
+    try { showResult('res-admin-delete', await api('DELETE', '/api/admin/orgs', { id })); }
+    catch (e) { showResult('res-admin-delete', e); }
+  }
+</script>
+
+</body>
+</html>
