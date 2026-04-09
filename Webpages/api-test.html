@@ -570,7 +570,7 @@
      Test runners
   ──────────────────────────────────────────────────────────────── */
 
-  const exampleUserFromSortingGo = {
+  const exampleUserForSorting = {
     personality: [
       'Welcoming',
       'Hard Working',
@@ -613,8 +613,8 @@
   function determineExampleAnswer(questionType, adjectiveTerm) {
     const normalizedType = normalizeTerm(questionType).replaceAll('_', '');
     const normalizedTerm = normalizeTerm(adjectiveTerm);
-    const personalitySet = new Set(exampleUserFromSortingGo.personality.map(normalizeTerm));
-    const activitiesSet = new Set(exampleUserFromSortingGo.activities.map(normalizeTerm));
+    const personalitySet = new Set(exampleUserForSorting.personality.map(normalizeTerm));
+    const activitiesSet = new Set(exampleUserForSorting.activities.map(normalizeTerm));
 
     if (normalizedType === 'personalitytraits' || normalizedType === 'personalitytrait' || normalizedType === 'personality') {
       return personalitySet.has(normalizedTerm);
@@ -741,7 +741,7 @@
       }
 
       // Keep demographic payload aligned with the example user as part of the simulation flow.
-      await api('POST', '/submit', exampleUserFromSortingGo.demographics);
+      await api('POST', '/submit', exampleUserForSorting.demographics);
 
       const scoredResultsResponse = await api('GET', '/api/results?includeScores=true');
       if (!scoredResultsResponse.ok) {
