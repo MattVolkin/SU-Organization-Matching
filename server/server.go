@@ -15,6 +15,8 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+
+	gomail "gopkg.in/mail.v2"
 )
 
 // host=localhost port=5432 user=dev_user password=testing
@@ -390,6 +392,9 @@ func handleAdminCreateOrgRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// send email
+	sendEmailToOfficers(createdClub)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(orgJSONFromEntClub(createdClub))
@@ -697,6 +702,43 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		"major":    submission.Major,
 		"email":    r.Header.Get("X-User-Email"),
 	})
+}
+
+func sendEmailToOfficers(club *ent.Club) {
+	if club == nil || len(club.Edges.Leaders) == 0 {
+		return
+	}
+
+	for _, leader := range club.Edges.Leaders {
+		if leader == nil {
+			continue
+		}
+		email := strings.TrimSpace(leader.Email)
+		if email == "" {
+			continue
+		}
+		// sendEmail(email, fmt.Sprintf("Your club '%s' has been created/updated", club.ClubName), "Please check the officer portal for details.")
+	}
+}
+
+func sendEmail(to, subject, body string) {
+	message := gomail.NewMessage()
+
+    // Set email headers
+    message.SetHeader("From", "youremail@email.com")
+    message.SetHeader("To", to)
+    message.SetHeader("Subject", subject)
+
+    // Set email body
+    message.SetBody("text/plain", body)
+
+    // Set up the SMTP dialer
+    dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+
+    // Send the email
+    if err := dialer.DialAndSend(message); err != nil {
+        fmt.Println("Error:", err)
+    }
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response
