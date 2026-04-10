@@ -45,6 +45,8 @@
 			cardObject.advanceCard(count);
 				barObject.advanceProgress(count)
 
+			checkIfFinished()
+
 	}
 
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
@@ -69,6 +71,8 @@
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
 			barObject.advanceProgress(count)		
+
+			checkIfFinished()
 
 	}
 
@@ -138,25 +142,30 @@
 			console.log(personality);
 		}
 
-		console.log("count is " + count + "and card list length is " + cardObject.getListLength());
+
+	}
+
+		function checkIfFinished() { // method to check if we have gone through all the cards, if so, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+					console.log("count is " + count + " and card list length is " + cardObject.getListLength());
 
 		
 		if(count >= cardObject.getListLength()-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+			
 			console.log("finished all cards, sending information to backend");
 
 			pushAllUserInformationToBackend();
-			window.location.replace("https://stackoverflow.com");
+			window.location.replace("/results.html");
 
 
 
-		}
+		}	
 	}
 
 		function pushAllUserInformationToBackend() { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
 			
 		for(let i = 0; i < activities.length; i++) { // loop through all the cards and send information about whether the user liked them or not to the backend to be used in the fitness function and matching algorithm
 				
-			sendSwipeInformation(activities[i].id, true);
+			cardObject.sendSwipeInformation(activities[i].id, true);
 				console.log("sent activity information to backend about liking " + activities[i].term);
 
 		}
