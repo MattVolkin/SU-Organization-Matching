@@ -50,9 +50,9 @@
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
 		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
-				activities = [...activities, cardObject.getTerm()];
+				activities = [...activities, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
 			} else {
-				personality = [...personality, cardObject.getTerm()];
+				personality = [...personality, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
 			}
 
 			// animation code
@@ -63,8 +63,6 @@
 												} , 3000);
 			console.log(typeof cardObject);
 
-			cardObject.sendSwipeInformation(cardObject.getID(), true); // send information to backend about the card that was swiped right (liked) to be used in the fitness function and matching algorithm
-			console.log("sent information to backend about liking " + cardObject.getTerm());
 
 			count += 1;
 
@@ -140,14 +138,31 @@
 			console.log(personality);
 		}
 
-
-
-
-
-
+		console.log("count is " + count + "and card list length is " + cardObject.getListLength());
 
 		
+		if(count >= cardObject.getListLength()-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+			console.log("finished all cards, sending information to backend");
+
+			pushAllUserInformationToBackend();
+			window.location.replace("https://stackoverflow.com");
+
+
+
+		}
 	}
+
+		function pushAllUserInformationToBackend() { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+			
+		for(let i = 0; i < activities.length; i++) { // loop through all the cards and send information about whether the user liked them or not to the backend to be used in the fitness function and matching algorithm
+				
+			sendSwipeInformation(activities[i].id, true);
+				console.log("sent activity information to backend about liking " + activities[i].term);
+
+		}
+
+	}
+
 
 	function keyboardHandler(event: KeyboardEvent) { // method to capture the left and right arrow keys to perform the same function as swiping left and right, this is for accessibility reasons
 		console.log(event.key);

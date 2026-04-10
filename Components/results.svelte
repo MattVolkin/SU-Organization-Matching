@@ -24,18 +24,51 @@
   import LoginPopup from './login_popup.svelte'
   import { APICreater } from './APIHandler.svelte';
 
+  const selectedImageStorageKey = 'club-selected-images';
+  const legacySelectedImageStorageKey = 'club-selected-images-legacy';
+  const defaultResultImage = '';
+
   let results = $state([]) // stores matched clubs returned by the results API
-  let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
+  let pageNum = $state(1) // for keeping track of what page of results the user is on.
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
   let selectedImageByClub = $state({})
+  let ClubsPerPage = 5
+  let threshold = 50
 
   function normalizeClubKey(value) {
     return String(value || '').trim().toLowerCase()
   }
 
-  function getSelectedImageForCurrentClub() {
-    const currentClubName = results[pageNum - 1]
+  function normalizeClubScore(value) {
+    return typeof value === 'number' ? value : Number(value || 0)
+  }
+
+  function getClubName(club) {
+    return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club')
+  }
+
+  function getClubScore(club) {
+    return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
+  }
+
+  function getFilteredResults() {
+    return results.filter((club) => getClubScore(club) >= threshold)
+  }
+
+  function getTotalPages() {
+    const filteredResults = getFilteredResults()
+    return filteredResults.length > 0 ? Math.ceil(filteredResults.length / ClubsPerPage) : 0
+  }
+
+  function getVisibleResults() {
+    const filteredResults = getFilteredResults()
+    const startIndex = (pageNum - 1) * ClubsPerPage
+    return filteredResults.slice(startIndex, startIndex + ClubsPerPage)
+  }
+
+  function getSelectedImageForClub(club) {
+    const currentClubName = getClubName(club)
     if (!currentClubName) {
       return defaultResultImage
     }
@@ -99,14 +132,19 @@
   }
 
   async function getResults() {
-    const payload = await APICreater('GET', '/api/results', null)
+    const payload = await APICreater('GET', '/api/results?includeScores=1', null)
     results = Array.isArray(payload) && payload.length > 0
-      ? payload.map((item) => (typeof item === 'string' ? item : (item?.clubName || item?.ClubName || 'Unknown Club')))
-      : ["Computer Science Club"]
+      ? payload.map((item) => ({
+          id: typeof item?.id === 'number' ? item.id : 0,
+          clubName: getClubName(item),
+          matchPercentage: getClubScore(item),
+        }))
+      : []
+    pageNum = 1
   }
 
   async function nextPage() {
-    if (pageNum < results.length) {
+    if (pageNum < getTotalPages()) {
       pageNum += 1
     }
   }
@@ -114,7 +152,6 @@
   async function prevPage() {
     if (pageNum > 1) {
       pageNum -= 1
-      await getResults() // for future implementation when we have more results than we want to show on one page, this will fetch the previous page of results from the backend
     }
   }
   
@@ -150,34 +187,42 @@
     </section>
   {:else}
     <section class="result-card">
-      <h1>{results[pageNum-1]}</h1>
+      {#if getVisibleResults().length === 0}
+        <p>No clubs meet the current threshold of {threshold}%.</p>
+      {:else}
+        {#each getVisibleResults() as club, index (club.id || `${club.clubName}-${index}`)}
+          <article class="club-card">
+            <h1>{club.clubName}</h1>
 
-      {#if getSelectedImageForCurrentClub()}
-        <img
-          class="club-hero-image"
-          src={getSelectedImageForCurrentClub()}
-          alt={`Selected club image for ${results[pageNum - 1]}`}
-        />
+            {#if getSelectedImageForClub(club)}
+              <img
+                class="club-hero-image"
+                src={getSelectedImageForClub(club)}
+                alt={`Selected club image for ${club.clubName}`}
+              />
+            {/if}
+
+            <p class="match-score">Match score: {club.matchPercentage.toFixed(0)}%</p>
+            <h2>Hi, we are {club.clubName}! We are commited to to provide a safe space to play games and hang out with other computer nerds. </h2>
+
+            <h3> Activities we do include:</h3>
+            <ul>
+              <li>Playing games</li>
+              <li>Trivia nights </li>
+              <li>Presentation nights</li>
+              <li>Video game tournaments</li>
+              <li>Scavenger hunts</li>
+            </ul>
+            <h3>Meeting Information: </h3>
+            <p> Every Thursday at 6:30 pm in FJS 310</p>
+          </article>
+        {/each}
+
+        <div class="pager">
+          <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
+          <button onclick={nextPage} disabled={pageNum >= getTotalPages()}>Next</button>
+        </div>
       {/if}
-
-      <h2>Hi, we are {results[pageNum-1]}! We are commited to to provide a safe space to play games and hang out with other computer nerds. </h2> 
-
-    
-
-      <h3> Activities we do include:</h3>
-      <ul>
-        <li>Playing games</li>
-        <li>Trivia nights </li>
-        <li>Presentation nights</li>
-        <li>Video game tournaments</li>
-        <li>Scavenger hunts</li>
-      </ul>
-      <h3>Meeting Information: </h3>
-      <p> Every Thursday at 6:30 pm in FJS 310</p>
-          <div class="pager">
-        <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
-        <button onclick={nextPage} disabled={pageNum >= results.length}>Next</button>
-      </div>
     </section>
   {/if}
 </main>
@@ -222,6 +267,29 @@
   .status-card p {
     margin: 0;
     font-size: 1rem;
+  }
+
+  .result-card {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .club-card {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .club-card:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .match-score {
+    margin: 0;
+    font-weight: 700;
+    color: var(--action);
   }
 
   h1 {

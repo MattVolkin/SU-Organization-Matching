@@ -105,11 +105,9 @@
     }
 }
 
+
 	export async function sendSwipeInformation(IDNumber, answer) { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-    
-		// if(counter >= items.length) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-		// 	goto('/results');
-		// 	console.log("finished all cards, sending information to backend");
+
 		try {
       	 APICreater('POST', '/response', { "questionId": IDNumber, "answer": answer });
 	} catch (error) {
@@ -137,13 +135,6 @@
 		term = items[counter][lang].term;
 		def = items[counter][lang].def;
 		console.log("tried to advance card to" + counter + ":" + term + ":" + def);
-
-		if(counter >= items.length-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-			console.log("finished all cards, sending information to backend");
-
-		}
-
-
 		
 	}
 
