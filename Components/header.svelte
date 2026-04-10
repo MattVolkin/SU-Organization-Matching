@@ -25,9 +25,20 @@
   let isMenuOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
+  let resolvedUserType = $state('user');
   let officerClubs = $state([]);
   let isTestMode = $state(false);
   let isAuthChecking = $state(true);
+
+  function getApiUserType() {
+    return resolvedUserType === 'admin' || resolvedUserType === 'officer'
+      ? resolvedUserType
+      : userType;
+  }
+
+  function getOrgApiPath() {
+    return getApiUserType() === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs';
+  }
 
   async function refreshUser() {
     isAuthChecking = true;
@@ -47,12 +58,15 @@
       if (!res.ok) {
         userEmail = '';
         authToken = '';
+        resolvedUserType = 'user';
         localStorage.removeItem('authToken');
         return;
       }
 
       const data = await res.json();
       userEmail = data.email || '';
+      const role = String(data?.role || '').toLowerCase();
+      resolvedUserType = role === 'admin' || role === 'officer' ? role : 'user';
     } finally {
       isAuthChecking = false;
     }
@@ -65,7 +79,7 @@
     }
 
     try {
-      const clubs = await APICreater('GET', '/api/officer/orgs', null, authToken);
+      const clubs = await APICreater('GET', getOrgApiPath(), null, authToken);
       officerClubs = Array.isArray(clubs) ? clubs : [];
     } catch (error) {
       console.error('Unable to load officer clubs', error);

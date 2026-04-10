@@ -1,0 +1,5 @@
+ id |  club_name  | description | meeting_time | image_path | external_link | contact_info | include_officer_emails |          updated_at           |     personality      |   activities    | genders | ethnicities | religions | strict_genders | dedicated_majors | associated_majors | other 
+----+-------------+-------------+--------------+------------+---------------+--------------+------------------------+-------------------------------+----------------------+-----------------+---------+-------------+-----------+----------------+------------------+-------------------+-------
+ 29 | Kappa Sigma |             |              |            |               |              | f                      | 2026-04-08 19:37:13.351931+00 | ["Leader", "Social"] | ["Group Meals"] | []      | []          | []        | f              | []               | []                | []
+(1 row)
+

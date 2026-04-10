@@ -7,7 +7,7 @@
 	import { useSwipe , type SwipeCustomEvent } from 'svelte-gestures'; // import methods and events from Svelte-Gesture library
 	import Card from './Card.svelte'; // import the Card Component and it's relevant method (advanceCard) to display the details of a word and its description
 	import Bar from './ProgressBar.svelte'
-	import API from './APIHandler.svelte' // import the API handler to make calls to the backend and get the data for the cards
+	import API, { APICreater } from './APIHandler.svelte' // import the API handler to make calls to the backend and get the data for the cards
 
 
 
@@ -62,7 +62,12 @@
 				right = !right;
 												} , 3000);
 			console.log(typeof cardObject);
+
+			cardObject.sendSwipeInformation(cardObject.getID(), true); // send information to backend about the card that was swiped right (liked) to be used in the fitness function and matching algorithm
+			console.log("sent information to backend about liking " + cardObject.getTerm());
+
 			count += 1;
+
 			cardObject.setDirection(directionInt)
 			cardObject.advanceCard(count);
 			barObject.advanceProgress(count)		
@@ -138,6 +143,9 @@
 
 
 
+
+
+
 		
 	}
 
@@ -160,27 +168,15 @@
 </script>
 
 
-<!-- 
-<h1>Hello {name}!</h1>
-
-<input bind:value={name} />
-<button onclick={() => count += 1}>
-	clicks: {count}
-</button>
- -->
-
 <svelte:window onkeydown={keyboardHandler} />
 
 
 <div class="swipedContainer">
-	<h1>Swipe right if you like the activity,</h1>
-	<h1>Swipe left if you don't.</h1>
-	<!-- Debug information -->
-	<!-- <h2>Activities you like: {activities} </h2>
-	<h2>Personality traits you like: {personality} </h2>
-	<h2> {count} </h2> -->
-	
+	<h1>Swipe right if you like the activity</h1>
+	<h1>Swipe left if you don't like the activity!</h1>
+
 	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+
 
 
 
@@ -206,6 +202,11 @@
 
 
 <style>
+	:global(html),
+	:global(body) {
+		margin: 0;
+		padding: 0;
+	}
 
 	h1 {
 		margin: 10px;
@@ -235,20 +236,16 @@
   height: 100vh;       /* Example height to fill the viewport */
 	}
 
-
- @media (prefers-color-scheme: dark) {
 	.swipedContainer {
-		
-	background: #ad0000;
-	background: linear-gradient(90deg,rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 255) 33%, rgba(0, 0, 0, 255) 66%, rgba(0, 168, 67, 1) 100%);		
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-
-
 		overflow: hidden;
-
+		background: #ad0000;
+		background: linear-gradient(90deg, rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 255) 33%, rgba(0, 0, 0, 255) 66%, rgba(0, 168, 67, 1) 100%);
 	}
-}
+
+	.bar {
+		margin-top: 20px;
+		margin-bottom: 20px;
+		width: 50vw;
+	}
 
 </style>

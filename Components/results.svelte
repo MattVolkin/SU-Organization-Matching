@@ -24,14 +24,11 @@
   import LoginPopup from './login_popup.svelte'
   import { APICreater } from './APIHandler.svelte';
 
-  let results = $state(["Computer Science Club"]) // for now this is just a placeholder, in the future this will be an array of clubs that match the user's interests and demographics, fetched from the backend server when the page loads
+  let results = $state([]) // stores matched clubs returned by the results API
   let pageNum = $state(1) // for keeping track of what page of results the user is on. Not currently being used but will be helpful for future implementation 
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
   let selectedImageByClub = $state({})
-  const defaultResultImage = new URL('./20250925_185027.jpg', import.meta.url).href
-  const selectedImageStorageKey = 'club-selected-images'
-  const legacySelectedImageStorageKey = 'selectedClubResultImages'
 
   function normalizeClubKey(value) {
     return String(value || '').trim().toLowerCase()
@@ -88,22 +85,21 @@
       return;
     }
 
-    isAuthenticated = false;
-    isAuthChecking = false;
+    isAuthenticated = false
+    isAuthChecking = false
   }
 
   function handleAuthLogout() {
-    isAuthenticated = false;
-    isAuthChecking = false;
+    isAuthenticated = false
+    isAuthChecking = false
   }
 
   function handleAuthLogin() {
-    promptLoginIfNeeded();
+    promptLoginIfNeeded()
   }
 
   async function getResults() {
-    const response = await APICreater('GET', '/results')
-    const payload = await response.json().catch(() => [])
+    const payload = await APICreater('GET', '/api/results', null)
     results = Array.isArray(payload) && payload.length > 0
       ? payload.map((item) => (typeof item === 'string' ? item : (item?.clubName || item?.ClubName || 'Unknown Club')))
       : ["Computer Science Club"]
@@ -128,15 +124,15 @@
   }
 
   onMount(() => {
-    window.addEventListener('auth-login', handleAuthLogin);
-    window.addEventListener('auth-logout', handleAuthLogout);
+    window.addEventListener('auth-login', handleAuthLogin)
+    window.addEventListener('auth-logout', handleAuthLogout)
     loadSelectedClubImages();
     promptLoginIfNeeded();
   });
 
   onDestroy(() => {
-    window.removeEventListener('auth-login', handleAuthLogin);
-    window.removeEventListener('auth-logout', handleAuthLogout);
+    window.removeEventListener('auth-login', handleAuthLogin)
+    window.removeEventListener('auth-logout', handleAuthLogout)
   });
     
 </script>

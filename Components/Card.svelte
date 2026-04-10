@@ -105,19 +105,18 @@
     }
 }
 
-	async function sendSwipeInformation() { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+	export async function sendSwipeInformation(IDNumber, answer) { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
     
-		if(counter >= items.length) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-			goto('/results');
-			console.log("finished all cards, sending information to backend");
+		// if(counter >= items.length) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+		// 	goto('/results');
+		// 	console.log("finished all cards, sending information to backend");
 		try {
-      //const adjectivesList = await APICreater('SEND', '/api/adjectives', null);
-		// TODO send the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+      	 APICreater('POST', '/response', { "questionId": IDNumber, "answer": answer });
 	} catch (error) {
-      console.error('Unable to load officer clubs', error);
+      console.error('Unable to send swipe information', error);
     }
 	}
-}
+
 
 	const range = (start, end, targetArray) => { // range function to get a sub-array of the full question array (without modifying the original)
     let arr = [];
@@ -137,11 +136,10 @@
 		counter = index;
 		term = items[counter][lang].term;
 		def = items[counter][lang].def;
-		console.log("tried to advance card" + counter + ":" + term + ":" + def);
+		console.log("tried to advance card to" + counter + ":" + term + ":" + def);
 
 		if(counter >= items.length-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
 			console.log("finished all cards, sending information to backend");
-			sendSwipeInformation();
 
 		}
 
@@ -160,6 +158,10 @@
 
 	export function getTag() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current question_type before changing it
 		return question_type;
+	}
+
+	export function getID() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current id before changing it
+		return items[counter].id;
 	}
 
 	export function getListLength() {

@@ -14,6 +14,7 @@
   const uploadedImagesStorageKey = 'club-uploaded-images';
   const selectedImageStorageKey = 'club-selected-images';
 
+  let userType = 'user';
   let pageNotice = $state('');
   let accessibleClubs = $state<string[]>(["Test Club 1"]);
   let selectedClubFromUrl = $state('');
@@ -28,6 +29,32 @@
   let isTestMode = $state(false);
   let previewUrl = $state('');
 
+  function getOrgApiPath() {
+    return userType === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs';
+  }
+
+  async function loadUserType() {
+    const tokenFromStorage = localStorage.getItem('authToken') || '';
+    const headers = tokenFromStorage
+      ? { Authorization: `Bearer ${tokenFromStorage}` }
+      : {};
+
+    const response = await fetch('/api/user', {
+      method: 'GET',
+      credentials: 'include',
+      headers,
+    });
+
+    if (!response.ok) {
+      userType = 'user';
+      return;
+    }
+
+    const data = await response.json().catch(() => ({}));
+    const role = String(data?.role || '').toLowerCase();
+    userType = role === 'admin' || role === 'officer' ? role : 'user';
+  }
+  
   const testAdjectives = [
     'Welcoming',
     'Community Service',
@@ -115,7 +142,7 @@
   }
 
   async function getClubOfficers() {
-    const response = await APICreater('GET', '/api/officer/orgs', null);
+    const response = await APICreater('GET', getOrgApiPath(), null);
     officerClubs = normalizeClubList(response);
   }
 
@@ -131,7 +158,7 @@
       mergedOfficers.push(officerEmail);
     }
 
-    await APICreater('PATCH', '/api/officer/orgs', {
+    await APICreater('PATCH', getOrgApiPath(), {
       id: clubID,
       officers: mergedOfficers,
     });
@@ -260,7 +287,7 @@
       return Promise.reject(new Error('Missing valid club ID for adjective update'));
     }
 
-    return APICreater('PATCH', '/api/officer/orgs', {
+    return APICreater('PATCH', getOrgApiPath(), {
       id: clubID,
       personalityTraits: adjectives,
       activities: getClubActivities(clubInfo || ''),
@@ -292,6 +319,13 @@
     }
 
     try {
+      await loadUserType();
+      if (userType !== 'admin' && userType !== 'officer') {
+        pageNotice = 'Only officers and admins can manage club settings.';
+        accessibleClubs = [];
+        return;
+      }
+
       await Promise.all([loadAdjectives(), getClubOfficers()]);
 
       const pathParts = window.location.pathname.split('/').filter(Boolean);
