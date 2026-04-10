@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS questions (
     id SERIAL PRIMARY KEY,
     question_type VARCHAR(50) NOT NULL, -- e.g., 'multiple_choice', 'text'
     -- Optimized: Use JSONB for multi-language support (English, Spanish, etc.)
-    -- Example structure: {"en": "What is your name?", "es": "Cual es tu nombre?"}
+    -- Example structure: {"en": ["Creative", "A trait related to imagination and originality"]}
     translations JSONB NOT NULL, 
     is_active BOOLEAN DEFAULT TRUE
 );

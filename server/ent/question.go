@@ -20,7 +20,7 @@ type Question struct {
 	// QuestionType holds the value of the "question_type" field.
 	QuestionType string `json:"question_type,omitempty"`
 	// Translations holds the value of the "translations" field.
-	Translations map[string]string `json:"translations,omitempty"`
+	Translations map[string][]string `json:"translations,omitempty"`
 	// IsActive holds the value of the "is_active" field.
 	IsActive bool `json:"is_active,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.

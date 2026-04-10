@@ -13,7 +13,7 @@ type Question struct {
 func (Question) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("question_type"),
-		field.JSON("translations", map[string]string{}), // Handles JSONB translations
+		field.JSON("translations", map[string][]string{}), // Example: {"en": ["term", "definition"]}
 		field.Bool("is_active").Default(true),
 	}
 }

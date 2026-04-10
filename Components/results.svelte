@@ -141,7 +141,6 @@
     
 </script>
 
-<Header/>
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page">
@@ -187,9 +186,16 @@
   {/if}
 </main>
 
-<Footer />
 
 <style>
+  :global(html),
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: #eef6ff;
+  }
+
   .results-page {
     --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
     --card-bg: #ffffff;
@@ -211,7 +217,7 @@
     width: min(100%, 860px);
     margin: 0 auto;
     background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    border: none;
     border-radius: 1rem;
     box-shadow: 0 10px 22px rgba(16, 36, 58, 0.1);
     padding: 1rem;
@@ -242,7 +248,7 @@
     object-fit: cover;
     border-radius: 0.8rem;
     margin: 0.9rem 0;
-    border: 1px solid var(--card-border);
+    border: none;
   }
 
   h3 {

@@ -1,9 +1,9 @@
 <script>
     import { onMount } from 'svelte';
-    import Results from '../Components/results.svelte'
-    import Header from '../Components/header.svelte'
-    import Footer from '../Components/footer.svelte'
-    import LoginPopup from '../Components/login_popup.svelte';
+    import Results from '../results.svelte'
+    import Header from '../header.svelte'
+    import Footer from '../footer.svelte'
+    import LoginPopup from '../login_popup.svelte';
 
     let userType = 'user';
 
@@ -35,3 +35,5 @@
 </script>
 <LoginPopup/>
 <Header userType={userType} />
+<Results userType={userType} />
+<Footer />

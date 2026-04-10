@@ -30,6 +30,34 @@ func (_u *AnswerUpdate) Where(ps ...predicate.Answer) *AnswerUpdate {
 	return _u
 }
 
+// SetQuestionID sets the "question_id" field.
+func (_u *AnswerUpdate) SetQuestionID(v int) *AnswerUpdate {
+	_u.mutation.SetQuestionID(v)
+	return _u
+}
+
+// SetNillableQuestionID sets the "question_id" field if the given value is not nil.
+func (_u *AnswerUpdate) SetNillableQuestionID(v *int) *AnswerUpdate {
+	if v != nil {
+		_u.SetQuestionID(*v)
+	}
+	return _u
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *AnswerUpdate) SetUserID(v int) *AnswerUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *AnswerUpdate) SetNillableUserID(v *int) *AnswerUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetAnswerText sets the "answer_text" field.
 func (_u *AnswerUpdate) SetAnswerText(v string) *AnswerUpdate {
 	_u.mutation.SetAnswerText(v)
@@ -58,21 +86,9 @@ func (_u *AnswerUpdate) SetNillableSubmittedAt(v *time.Time) *AnswerUpdate {
 	return _u
 }
 
-// SetQuestionID sets the "question" edge to the Question entity by ID.
-func (_u *AnswerUpdate) SetQuestionID(id int) *AnswerUpdate {
-	_u.mutation.SetQuestionID(id)
-	return _u
-}
-
 // SetQuestion sets the "question" edge to the Question entity.
 func (_u *AnswerUpdate) SetQuestion(v *Question) *AnswerUpdate {
 	return _u.SetQuestionID(v.ID)
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *AnswerUpdate) SetUserID(id int) *AnswerUpdate {
-	_u.mutation.SetUserID(id)
-	return _u
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -231,6 +247,34 @@ type AnswerUpdateOne struct {
 	mutation *AnswerMutation
 }
 
+// SetQuestionID sets the "question_id" field.
+func (_u *AnswerUpdateOne) SetQuestionID(v int) *AnswerUpdateOne {
+	_u.mutation.SetQuestionID(v)
+	return _u
+}
+
+// SetNillableQuestionID sets the "question_id" field if the given value is not nil.
+func (_u *AnswerUpdateOne) SetNillableQuestionID(v *int) *AnswerUpdateOne {
+	if v != nil {
+		_u.SetQuestionID(*v)
+	}
+	return _u
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *AnswerUpdateOne) SetUserID(v int) *AnswerUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *AnswerUpdateOne) SetNillableUserID(v *int) *AnswerUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetAnswerText sets the "answer_text" field.
 func (_u *AnswerUpdateOne) SetAnswerText(v string) *AnswerUpdateOne {
 	_u.mutation.SetAnswerText(v)
@@ -259,21 +303,9 @@ func (_u *AnswerUpdateOne) SetNillableSubmittedAt(v *time.Time) *AnswerUpdateOne
 	return _u
 }
 
-// SetQuestionID sets the "question" edge to the Question entity by ID.
-func (_u *AnswerUpdateOne) SetQuestionID(id int) *AnswerUpdateOne {
-	_u.mutation.SetQuestionID(id)
-	return _u
-}
-
 // SetQuestion sets the "question" edge to the Question entity.
 func (_u *AnswerUpdateOne) SetQuestion(v *Question) *AnswerUpdateOne {
 	return _u.SetQuestionID(v.ID)
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *AnswerUpdateOne) SetUserID(id int) *AnswerUpdateOne {
-	_u.mutation.SetUserID(id)
-	return _u
 }
 
 // SetUser sets the "user" edge to the User entity.

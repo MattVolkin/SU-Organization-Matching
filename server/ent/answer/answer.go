@@ -14,6 +14,10 @@ const (
 	Label = "answer"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldQuestionID holds the string denoting the question_id field in the database.
+	FieldQuestionID = "question_id"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
 	// FieldAnswerText holds the string denoting the answer_text field in the database.
 	FieldAnswerText = "answer_text"
 	// FieldSubmittedAt holds the string denoting the submitted_at field in the database.
@@ -30,39 +34,29 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "question" package.
 	QuestionInverseTable = "questions"
 	// QuestionColumn is the table column denoting the question relation/edge.
-	QuestionColumn = "question_answers"
+	QuestionColumn = "question_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "answers"
 	// UserInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_answers"
+	UserColumn = "user_id"
 )
 
 // Columns holds all SQL columns for answer fields.
 var Columns = []string{
 	FieldID,
+	FieldQuestionID,
+	FieldUserID,
 	FieldAnswerText,
 	FieldSubmittedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "answers"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"question_answers",
-	"user_answers",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -80,6 +74,16 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByQuestionID orders the results by the question_id field.
+func ByQuestionID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldQuestionID, opts...).ToFunc()
+}
+
+// ByUserID orders the results by the user_id field.
+func ByUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserID, opts...).ToFunc()
 }
 
 // ByAnswerText orders the results by the answer_text field.

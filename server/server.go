@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"encoding/json"
@@ -9,11 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"su-organization-matching/matching"
 	"su-organization-matching/server/ent"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+
+	gomail "gopkg.in/mail.v2"
 )
 
 // host=localhost port=5432 user=dev_user password=testing
@@ -71,7 +74,36 @@ type OrgJSON struct {
 	ExternalLink         string    `json:"externalLink"`
 	ContactInfo          string    `json:"contactInfo"`
 	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
+	Officers             []string  `json:"officers"`
 	UpdatedAt            time.Time `json:"updatedAt"`
+}
+
+// OrgUpdatePayload contains only mutable club fields for PATCH requests.
+type OrgUpdatePayload struct {
+	ID                   int       `json:"id"`
+	ClubName             *string   `json:"clubName,omitempty"`
+	Description          *string   `json:"description,omitempty"`
+	MeetingTime          *string   `json:"meetingTime,omitempty"`
+	ImagePath            *string   `json:"imagePath,omitempty"`
+	ExternalLink         *string   `json:"externalLink,omitempty"`
+	ContactInfo          *string   `json:"contactInfo,omitempty"`
+	IncludeOfficerEmails *bool     `json:"includeOfficerEmails,omitempty"`
+	Officers             *[]string `json:"officers,omitempty"`
+}
+
+type OrgDeletePayload struct {
+	ID int `json:"id"`
+}
+
+type OrgMatchJSON struct {
+	ID              int     `json:"id"`
+	ClubName        string  `json:"clubName"`
+	MatchPercentage float32 `json:"matchPercentage"`
+}
+
+type RoleSwitchTestPayload struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -91,6 +123,15 @@ type Organization struct {
 }
 
 var dbClient *DatabaseClient
+
+const testOfficerClubName = "Computer Science Club"
+
+var testRoleSwitchAllowlist = map[string]struct{}{
+	"mckallipb@southwestern.edu": {},
+	"volkinm@southwestern.edu":   {},
+	"kleinj@southwestern.edu":    {},
+	"balakrisa@southwestern.edu": {},
+}
 
 // main wires up OAuth, database connectivity, middleware-protected routes,
 // and static file serving for the Svelte frontend.
@@ -156,43 +197,46 @@ func main() {
 	// Register API routes and static site handler.
 	router := mux.NewRouter()
 
-	router.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg))
-	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg))
-	router.HandleFunc("/api/user", makeCurrentUserHandler())
-	router.HandleFunc("/logout", makeLogoutHandler())
+	router.HandleFunc("/login", makeOAuthLoginHandler(oauthCfg)).Methods(http.MethodGet)
+	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user", makeCurrentUserHandler()).Methods(http.MethodGet)
+	router.HandleFunc("/logout", makeLogoutHandler()).Methods(http.MethodPost)
 
-	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission)))
+	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission))).Methods(http.MethodPost)
 
-	submitHandler := requirePostMethod(http.HandlerFunc(handleDemographicsSubmission))
+	submitHandler := http.Handler(http.HandlerFunc(handleDemographicsSubmission))
 	if submitRequiresAuth {
 		submitHandler = requireAuthenticatedSession(submitHandler)
 	}
-	router.Handle("/submit", submitHandler)
+	router.Handle("/submit", submitHandler).Methods(http.MethodPost)
 
 	// All /api/ endpoints require an authenticated session, but only some require specific roles.
 	apiRouter := router.PathPrefix("/api/").Subrouter()
 	apiRouter.Use(requireAuthenticatedSession)
 
-	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler())
+	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler()).Methods(http.MethodGet)
 
-	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest))
+	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest)).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/test/role", handleTestRoleSwitchRequest).Methods(http.MethodPost)
 
-	apiRouter.HandleFunc("/results", getUserOrgsHandler)
+	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
 	// Officer-only endpoints are nested under /api/officer/ and use additional role-checking middleware.
 	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
 
 	officerRouter.Use(makeRequireUserRoleHandlerMiddleware(Officer))
 
-	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest)
-
-	officerRouter.HandleFunc("/update", handleOfficerUpdateRequest)
+	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest).Methods(http.MethodGet)
+	officerRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
 
 	// Admin-only endpoints are nested under /api/admin/ and use additional role-checking middleware.
 	adminRouter := apiRouter.PathPrefix("/admin/").Subrouter()
 	adminRouter.Use(makeRequireUserRoleHandlerMiddleware(Admin))
 
-	adminRouter.HandleFunc("/orgs", handleAdminOrgsRequest)
+	adminRouter.HandleFunc("/orgs", handleAdminOrgsRequest).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/orgs", handleAdminCreateOrgRequest).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
+	adminRouter.HandleFunc("/orgs", handleAdminDeleteOrgRequest).Methods(http.MethodDelete)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -207,45 +251,117 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	_, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user orgs"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "No user answers found"})
 		return
 	}
 
-	clubs := getClubsFromAnswers(answers) // use the algorithm made by @TannerK7 here to get a list of clubs!
-
-	// jsonClubs := Map(clubs, getOrgInfoFromName)
+	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch orgs"})
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(clubs)
+	includeScores := strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("includeScores")), "true") || strings.TrimSpace(r.URL.Query().Get("includeScores")) == "1"
+	if includeScores {
+		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, clubs))
+		return
+	}
+
+	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, clubs))
 }
 
-// getClubsFromAnswers is a placeholder for the algorithm that would determine club membership based on user answers. TODO: replace with the actual implementation made by @TannerK7.
-func getClubsFromAnswers(answers []DBAnswer) []OrgJSON {
-	jsonClubs := []OrgJSON{
-		{
-			ID:                   0,
-			ClubName:             "CS Club",
-			Description:          "placeholder description yay!",
-			MeetingTime:          "Thursdays at 6:30",
-			ImagePath:            "",
-			ExternalLink:         "",
-			ContactInfo:          "",
-			IncludeOfficerEmails: false,
-			UpdatedAt:            time.Now(),
-		},
-		{
-			ID:                   1,
-			ClubName:             "Physics Club",
-			Description:          "placeholder description yay! This is a longer one to show how text wrapping looks in the frontend.more words to make it even longer and see if it breaks or not! sorry Matt",
-			MeetingTime:          "random",
-			ImagePath:            "",
-			ExternalLink:         "",
-			ContactInfo:          "",
-			IncludeOfficerEmails: false,
-			UpdatedAt:            time.Now(),
-		},
+// getClubsFromAnswers ranks clubs for a user by converting stored answers into
+// matcher input and sorting all clubs by normalized match score.
+func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
+	matchAnswers := make([]matching.Answer, 0, len(answers))
+	for _, a := range answers {
+		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionType: a.QuestionType,
+			AnswerText:   a.AnswerText,
+			Translations: a.Translations,
+		})
 	}
-	return jsonClubs
+
+	matchClubs := make([]matching.Organization, 0, len(clubs))
+	clubsByID := make(map[int]OrgJSON, len(clubs))
+	for _, club := range clubs {
+		if club == nil {
+			continue
+		}
+
+		clubsByID[club.ID] = orgJSONFromEntClub(club)
+		matchClubs = append(matchClubs, matching.Organization{
+			ID:               club.ID,
+			Name:             club.ClubName,
+			Personality:      club.Personality,
+			Activities:       club.Activities,
+			Genders:          club.Genders,
+			Ethnicities:      club.Ethnicities,
+			Religions:        club.Religions,
+			StrictGenders:    club.StrictGenders,
+			DedicatedMajors:  club.DedicatedMajors,
+			AssociatedMajors: club.AssociatedMajors,
+			Other:            club.Other,
+		})
+	}
+
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ordered := make([]OrgJSON, 0, len(ranked))
+	for _, result := range ranked {
+		clubJSON, ok := clubsByID[result.Organization.ID]
+		if !ok {
+			continue
+		}
+		ordered = append(ordered, clubJSON)
+	}
+
+	return ordered
+}
+
+func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatchJSON {
+	matchAnswers := make([]matching.Answer, 0, len(answers))
+	for _, a := range answers {
+		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionType: a.QuestionType,
+			AnswerText:   a.AnswerText,
+			Translations: a.Translations,
+		})
+	}
+
+	matchClubs := make([]matching.Organization, 0, len(clubs))
+	for _, club := range clubs {
+		if club == nil {
+			continue
+		}
+
+		matchClubs = append(matchClubs, matching.Organization{
+			ID:               club.ID,
+			Name:             club.ClubName,
+			Personality:      club.Personality,
+			Activities:       club.Activities,
+			Genders:          club.Genders,
+			Ethnicities:      club.Ethnicities,
+			Religions:        club.Religions,
+			StrictGenders:    club.StrictGenders,
+			DedicatedMajors:  club.DedicatedMajors,
+			AssociatedMajors: club.AssociatedMajors,
+			Other:            club.Other,
+		})
+	}
+
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ordered := make([]OrgMatchJSON, 0, len(ranked))
+	for _, result := range ranked {
+		ordered = append(ordered, OrgMatchJSON{
+			ID:              result.Organization.ID,
+			ClubName:        result.Organization.Name,
+			MatchPercentage: result.NormalizedScore,
+		})
+	}
+
+	return ordered
 }
 
 func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -262,19 +378,73 @@ func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(jsonClubs)
 }
 
-func handleOfficerUpdateRequest(w http.ResponseWriter, r *http.Request) {
+func handleAdminCreateOrgRequest(w http.ResponseWriter, r *http.Request) {
 	var payload OrgJSON
 	if !decodeJSONBody(w, r, &payload) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON"})
 		return
 	}
 
-	dbClient.Query().UpdateClubFromJSON(r.Context(), &payload)
+	_, createdClub, err := dbClient.Query().CreateClubFromJSON(r.Context(), &payload)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// send email
+	sendEmailToOfficers(createdClub)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(orgJSONFromEntClub(createdClub))
+}
+
+func handlePatchOrgRequest(w http.ResponseWriter, r *http.Request) {
+	var payload OrgUpdatePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+	if payload.ID <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a positive integer"})
+		return
+	}
+
+	_, updatedClub, err := dbClient.Query().PatchClubFromJSON(r.Context(), payload.ID, &payload)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(orgJSONFromEntClub(updatedClub))
+}
+
+func handleAdminDeleteOrgRequest(w http.ResponseWriter, r *http.Request) {
+	var payload OrgDeletePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+	if payload.ID <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a positive integer"})
+		return
+	}
+
+	if _, err := dbClient.Query().DeleteClubByID(r.Context(), payload.ID); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -314,8 +484,29 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		ExternalLink:         club.ExternalLink,
 		ContactInfo:          club.ContactInfo,
 		IncludeOfficerEmails: club.IncludeOfficerEmails,
+		Officers:             officerEmailsFromClub(club),
 		UpdatedAt:            club.UpdatedAt,
 	}
+}
+
+func officerEmailsFromClub(club *ent.Club) []string {
+	if club == nil || len(club.Edges.Leaders) == 0 {
+		return []string{}
+	}
+
+	emails := make([]string, 0, len(club.Edges.Leaders))
+	for _, leader := range club.Edges.Leaders {
+		if leader == nil {
+			continue
+		}
+		email := strings.TrimSpace(leader.Email)
+		if email == "" {
+			continue
+		}
+		emails = append(emails, email)
+	}
+
+	return emails
 }
 
 // decodeOrgJSONs decodes a request body with the same JSON format used
@@ -337,6 +528,71 @@ func handleAdjectivesRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(adjectives)
+}
+
+func handleTestRoleSwitchRequest(w http.ResponseWriter, r *http.Request) {
+	actorEmail := strings.ToLower(strings.TrimSpace(r.Header.Get("X-User-Email")))
+	if !isAllowedRoleTestEmail(actorEmail) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: role switch endpoint is restricted to approved test users"})
+		return
+	}
+
+	var payload RoleSwitchTestPayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+
+	targetEmail := strings.ToLower(strings.TrimSpace(payload.Email))
+	if targetEmail == "" {
+		targetEmail = actorEmail
+	}
+	if !isAllowedRoleTestEmail(targetEmail) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "target email is not allowed for role switching"})
+		return
+	}
+
+	requestedRole := strings.ToLower(strings.TrimSpace(payload.Role))
+	switch requestedRole {
+	case "admin", "officer", "member":
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "role must be one of: admin, officer, member"})
+		return
+	}
+
+	if _, err := dbClient.Query().SetUserRoleForTesting(r.Context(), targetEmail, requestedRole, testOfficerClubName); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	effectiveRole := dbClient.Query().getUserRole(r.Context(), targetEmail)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":         "Role updated for testing",
+		"actorEmail":      actorEmail,
+		"targetEmail":     targetEmail,
+		"requestedRole":   requestedRole,
+		"effectiveRole":   effectiveRole,
+		"officerClubName": testOfficerClubName,
+	})
+}
+
+func isAllowedRoleTestEmail(email string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if normalized == "" {
+		return false
+	}
+	_, ok := testRoleSwitchAllowlist[normalized]
+	return ok
 }
 
 // requireAuthenticatedSession rejects requests that do not carry a valid session
@@ -384,28 +640,9 @@ func makeRequireUserRoleHandlerMiddleware(requiredRole UserRole) func(next http.
 	}
 }
 
-// requirePostMethod enforces POST-only semantics for endpoints
-// expecting JSON form submissions.
-func requirePostMethod(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Only POST method is allowed"})
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 // handleSurveyResponseSubmission validates and echoes a response payload from an
 // authenticated user.
 func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Only POST method is allowed"})
-		return
-	}
-
 	var payload SurveyResponsePayload
 	if !decodeJSONBody(w, r, &payload) {
 		return
@@ -416,14 +653,21 @@ func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if _, err := dbClient.Query().UpsertSurveyResponseByUserEmail(r.Context(), email, payload.QuestionID, payload.Answer); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
 	// Return a confirmation payload so the client can verify what was stored.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"email":      r.Header.Get("X-User-Email"),
+		"email":      email,
 		"questionId": payload.QuestionID,
 		"answer":     payload.Answer,
-		"message":    "Response accepted",
+		"message":    "Response accepted and stored",
 	})
 }
 
@@ -458,6 +702,43 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		"major":    submission.Major,
 		"email":    r.Header.Get("X-User-Email"),
 	})
+}
+
+func sendEmailToOfficers(club *ent.Club) {
+	if club == nil || len(club.Edges.Leaders) == 0 {
+		return
+	}
+
+	for _, leader := range club.Edges.Leaders {
+		if leader == nil {
+			continue
+		}
+		email := strings.TrimSpace(leader.Email)
+		if email == "" {
+			continue
+		}
+		// sendEmail(email, fmt.Sprintf("Your club '%s' has been created/updated", club.ClubName), "Please check the officer portal for details.")
+	}
+}
+
+func sendEmail(to, subject, body string) {
+	message := gomail.NewMessage()
+
+    // Set email headers
+    message.SetHeader("From", "youremail@email.com")
+    message.SetHeader("To", to)
+    message.SetHeader("Subject", subject)
+
+    // Set email body
+    message.SetBody("text/plain", body)
+
+    // Set up the SMTP dialer
+    dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+
+    // Send the email
+    if err := dialer.DialAndSend(message); err != nil {
+        fmt.Println("Error:", err)
+    }
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response

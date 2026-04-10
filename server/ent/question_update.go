@@ -43,7 +43,7 @@ func (_u *QuestionUpdate) SetNillableQuestionType(v *string) *QuestionUpdate {
 }
 
 // SetTranslations sets the "translations" field.
-func (_u *QuestionUpdate) SetTranslations(v map[string]string) *QuestionUpdate {
+func (_u *QuestionUpdate) SetTranslations(v map[string][]string) *QuestionUpdate {
 	_u.mutation.SetTranslations(v)
 	return _u
 }
@@ -228,7 +228,7 @@ func (_u *QuestionUpdateOne) SetNillableQuestionType(v *string) *QuestionUpdateO
 }
 
 // SetTranslations sets the "translations" field.
-func (_u *QuestionUpdateOne) SetTranslations(v map[string]string) *QuestionUpdateOne {
+func (_u *QuestionUpdateOne) SetTranslations(v map[string][]string) *QuestionUpdateOne {
 	_u.mutation.SetTranslations(v)
 	return _u
 }

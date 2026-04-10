@@ -160,8 +160,11 @@
   function getManageClubHref(club) {
     const clubName = getClubName(club);
     const shouldUseTestMode = isTestMode || clubName.trim().toLowerCase() === 'test club';
-    const testSuffix = shouldUseTestMode ? '&test=1' : '';
-    return `/manage-club/${toClubSlug(clubName)}?club=${encodeURIComponent(clubName)}${testSuffix}`;
+    const params = new URLSearchParams({ club: clubName });
+    if (shouldUseTestMode) {
+      params.set('test', '1');
+    }
+    return `/settings.html?${params.toString()}`;
   }
 
 </script>
@@ -197,17 +200,17 @@
   </button>
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
-    <a href="/" onclick={closeMenu}>Home</a>
-     <a href="/Results" onclick={closeMenu}>Results</a>
-    <a href="/about" onclick={closeMenu}>About This Project</a>
-    <a href="/howto" onclick={closeMenu}>How To Use This Tool</a>
+    <a href="/index.html" onclick={closeMenu}>Home</a>
+     <a href="/results.html" onclick={closeMenu}>Results</a>
+    <a href="/about.html" onclick={closeMenu}>About This Project</a>
+    <a href="/howto.html" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
     {#if getNavUserType() === 'admin'}
-      <a href="/create" onclick={closeMenu}>Create New Club</a>
+      <a href="/admin-home.html" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
       {@const managedClubs = getManageClubs()}
       <div class="nav-item manage-club-menu">
-        <a href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/manage-club'} onclick={closeMenu}>Manage Club</a>
+        <a href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/settings.html'} onclick={closeMenu}>Manage Club</a>
         <div class="club-dropdown" aria-label="Clubs you can manage">
           {#if managedClubs.length > 0}
             {#each managedClubs as club}

@@ -1,6 +1,6 @@
 # Frontend API Reference
 
-This document describes the HTTP API currently exposed by the Go server in `Server Examples/`.
+This document reflects the current HTTP API exposed by the Go server in `server/`.
 
 Base URL:
 
@@ -8,30 +8,29 @@ Base URL:
 http://localhost:8080
 ```
 
-## Authentication Model
+## Authentication
 
-Most API endpoints require an authenticated session.
+Most endpoints require an authenticated session.
 
-The server accepts authentication in either of these forms:
+The server accepts auth using either:
 
 1. `Authorization: Bearer <token>`
 2. `Authorization: <token>`
 3. `session_token` cookie
 
-Token lookup order is:
+Token lookup order:
 
 1. `Authorization` header
 2. `session_token` cookie
 
 Important behavior:
 
-- The server creates an in-memory session after Google OAuth succeeds.
-- Sessions expire after 30 minutes of inactivity.
 - `/auth/callback` sets an `HttpOnly` `session_token` cookie.
-- If your frontend relies on cookies, send requests with credentials enabled.
-- If your frontend stores the returned token, you can also send it explicitly in the `Authorization` header.
+- Sessions are stored in memory and expire after 30 minutes of inactivity.
+- If the frontend uses cookies, requests should include credentials.
+- If the frontend stores the token returned by `/auth/callback`, it can also send `Authorization: Bearer <token>` explicitly.
 
-Example authenticated fetch:
+Example authenticated request:
 
 ```js
 fetch('/api/user', {
@@ -45,26 +44,29 @@ fetch('/api/user', {
 
 ## Roles
 
-The server uses these role strings:
+Role strings returned by the server:
 
 - `admin`
 - `officer`
 - `member`
 
-Role-restricted routes:
+Role-restricted route groups:
 
-- `/api/officer/*` requires role `officer`
-- `/api/admin/*` requires role `admin`
+- `/api/officer/*` requires `officer`
+- `/api/admin/*` requires `admin`
 
-## Common Response Notes
+## Common Notes
 
-- Most successful responses are JSON.
-- Some authentication failures use `http.Error(...)` and return plain text, not JSON.
-- Some handlers do not strictly enforce HTTP method even though they are clearly intended for `GET` or `POST`. The frontend should still use the method documented below.
+- Successful API responses are JSON except popup-mode `/auth/callback`, which returns HTML.
+- Middleware-based auth failures return JSON.
+- `/api/user` and `/api/prefill` use `http.Error(...)` for token failures and therefore return plain text on `401`.
+- REST methods are enforced by the router.
 
 ## Shared Data Shapes
 
-### User object returned by `/api/user`
+### User
+
+Returned by `/api/user`.
 
 ```json
 {
@@ -73,7 +75,9 @@ Role-restricted routes:
 }
 ```
 
-### Prefill fields returned by `/api/prefill`
+### Prefill payload
+
+Returned by `/api/prefill`.
 
 ```json
 {
@@ -84,15 +88,16 @@ Role-restricted routes:
 }
 ```
 
-### Organization object
+### Organization
 
 Used by:
 
-- `/api/results`
-- `/api/officer/orgs`
-- `/api/admin/orgs`
-- `/api/admin/create` request body and response body
-- `/api/officer/update` request body
+- `GET /api/results`
+- `GET /api/officer/orgs`
+- `GET /api/admin/orgs`
+- `POST /api/admin/orgs` request and response
+- `PATCH /api/officer/orgs` response
+- `PATCH /api/admin/orgs` response
 
 ```json
 {
@@ -104,22 +109,54 @@ Used by:
   "externalLink": "https://example.com",
   "contactInfo": "club@example.edu",
   "includeOfficerEmails": false,
-  "updatedAt": "2026-04-06T18:30:00Z",
-  "officers": []
+  "officers": ["president@example.edu", "vp@example.edu"],
+  "updatedAt": "2026-04-09T18:30:00Z"
 }
 ```
 
 Notes:
 
-- `updatedAt` is returned on read endpoints.
-- `officers` exists in the wire type, but the current read handlers do not populate it.
-- The current update handler ignores the `officers` field.
+- `officers` is an array of officer email addresses derived from the club leaders relationship.
+- `personalityTraits` and `activities` are not part of the current wire format.
+- `updatedAt` is returned by read endpoints and create/patch responses.
+
+### Organization PATCH body
+
+Used by:
+
+- `PATCH /api/officer/orgs`
+- `PATCH /api/admin/orgs`
+
+The club id is required in the JSON body.
+
+Only include fields that should change:
+
+```json
+{
+  "id": 12,
+  "clubName": "Updated Club Name",
+  "description": "Updated description",
+  "meetingTime": "Fridays at 5:00 PM",
+  "imagePath": "/images/new-image.png",
+  "externalLink": "https://example.com",
+  "contactInfo": "updated@example.edu",
+  "includeOfficerEmails": true,
+  "officers": ["president@example.edu", "vp@example.edu"]
+}
+```
+
+Rules:
+
+- At least one field must be present.
+- Any omitted field is left unchanged.
+- If `officers` is included, it replaces the club's full officer list.
+- Every officer email provided must already belong to an existing user record.
 
 ### Swipe question object
 
 Returned by `/api/adjectives`.
 
-Shape is partially dynamic because question text is stored in a translation map.
+Shape is dynamic because translations come from the database.
 
 Example:
 
@@ -127,8 +164,10 @@ Example:
 {
   "id": 4,
   "question_type": "adjective",
-  "en": "Creative",
-  "es": "Creativo"
+  "translations": {
+    "en": ["Creative", "A trait related to imagination and originality"],
+    "es": []
+  }
 }
 ```
 
@@ -136,7 +175,7 @@ At minimum, each object contains:
 
 - `id: number`
 - `question_type: string`
-- zero or more translation keys such as `en`
+- `translations: object`
 
 ## Endpoint Reference
 
@@ -148,35 +187,24 @@ Query params:
 
 - `popup=1` optional. Enables popup login behavior.
 
-Request body:
-
-- None.
-
 Success behavior:
 
 - Returns `307 Temporary Redirect` to Google OAuth.
 
 Frontend notes:
 
-- This endpoint is usually navigated to in the browser rather than called with `fetch`.
-- If you use popup mode, open `/login?popup=1` in a popup window.
+- This is normally opened via navigation or popup, not `fetch`.
 
 ### `GET /auth/callback`
 
 Completes the Google OAuth flow.
 
-Query params expected from Google:
+Expected query params from Google:
 
 - `state: string`
 - `code: string`
 
-Request body:
-
-- None.
-
-Success responses:
-
-1. Normal flow returns JSON:
+Success response in normal flow:
 
 ```json
 {
@@ -186,12 +214,10 @@ Success responses:
 }
 ```
 
-2. Popup flow returns HTML, not JSON.
-
-Popup behavior:
+Popup flow:
 
 - Sets `session_token` cookie.
-- Sends `window.opener.postMessage(...)` with:
+- Returns HTML that posts this object back to `window.opener`:
 
 ```json
 {
@@ -201,25 +227,19 @@ Popup behavior:
 }
 ```
 
-- Attempts to close the popup.
-
 Possible errors:
 
-- `400 Bad Request` plain text: invalid or expired OAuth `state`
-- `401 Unauthorized` plain text: token exchange failed or Google subject extraction failed
-- `500 Internal Server Error` plain text: unable to fetch or persist user info
+- `400 Bad Request` plain text: invalid or expired `state`
+- `401 Unauthorized` plain text: token exchange or user identification failed
+- `500 Internal Server Error` plain text: user info fetch/persist failed
 
 ### `GET /api/user`
 
-Returns the authenticated user identity and resolved role.
+Returns the authenticated user and role.
 
 Authentication:
 
 - Required.
-
-Request body:
-
-- None.
 
 Success response:
 
@@ -235,21 +255,13 @@ Possible errors:
 - `401 Unauthorized` plain text: missing token
 - `401 Unauthorized` plain text: invalid or expired token
 
-Frontend notes:
-
-- Use this after login to determine which UI to show.
-
 ### `POST /logout`
 
 Logs out the current session.
 
 Authentication:
 
-- Optional. If a token exists, it is removed.
-
-Request body:
-
-- None.
+- Optional.
 
 Success response:
 
@@ -259,22 +271,18 @@ Success response:
 }
 ```
 
-Frontend notes:
+Behavior:
 
-- The handler currently accepts any HTTP method, but `POST` is the intended method.
-- The response also expires the `session_token` cookie.
+- Removes the in-memory session if present.
+- Expires the `session_token` cookie.
 
 ### `GET /api/prefill`
 
-Returns lightweight profile fields for client-side form prefilling.
+Returns session-backed profile fields used to prefill client forms.
 
 Authentication:
 
 - Required.
-
-Request body:
-
-- None.
 
 Success response:
 
@@ -292,35 +300,24 @@ Possible errors:
 - `401 Unauthorized` plain text: missing token
 - `401 Unauthorized` plain text: invalid or expired token
 
-Frontend notes:
-
-- Current fields are built from the login profile and typically include `email` and `name`.
-
 ### `GET /api/adjectives`
 
-Returns swipe-card question content for `adjective` and `personality_traits` question types.
+Returns swipe question content for `adjective` and `personality_traits` question types.
 
 Authentication:
 
 - Required.
 
-Request body:
-
-- None.
-
-Success response:
+Success response example:
 
 ```json
 [
   {
     "id": 4,
     "question_type": "adjective",
-    "en": "Creative"
-  },
-  {
-    "id": 9,
-    "question_type": "personality_traits",
-    "en": "Collaborative"
+    "translations": {
+      "en": ["Creative", "A trait related to imagination and originality"]
+    }
   }
 ]
 ```
@@ -357,7 +354,7 @@ Request body:
 }
 ```
 
-Field rules:
+Rules:
 
 - `questionId` must be a positive integer
 - `answer` must be a boolean
@@ -376,34 +373,12 @@ Success response:
 Possible errors:
 
 - `401 Unauthorized` JSON: missing/invalid/expired session
-- `405 Method Not Allowed` JSON:
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: `questionId must be a positive integer`
 
-```json
-{
-  "error": "Only POST method is allowed"
-}
-```
+Frontend note:
 
-- `400 Bad Request` JSON:
-
-```json
-{
-  "error": "Invalid JSON"
-}
-```
-
-- `400 Bad Request` JSON:
-
-```json
-{
-  "error": "questionId must be a positive integer"
-}
-```
-
-Frontend notes:
-
-- The current handler validates and echoes the payload.
-- It does not currently persist the response to the database.
+- The current handler validates and echoes the payload. It does not persist it.
 
 ### `POST /submit`
 
@@ -411,9 +386,8 @@ Submits the demographics form.
 
 Authentication:
 
-- Usually required.
-- Controlled by environment variable `SUBMIT_REQUIRES_AUTH`.
-- Default behavior is authenticated-only.
+- Required by default.
+- Controlled by `SUBMIT_REQUIRES_AUTH`.
 
 Headers:
 
@@ -431,14 +405,6 @@ Request body:
 }
 ```
 
-Field rules:
-
-- `name` must be non-empty
-- `gender` must be non-empty
-- `race` must contain at least one value
-- `religion` must be non-empty
-- `major` must contain at least one value
-
 Success response:
 
 ```json
@@ -455,63 +421,43 @@ Success response:
 
 Possible errors:
 
-- `401 Unauthorized` JSON when auth is enabled and no valid session is present
-- `405 Method Not Allowed` JSON:
+- `401 Unauthorized` JSON when auth is enabled and the session is invalid
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: missing required demographics fields
 
-```json
-{
-  "error": "Only POST method is allowed"
-}
-```
+Frontend note:
 
-- `400 Bad Request` JSON:
-
-```json
-{
-  "error": "Invalid JSON"
-}
-```
-
-- `400 Bad Request` JSON:
-
-```json
-{
-  "error": "Missing one or more required demographics fields"
-}
-```
-
-Frontend notes:
-
-- The current handler validates and echoes the submission.
-- It does not currently persist demographics data to the database.
-- If auth is disabled through environment configuration, `email` in the success payload may be an empty string.
+- The current handler validates and echoes the payload. It does not persist it.
 
 ### `GET /api/results`
 
-Returns organization matches for the authenticated user.
+Returns ranked organization matches for the authenticated user.
 
 Authentication:
 
 - Required.
 
-Request body:
+Behavior:
 
-- None.
+- Reads the authenticated user’s stored answers.
+- Fetches all clubs.
+- Uses the matching algorithm to sort clubs by normalized match score.
+- Returns the ranked organizations in order.
 
 Success response:
 
 ```json
 [
   {
-    "id": 0,
+    "id": 12,
     "clubName": "CS Club",
-    "description": "placeholder description yay!",
-    "meetingTime": "Thursdays at 6:30",
-    "imagePath": "",
-    "externalLink": "",
-    "contactInfo": "",
+    "description": "Club description",
+    "meetingTime": "Thursdays at 6:30 PM",
+    "imagePath": "/images/cs-club.png",
+    "externalLink": "https://example.com",
+    "contactInfo": "club@example.edu",
     "includeOfficerEmails": false,
-    "updatedAt": "2026-04-06T18:30:00Z"
+    "updatedAt": "2026-04-09T18:30:00Z"
   }
 ]
 ```
@@ -527,11 +473,6 @@ Possible errors:
 }
 ```
 
-Frontend notes:
-
-- The current implementation returns placeholder club data.
-- The matching algorithm is not fully implemented yet.
-
 ### `GET /api/officer/orgs`
 
 Returns the organizations managed by the authenticated officer.
@@ -540,10 +481,6 @@ Authentication:
 
 - Required.
 - User must have role `officer`.
-
-Request body:
-
-- None.
 
 Success response:
 
@@ -558,8 +495,7 @@ Success response:
     "externalLink": "https://example.com",
     "contactInfo": "club@example.edu",
     "includeOfficerEmails": false,
-    "updatedAt": "2026-04-06T18:30:00Z",
-    "officers": []
+    "updatedAt": "2026-04-09T18:30:00Z"
   }
 ]
 ```
@@ -567,25 +503,12 @@ Success response:
 Possible errors:
 
 - `401 Unauthorized` JSON: missing/invalid/expired session
-- `403 Forbidden` JSON:
+- `403 Forbidden` JSON: forbidden
+- `500 Internal Server Error` JSON: failed to fetch officer orgs
 
-```json
-{
-  "error": "Forbidden"
-}
-```
+### `PATCH /api/officer/orgs`
 
-- `500 Internal Server Error` JSON:
-
-```json
-{
-  "error": "Failed to fetch officer orgs"
-}
-```
-
-### `POST /api/officer/update`
-
-Updates one organization owned by the authenticated officer.
+Partially updates an organization managed by the authenticated officer.
 
 Authentication:
 
@@ -601,59 +524,27 @@ Request body:
 ```json
 {
   "id": 12,
-  "clubName": "CS Club",
   "description": "Updated description",
-  "meetingTime": "Thursdays at 7:00 PM",
-  "imagePath": "/images/cs-club.png",
-  "externalLink": "https://example.com",
-  "contactInfo": "club@example.edu",
-  "includeOfficerEmails": true,
-  "updatedAt": "2026-04-06T18:30:00Z",
-  "officers": []
+  "meetingTime": "Fridays at 5:00 PM"
 }
 ```
 
-Important behavior:
-
-- `id` is required and must be a positive integer.
-- The server updates these fields:
-  - `clubName`
-  - `description`
-  - `meetingTime`
-  - `imagePath`
-  - `externalLink`
-  - `contactInfo`
-  - `includeOfficerEmails`
-- The server ignores `updatedAt` and `officers` in the current implementation.
-
 Success response:
 
-- Status `200 OK`
-- No response body is currently written by the handler.
+- `200 OK`
+- Response body is the full updated Organization object
 
 Possible errors:
 
 - `401 Unauthorized` JSON: missing/invalid/expired session
-- `403 Forbidden` JSON:
+- `403 Forbidden` JSON: forbidden
+- `400 Bad Request` JSON: invalid club id
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: no fields provided for update
 
-```json
-{
-  "error": "Forbidden"
-}
-```
+Validation:
 
-- `400 Bad Request` JSON:
-
-```json
-{
-  "error": "Invalid JSON"
-}
-```
-
-Frontend notes:
-
-- Because the handler returns an empty body on success, the safest client behavior is to check `response.ok` and then refetch `/api/officer/orgs`.
-- The handler is intended for `POST`, although the server does not currently enforce method.
+- `id` must be a positive integer
 
 ### `GET /api/admin/orgs`
 
@@ -664,49 +555,17 @@ Authentication:
 - Required.
 - User must have role `admin`.
 
-Request body:
-
-- None.
-
 Success response:
 
-```json
-[
-  {
-    "id": 12,
-    "clubName": "CS Club",
-    "description": "Club description",
-    "meetingTime": "Thursdays at 6:30 PM",
-    "imagePath": "/images/cs-club.png",
-    "externalLink": "https://example.com",
-    "contactInfo": "club@example.edu",
-    "includeOfficerEmails": false,
-    "updatedAt": "2026-04-06T18:30:00Z",
-    "officers": []
-  }
-]
-```
+- JSON array of Organization objects
 
 Possible errors:
 
 - `401 Unauthorized` JSON: missing/invalid/expired session
-- `403 Forbidden` JSON:
+- `403 Forbidden` JSON: forbidden
+- `500 Internal Server Error` JSON: failed to fetch orgs
 
-```json
-{
-  "error": "Forbidden"
-}
-```
-
-- `500 Internal Server Error` JSON:
-
-```json
-{
-  "error": "Failed to fetch orgs"
-}
-```
-
-### `POST /api/admin/create`
+### `POST /api/admin/orgs`
 
 Creates a new organization.
 
@@ -730,76 +589,93 @@ Request body:
   "externalLink": "https://example.com/new-club",
   "contactInfo": "new-club@example.edu",
   "includeOfficerEmails": false,
-  "officers": []
+  "officers": ["president@example.edu"]
 }
 ```
 
-Important behavior:
+Rules:
 
 - `clubName` is required and must be non-empty.
-- `id`, `updatedAt`, and `officers` from the request body are ignored by the server.
+- If `officers` is provided, every email must belong to an existing user record.
 
 Success response:
 
-- Status `201 Created`
-- Response body uses the Organization object shape and includes server-generated `id` and `updatedAt`.
-
-Example success body:
-
-```json
-{
-  "id": 34,
-  "clubName": "New Club",
-  "description": "Club description",
-  "meetingTime": "Fridays at 5:00 PM",
-  "imagePath": "/images/new-club.png",
-  "externalLink": "https://example.com/new-club",
-  "contactInfo": "new-club@example.edu",
-  "includeOfficerEmails": false,
-  "updatedAt": "2026-04-06T18:30:00Z",
-  "officers": []
-}
-```
+- `201 Created`
+- Response body is the created Organization object
 
 Possible errors:
 
 - `401 Unauthorized` JSON: missing/invalid/expired session
-- `403 Forbidden` JSON:
+- `403 Forbidden` JSON: forbidden
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: `clubName is required`
+
+### `PATCH /api/admin/orgs`
+
+Partially updates an organization as an admin.
+
+Authentication:
+
+- Required.
+- User must have role `admin`.
+
+Headers:
+
+- `Content-Type: application/json`
+
+Request body:
+
+- Same shape as `PATCH /api/officer/orgs`
+
+Success response:
+
+- `200 OK`
+- Response body is the full updated Organization object
+
+Possible errors:
+
+- `401 Unauthorized` JSON: missing/invalid/expired session
+- `403 Forbidden` JSON: forbidden
+- `400 Bad Request` JSON: invalid club id
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: no fields provided for update
+
+### `DELETE /api/admin/orgs`
+
+Deletes an organization.
+
+Authentication:
+
+- Required.
+- User must have role `admin`.
+
+Request body:
 
 ```json
 {
-  "error": "Forbidden"
+  "id": 12
 }
 ```
 
-- `405 Method Not Allowed` JSON:
+Success response:
 
-```json
-{
-  "error": "Only POST method is allowed"
-}
-```
+- `204 No Content`
+- No response body
 
-- `400 Bad Request` JSON:
+Possible errors:
 
-```json
-{
-  "error": "Invalid JSON"
-}
-```
+- `401 Unauthorized` JSON: missing/invalid/expired session
+- `403 Forbidden` JSON: forbidden
+- `400 Bad Request` JSON: invalid club id
+- `400 Bad Request` JSON: delete failed
 
-- `400 Bad Request` JSON when `clubName` is missing/blank:
+## Frontend Checklist
 
-```json
-{
-  "error": "clubName is required"
-}
-```
-
-## Frontend Integration Checklist
-
-- Use `credentials: 'include'` if you want the browser to send the `session_token` cookie.
-- Prefer also storing the returned token from `/auth/callback` so you can send `Authorization: Bearer <token>` explicitly.
-- Expect both JSON and plain-text error responses depending on the endpoint.
-- Treat `/response`, `/submit`, and `/api/results` as partially implemented backend endpoints for now.
-- After calling `/api/officer/update`, refetch data because success returns no body.
+- Use `credentials: 'include'` if relying on the `session_token` cookie.
+- Prefer also storing the token returned by `/auth/callback` so requests can send `Authorization: Bearer <token>`.
+- Use resource-based admin/officer update routes:
+  - `PATCH /api/officer/orgs`
+  - `PATCH /api/admin/orgs`
+- Use `POST /api/admin/orgs` to create clubs.
+- Use `DELETE /api/admin/orgs` to delete clubs.
+- Expect both JSON and plain-text `401` responses depending on the endpoint.

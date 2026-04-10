@@ -1,8 +1,9 @@
-package server
+package main
 
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +36,7 @@ type DBAnswer struct {
 	SubmittedAt  time.Time
 	QuestionID   int
 	QuestionType string
-	Translations map[string]string
+	Translations map[string][]string
 	IsActive     bool
 }
 
@@ -441,17 +442,14 @@ func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType
 			continue
 		}
 
-		questionPayload := make(map[string]any, len(q.Translations)+2)
+		questionPayload := make(map[string]any, len(q.Translations)+3)
 		questionPayload["id"] = q.ID
 		questionPayload["question_type"] = q.QuestionType
+		questionPayload["translations"] = q.Translations
 
 		if q.Translations == nil {
 			contents = append(contents, questionPayload)
 			continue
-		}
-
-		for k, v := range q.Translations {
-			questionPayload[k] = v
 		}
 
 		contents = append(contents, questionPayload)
@@ -514,7 +512,7 @@ func (db *DatabaseClient) FetchAllClubs(ctx context.Context) (*DatabaseClient, [
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().All(ctx)
+	clubs, err := next.client.Club.Query().WithLeaders().All(ctx)
 	next.lastErr = err
 	return next, clubs, err
 }
@@ -553,6 +551,158 @@ func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *O
 	return next, err
 }
 
+func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, patch *OrgUpdatePayload) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if patch == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, nil, next.lastErr
+	}
+	if clubID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, nil, next.lastErr
+	}
+
+	update := next.client.Club.UpdateOneID(clubID)
+	hasUpdate := false
+	if patch.ClubName != nil {
+		update.SetClubName(strings.TrimSpace(*patch.ClubName))
+		hasUpdate = true
+	}
+	if patch.Description != nil {
+		update.SetDescription(strings.TrimSpace(*patch.Description))
+		hasUpdate = true
+	}
+	if patch.MeetingTime != nil {
+		update.SetMeetingTime(strings.TrimSpace(*patch.MeetingTime))
+		hasUpdate = true
+	}
+	if patch.ImagePath != nil {
+		update.SetImagePath(strings.TrimSpace(*patch.ImagePath))
+		hasUpdate = true
+	}
+	if patch.ExternalLink != nil {
+		update.SetExternalLink(strings.TrimSpace(*patch.ExternalLink))
+		hasUpdate = true
+	}
+	if patch.ContactInfo != nil {
+		update.SetContactInfo(strings.TrimSpace(*patch.ContactInfo))
+		hasUpdate = true
+	}
+	if patch.IncludeOfficerEmails != nil {
+		update.SetIncludeOfficerEmails(*patch.IncludeOfficerEmails)
+		hasUpdate = true
+	}
+	if patch.Officers != nil {
+		leaders, err := next.resolveUsersByEmail(ctx, *patch.Officers)
+		if err != nil {
+			next.lastErr = err
+			return next, nil, err
+		}
+		update.ClearLeaders()
+		if len(leaders) > 0 {
+			update.AddLeaders(leaders...)
+		}
+		hasUpdate = true
+	}
+	if !hasUpdate {
+		next.lastErr = fmt.Errorf("at least one field must be provided for update")
+		return next, nil, next.lastErr
+	}
+
+	updatedClub, err := update.Save(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	updatedClub, err = next.client.Club.Query().Where(club.IDEQ(updatedClub.ID)).WithLeaders().Only(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	return next, updatedClub, nil
+}
+
+func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *OrgJSON) (*DatabaseClient, *ent.Club, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+	if newClubInfo == nil {
+		next.lastErr = fmt.Errorf("payload is required")
+		return next, nil, next.lastErr
+	}
+
+	clubName := strings.TrimSpace(newClubInfo.ClubName)
+	if clubName == "" {
+		next.lastErr = fmt.Errorf("clubName is required")
+		return next, nil, next.lastErr
+	}
+
+	create := next.client.Club.Create().
+		SetClubName(clubName).
+		SetDescription(strings.TrimSpace(newClubInfo.Description)).
+		SetMeetingTime(strings.TrimSpace(newClubInfo.MeetingTime)).
+		SetImagePath(strings.TrimSpace(newClubInfo.ImagePath)).
+		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
+		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
+		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
+
+	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+	if len(leaders) > 0 {
+		create.AddLeaders(leaders...)
+	}
+
+	createdClub, err := create.Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, nil, err
+	}
+
+	createdClub, err = next.client.Club.Query().Where(club.IDEQ(createdClub.ID)).WithLeaders().Only(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	return next, createdClub, nil
+}
+
+func (db *DatabaseClient) DeleteClubByID(ctx context.Context, clubID int) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+	if clubID <= 0 {
+		next.lastErr = fmt.Errorf("club id must be positive")
+		return next, next.lastErr
+	}
+
+	err := next.client.Club.DeleteOneID(clubID).Exec(ctx)
+	next.lastErr = err
+	return next, err
+}
+
 // FetchOfficerClubsByUserEmail returns all clubs where the given user is listed
 // as a leader/officer. The user is identified by email.
 func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, email string) (*DatabaseClient, []*ent.Club, error) {
@@ -574,10 +724,194 @@ func (db *DatabaseClient) FetchOfficerClubsByUserEmail(ctx context.Context, emai
 		return next, nil, next.lastErr
 	}
 
-	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).All(ctx)
+	clubs, err := next.client.Club.Query().Where(club.HasLeadersWith(user.EmailEQ(lookupEmail))).WithLeaders().All(ctx)
 	next.userEmail = lookupEmail
 	next.lastErr = err
 	return next, clubs, err
+}
+
+func (db *DatabaseClient) resolveUsersByEmail(ctx context.Context, emails []string) ([]*ent.User, error) {
+	if len(emails) == 0 {
+		return []*ent.User{}, nil
+	}
+
+	normalizedEmails := make([]string, 0, len(emails))
+	seen := make(map[string]struct{}, len(emails))
+	for _, email := range emails {
+		trimmed := strings.TrimSpace(email)
+		if trimmed == "" {
+			continue
+		}
+		key := strings.ToLower(trimmed)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalizedEmails = append(normalizedEmails, trimmed)
+	}
+
+	if len(normalizedEmails) == 0 {
+		return []*ent.User{}, nil
+	}
+
+	usersByEmail, err := db.client.User.Query().Where(user.EmailIn(normalizedEmails...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resolved := make(map[string]*ent.User, len(usersByEmail))
+	for _, storedUser := range usersByEmail {
+		if storedUser == nil {
+			continue
+		}
+		resolved[strings.ToLower(strings.TrimSpace(storedUser.Email))] = storedUser
+	}
+
+	users := make([]*ent.User, 0, len(normalizedEmails))
+	for _, email := range normalizedEmails {
+		storedUser, ok := resolved[strings.ToLower(strings.TrimSpace(email))]
+		if !ok {
+			return nil, fmt.Errorf("officer with email %q not found", email)
+		}
+		users = append(users, storedUser)
+	}
+
+	return users, nil
+}
+
+// SetUserRoleForTesting updates the persisted fields that determine effective role.
+// - admin: adds student_life tag
+// - officer: removes student_life tag and adds user as leader of officerClubName
+// - member: removes student_life tag and clears all led clubs
+func (db *DatabaseClient) SetUserRoleForTesting(ctx context.Context, email string, role string, officerClubName string) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+
+	normalizedRole := strings.ToLower(strings.TrimSpace(role))
+	if normalizedRole == "" {
+		next.lastErr = fmt.Errorf("role is required")
+		return next, next.lastErr
+	}
+
+	tx, err := next.client.Tx(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	defer func() {
+		if next.lastErr != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	storedUser, err := tx.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	switch normalizedRole {
+	case "admin":
+		tags := withStudentLifeTag(storedUser.Tags, true)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+	case "officer":
+		tags := withStudentLifeTag(storedUser.Tags, false)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+		clubName := strings.TrimSpace(officerClubName)
+		if clubName == "" {
+			next.lastErr = fmt.Errorf("officer club name is required")
+			return next, next.lastErr
+		}
+
+		csClub, queryErr := tx.Club.Query().Where(club.ClubNameEQ(clubName)).Only(ctx)
+		if queryErr != nil {
+			next.lastErr = fmt.Errorf("officer club %q not found", clubName)
+			return next, next.lastErr
+		}
+
+		alreadyLeader, queryErr := tx.Club.Query().
+			Where(club.IDEQ(csClub.ID), club.HasLeadersWith(user.IDEQ(storedUser.ID))).
+			Exist(ctx)
+		if queryErr != nil {
+			next.lastErr = queryErr
+			return next, queryErr
+		}
+		if !alreadyLeader {
+			err = tx.Club.UpdateOneID(csClub.ID).AddLeaderIDs(storedUser.ID).Exec(ctx)
+			if err != nil {
+				next.lastErr = err
+				return next, err
+			}
+		}
+
+	case "member":
+		tags := withStudentLifeTag(storedUser.Tags, false)
+		err = tx.User.UpdateOneID(storedUser.ID).SetTags(tags).ClearLedClubs().Exec(ctx)
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
+
+	default:
+		next.lastErr = fmt.Errorf("unsupported role %q", role)
+		return next, next.lastErr
+	}
+
+	if err = tx.Commit(); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.lastErr = nil
+	next.userEmail = lookupEmail
+	return next, nil
+}
+
+func withStudentLifeTag(tags []string, enabled bool) []string {
+	filtered := make([]string, 0, len(tags)+1)
+	hasStudentLife := false
+	for _, rawTag := range tags {
+		tag := strings.TrimSpace(rawTag)
+		if tag == "" {
+			continue
+		}
+		if strings.EqualFold(tag, "student_life") {
+			hasStudentLife = true
+			if !enabled {
+				continue
+			}
+			tag = "student_life"
+		}
+		filtered = append(filtered, tag)
+	}
+
+	if enabled && !hasStudentLife {
+		filtered = append(filtered, "student_life")
+	}
+
+	return filtered
 }
 
 func (db *DatabaseClient) IsUserStudentLifeByEmail(ctx context.Context, email string) (*DatabaseClient, bool, error) {
@@ -661,6 +995,70 @@ func (db *DatabaseClient) FetchAnswerByID(ctx context.Context, id int) (*Databas
 	a, err := next.client.Answer.Query().Where(answer.IDEQ(id)).Only(ctx)
 	next.lastErr = err
 	return next, a, err
+}
+
+// UpsertSurveyResponseByUserEmail stores one boolean response for a user/question pair.
+// Existing answers are updated in place, otherwise a new answer row is created.
+func (db *DatabaseClient) UpsertSurveyResponseByUserEmail(ctx context.Context, email string, questionID int, answerValue bool) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+	if questionID <= 0 {
+		next.lastErr = fmt.Errorf("question id must be positive")
+		return next, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if _, err = next.client.Question.Query().Where(question.IDEQ(questionID)).Only(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	answerText := strconv.FormatBool(answerValue)
+	now := time.Now()
+
+	updatedCount, err := next.client.Answer.Update().
+		Where(
+			answer.HasUserWith(user.IDEQ(storedUser.ID)),
+			answer.HasQuestionWith(question.IDEQ(questionID)),
+		).
+		SetAnswerText(answerText).
+		SetSubmittedAt(now).
+		Save(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if updatedCount > 0 {
+		next.lastErr = nil
+		return next, nil
+	}
+
+	_, err = next.client.Answer.Create().
+		SetAnswerText(answerText).
+		SetQuestionID(questionID).
+		SetUserID(storedUser.ID).
+		SetSubmittedAt(now).
+		Save(ctx)
+	next.lastErr = err
+	return next, err
 }
 
 // FetchAnswersByQuestionID returns all answers belonging to one question.
