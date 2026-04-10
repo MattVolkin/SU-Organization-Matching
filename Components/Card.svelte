@@ -5,6 +5,9 @@
 	
   	import { blur, fade, fly, scale, slide } from 'svelte/transition'; //import transition animations
   	import { APICreater } from './APIHandler.svelte'; // import the API handler to make calls to the backend and get the data for the cards
+	import { redirect } from '@sveltejs/kit';
+
+
 
 	let counter = $state(0); // count what term we are on to stay on the list
 	let directionInt = $state('none'); // gets direction information from swiping app
@@ -46,7 +49,9 @@
 {id:32, question_type: "personality", en: {term: "Curious", def: "desire to investigate and learn"}},
 {id:33, question_type: "personality", en: {term: "Organized", def: "arranged in a systematic way, especially on a large scale."}},
 {id:34, question_type: "personality", en: {term: "Social", def: "pleasant companionship with friends or associates"}},
-{id:35, question_type: "personality", en: {term: "Fun", def: "providing entertainment, amusement, or enjoyment"}}
+{id:35, question_type: "personality", en: {term: "Fun", def: "providing entertainment, amusement, or enjoyment"}},
+{id:36, question_type: "personality", en: {term: "Ending", def: "All Cards are finished! You will be redirected to the results page in a few seconds!"}}
+
 
 	]);
 
@@ -101,13 +106,17 @@
 }
 
 	async function sendSwipeInformation() { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-    try {
-      const adjectivesList = await APICreater('GET', '/api/adjectives', null);
-
+    
+		if(counter >= items.length) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+			goto('/results');
+			console.log("finished all cards, sending information to backend");
+		try {
+      //const adjectivesList = await APICreater('SEND', '/api/adjectives', null);
+		// TODO send the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
 	} catch (error) {
       console.error('Unable to load officer clubs', error);
     }
-
+	}
 }
 
 	const range = (start, end, targetArray) => { // range function to get a sub-array of the full question array (without modifying the original)
@@ -130,7 +139,13 @@
 		def = items[counter][lang].def;
 		console.log("tried to advance card" + counter + ":" + term + ":" + def);
 
-		//TODO: if at end of list and finished with swiping, do something (undefined at this time)
+		if(counter >= items.length-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+			console.log("finished all cards, sending information to backend");
+			sendSwipeInformation();
+
+		}
+
+
 		
 	}
 
@@ -175,12 +190,10 @@
 
 
 	<!-- rest of the cards in a stack -->
-	{#each range(counter+1, items.length, items) as card, index} 
     <div 
       class="card" 
     >
     </div>
-	{/each}
 
 	
 
@@ -188,13 +201,16 @@
 </div>
 <style>
 
+ @media (prefers-color-scheme: dark) {
 	:root {
 		/* shared variables */
   	--card-width: 50vw;
 	--card-height: 60vh;
 	--card--color: #1a1a1a;
+	--text--color: white;
 
 	}
+}
 
 	h1 {
 		
@@ -202,12 +218,15 @@
 		margin: 10px;
 		border-bottom: 3px solid #ccc;
 		font-weight: 1000; /* make the text a larger weight so it stands out more*/
+		color: var(--text--color);
 		
 	}
 
 	p {
 		font-size: 3vw;
 				margin: 10px;
+						color: var(--text--color);
+
 	}
 
 	.parent {
@@ -232,14 +251,14 @@
     grid-area: 1 / 1;  /* place the background cards in the same position as the top card so they look like they are under the first one */
 
 		/* use shared variables so that all the cards are the same size*/
-    width: calc(var(--card-width) - 5vw); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
-    height: calc(var(--card-height) - 5vh); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
+    width: var(--card-width); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
+    height: var(--card-height); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
     background: var(--card--color);
 		
-    border: 2px solid #ccc; 
+    border: 4px solid #ccc; 
     border-radius: 8px;
     transition: transform 0.3s ease;
-		margin-bottom: 160px;
+		margin-bottom: 200px;
 
 
   }
@@ -258,7 +277,7 @@
     height: var(--card-height);
     background: var(--card--color);
 			
-    border: 2px solid #ccc;
+    border: 4px solid #ccc;
     border-radius: 8px;
     transition: transform 0.3s ease;
 			

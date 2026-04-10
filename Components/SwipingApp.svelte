@@ -131,6 +131,13 @@
 		else if (direction === 'top') { // DEBUG; when we swipe up print the activities list to the console
 			console.log(activities);
 		}
+		else if (direction === 'bottom') { // DEBUG; when we swipe down print the personality list to the console
+			console.log(personality);
+		}
+
+
+
+
 		
 	}
 
@@ -173,7 +180,7 @@
 	<h2>Personality traits you like: {personality} </h2>
 	<h2> {count} </h2> -->
 	
-	<Bar maxLimit = 36 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
 
 
 
@@ -204,7 +211,8 @@
 		margin: 10px;
 		margin-bottom: 1px;
 		text-align: center;
-		font-size: 4vw
+		font-size: 4vw;
+		color: white;
 	}
 
 	button {
@@ -212,7 +220,9 @@
 		height: 8vw;
 		width: 10vw;
 		font-size: 3vw;
-		margin: 10px
+		margin: 10px;
+		background-color:  #1a1a1a;
+		color:white;
 	}
 	
 	.content {
@@ -226,20 +236,19 @@
 	}
 
 
-
+ @media (prefers-color-scheme: dark) {
 	.swipedContainer {
 		
-background: #ad0000;
-background: linear-gradient(90deg,rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 33%, rgba(0, 0, 0, 0) 66%, rgba(0, 168, 67, 1) 100%);		
+	background: #ad0000;
+	background: linear-gradient(90deg,rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 255) 33%, rgba(0, 0, 0, 255) 66%, rgba(0, 168, 67, 1) 100%);		
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		height: 100vh;
 
-		width: 100vw;
 
 		overflow: hidden;
 
 	}
+}
 
 </style>
