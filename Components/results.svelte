@@ -24,21 +24,14 @@
   import LoginPopup from './login_popup.svelte'
   import { APICreater } from './APIHandler.svelte';
 
-  const selectedImageStorageKey = 'club-selected-images';
-  const legacySelectedImageStorageKey = 'club-selected-images-legacy';
-  const defaultResultImage = '';
+  const defaultResultImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23dbeafe'/><stop offset='100%' stop-color='%23f8fafc'/></linearGradient></defs><rect width='640' height='360' fill='url(%23sky)'/><rect y='235' width='640' height='125' fill='%23d1d5db'/><path d='M0 250L120 190L210 235L330 165L440 235L520 205L640 250V360H0Z' fill='%239ca3af'/><circle cx='110' cy='84' r='34' fill='%23fde68a'/><text x='320' y='330' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' fill='%234b5563'>Organization Image</text></svg>";
 
   let results = $state([]) // stores matched clubs returned by the results API
   let pageNum = $state(1) // for keeping track of what page of results the user is on.
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
-  let selectedImageByClub = $state({})
   let ClubsPerPage = 5
   let threshold = 50
-
-  function normalizeClubKey(value) {
-    return String(value || '').trim().toLowerCase()
-  }
 
   function normalizeClubScore(value) {
     return typeof value === 'number' ? value : Number(value || 0)
@@ -46,6 +39,15 @@
 
   function getClubName(club) {
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club')
+  }
+
+  function getClubDescription(club) {
+    if (typeof club === 'string') {
+      return ''
+    }
+
+    const description = club?.description ?? club?.Description ?? club?.clubDescription ?? club?.ClubDescription ?? ''
+    return typeof description === 'string' ? description.trim() : ''
   }
 
   function getClubScore(club) {
@@ -78,38 +80,6 @@
     const filteredResults = getFilteredResults()
     const startIndex = (pageNum - 1) * ClubsPerPage
     return filteredResults.slice(startIndex, startIndex + ClubsPerPage)
-  }
-
-  function getSelectedImageForClub(club) {
-    const currentClubName = getClubName(club)
-    if (!currentClubName) {
-      return defaultResultImage
-    }
-
-    if (selectedImageByClub[currentClubName]) {
-      return selectedImageByClub[currentClubName]
-    }
-
-    const normalizedCurrent = normalizeClubKey(currentClubName)
-    const matchedEntry = Object.entries(selectedImageByClub).find(([clubName]) => normalizeClubKey(clubName) === normalizedCurrent)
-    if (matchedEntry) {
-      return matchedEntry[1]
-    }
-
-    return defaultResultImage
-  }
-
-  function loadSelectedClubImages() {
-    try {
-      const savedSelection = localStorage.getItem(selectedImageStorageKey)
-      const legacySelection = localStorage.getItem(legacySelectedImageStorageKey)
-      selectedImageByClub = savedSelection
-        ? JSON.parse(savedSelection)
-        : (legacySelection ? JSON.parse(legacySelection) : {})
-    } catch (error) {
-      console.error('Unable to load selected club image', error)
-      selectedImageByClub = {}
-    }
   }
 
   async function promptLoginIfNeeded() {
@@ -145,13 +115,13 @@
   }
 
   async function getResults() {
-    const payload = await APICreater('GET', '/api/results?includeScores=true', null)
+    const payload = await APICreater('GET', '/api/results', null,true)
     results = Array.isArray(payload) && payload.length > 0
       ? payload.map((item) => ({
           id: typeof item?.id === 'number' ? item.id : 0,
           clubName: getClubName(item),
           matchPercentage: getClubScore(item),
-          description: typeof item?.description === 'string' ? item.description.trim() : '',
+          description: getClubDescription(item),
           meetingTime: typeof item?.meetingTime === 'string' ? item.meetingTime.trim() : '',
           imagePath: typeof item?.imagePath === 'string' ? item.imagePath.trim() : '',
           externalLink: typeof item?.externalLink === 'string' ? item.externalLink.trim() : '',
@@ -174,16 +144,10 @@
       pageNum -= 1
     }
   }
-  
-  async function getClubInfo(club) {
-
-    
-  }
 
   onMount(() => {
     window.addEventListener('auth-login', handleAuthLogin)
     window.addEventListener('auth-logout', handleAuthLogout)
-    loadSelectedClubImages();
     promptLoginIfNeeded();
   });
 
@@ -214,13 +178,11 @@
           <article class="club-card">
             <h1>{club.clubName}</h1>
 
-            {#if club.imagePath || getSelectedImageForClub(club)}
-              <img
-                class="club-hero-image"
-                src={club.imagePath || getSelectedImageForClub(club)}
-                alt={`Selected club image for ${club.clubName}`}
-              />
-            {/if}
+            <img
+              class="club-hero-image"
+              src={club.imagePath || defaultResultImage}
+              alt={`Image for ${club.clubName}`}
+            />
 
             <p class="match-score">Match score: {club.matchPercentage.toFixed(0)}%</p>
             <h2>{club.description || 'No description available yet.'}</h2>
