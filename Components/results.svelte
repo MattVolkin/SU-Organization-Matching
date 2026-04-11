@@ -52,6 +52,19 @@
     return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
   }
 
+  function formatUpdatedAt(updatedAt) {
+    if (!updatedAt) {
+      return ''
+    }
+
+    const parsedDate = new Date(updatedAt)
+    if (Number.isNaN(parsedDate.getTime())) {
+      return ''
+    }
+
+    return parsedDate.toLocaleString()
+  }
+
   function getFilteredResults() {
     return results.filter((club) => getClubScore(club) >= threshold)
   }
@@ -132,12 +145,19 @@
   }
 
   async function getResults() {
-    const payload = await APICreater('GET', '/api/results?includeScores=1', null)
+    const payload = await APICreater('GET', '/api/results?includeScores=true', null)
     results = Array.isArray(payload) && payload.length > 0
       ? payload.map((item) => ({
           id: typeof item?.id === 'number' ? item.id : 0,
           clubName: getClubName(item),
           matchPercentage: getClubScore(item),
+          description: typeof item?.description === 'string' ? item.description.trim() : '',
+          meetingTime: typeof item?.meetingTime === 'string' ? item.meetingTime.trim() : '',
+          imagePath: typeof item?.imagePath === 'string' ? item.imagePath.trim() : '',
+          externalLink: typeof item?.externalLink === 'string' ? item.externalLink.trim() : '',
+          contactInfo: typeof item?.contactInfo === 'string' ? item.contactInfo.trim() : '',
+          includeOfficerEmails: Boolean(item?.includeOfficerEmails),
+          updatedAt: typeof item?.updatedAt === 'string' ? item.updatedAt.trim() : '',
         }))
       : []
     pageNum = 1
@@ -194,27 +214,39 @@
           <article class="club-card">
             <h1>{club.clubName}</h1>
 
-            {#if getSelectedImageForClub(club)}
+            {#if club.imagePath || getSelectedImageForClub(club)}
               <img
                 class="club-hero-image"
-                src={getSelectedImageForClub(club)}
+                src={club.imagePath || getSelectedImageForClub(club)}
                 alt={`Selected club image for ${club.clubName}`}
               />
             {/if}
 
             <p class="match-score">Match score: {club.matchPercentage.toFixed(0)}%</p>
-            <h2>Hi, we are {club.clubName}! We are commited to to provide a safe space to play games and hang out with other computer nerds. </h2>
+            <h2>{club.description || 'No description available yet.'}</h2>
 
-            <h3> Activities we do include:</h3>
-            <ul>
-              <li>Playing games</li>
-              <li>Trivia nights </li>
-              <li>Presentation nights</li>
-              <li>Video game tournaments</li>
-              <li>Scavenger hunts</li>
-            </ul>
-            <h3>Meeting Information: </h3>
-            <p> Every Thursday at 6:30 pm in FJS 310</p>
+            {#if club.meetingTime}
+              <h3>Meeting Information</h3>
+              <p>{club.meetingTime}</p>
+            {/if}
+
+            <div class="club-meta">
+              {#if club.externalLink}
+                <a href={club.externalLink} target="_blank" rel="noopener noreferrer">Visit website</a>
+              {/if}
+
+              {#if club.contactInfo}
+                <p><strong>Contact:</strong> {club.contactInfo}</p>
+              {/if}
+
+              {#if club.includeOfficerEmails}
+                <p>Officer emails are included for this organization.</p>
+              {/if}
+
+              {#if formatUpdatedAt(club.updatedAt)}
+                <p><strong>Updated:</strong> {formatUpdatedAt(club.updatedAt)}</p>
+              {/if}
+            </div>
           </article>
         {/each}
 
@@ -321,19 +353,26 @@
     letter-spacing: 0.01em;
   }
 
-  p,
-  li {
+  p {
     font-size: 0.98rem;
     line-height: 1.55;
   }
 
-  li::marker {
-    color: var(--action);
+  .club-meta {
+    display: grid;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
   }
 
-  ul {
-    margin: 0 0 0.75rem 0;
-    padding-left: 1.2rem;
+  .club-meta a {
+    width: fit-content;
+    color: var(--action);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .club-meta a:hover {
+    text-decoration: underline;
   }
 
   .pager {
