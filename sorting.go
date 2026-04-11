@@ -28,7 +28,7 @@ func main() {
 			Personality:   []string{"Welcoming", "Caring", "Outgoing", "Open Minded", "Enthusiastic", "Social"},
 			Activities:    []string{"Social Justice", "Arts & Crafts", "Discussion"},
 			Genders:       []string{"Non Binary", "Other"},
-			Other:         []string{"Queer"},
+			Other:         []string{"LGBTQ"},
 			StrictGenders: false,
 		},
 	}
@@ -41,7 +41,7 @@ func main() {
 		Ethnicities:     []string{"White"},
 		Religions:       []string{"No Religion"},
 		DedicatedMajors: []string{"Computer Science"},
-		Other:           []string{"Queer"},
+		Other:           []string{"LGBTQ"},
 	}
 
 	results := matching.Sort(userInfo, clubs)

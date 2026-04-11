@@ -19,12 +19,12 @@ Personality:,Welcoming,Hard Working,Open Minded,Welcoming,Collaborative,Hard Wor
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Collaborative,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Curious,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Gender:,,Woman,Woman,,Woman,,,Woman,,,,,,,,,,,Woman,,Man,,,,,,Man,Woman,Man,,,,,,Woman,,Man,,Man,,Non Binary,,,,,,,,,,,,,,,,,,,,,,,Woman
+Genders:,,Woman,Woman,,Woman,,,Woman,,,,,,,,,,,Woman,,Man,,,,,,Man,Woman,Man,,,,,,Woman,,Man,,Man,,Non Binary,,,,,,,,,,,,,,,,,,,,,,,Woman
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Other,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Race/Ethnicity:,,,Black or African American,,,,,,Asian,,,Black or African American,,,,,,,,,Black or African American,,,,,,,Hispanic or Latino,,Hispanic or Latino,,,,,Black or African American,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Ethnicities:,,,Black or African American,,,,,,Asian,,,Black or African American,,,,,,,,,Black or African American,,,,,,,Hispanic or Latino,,Hispanic or Latino,,,,,Black or African American,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Religion:,,,,,,,,,,,,,,Catholocism,,,Protestantism,,,,,,Protestantism,,,,Protestantism,,,,,,,Islam,,,,,,,,,,,,,,,,,,,,,,,,,,,,Protestantism,Protestantism,
+Religions:,,,,,,,,,,,,,,Catholocism,,,Protestantism,,,,,,Protestantism,,,,Protestantism,,,,,,,Islam,,,,,,,,,,,,,,,,,,,,,,,,,,,,Protestantism,Protestantism,
 ,,,,,,,,,,,,,,,,,Catholocism,,,,,,Catholocism,,,,Catholocism,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Catholocism,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Dedicated Major:,,,,,,Biochemistry,Pre-Dentistry,Pre-Dentistry,,,,,,,Classics,,,Computational Mathematics,,Music,,,,,German,,,,,Spanish,Theatre,Computational Mathematics,,,,Anthropology,,Applied Physics,,,,,Pre-Dentistry,Pre-Dentistry,Pre-Law,,,Business,,,Art,,,,Environmental Studies,Philosophy,,,Spanish,,,,,
@@ -40,3 +40,5 @@ Associated Majors:,,,,,,,,,,Music,Environmental Studies,,,,,,,Biology,,,,,,Art,A
 ,,,,,,,,,,,,,,,,,,,,,,,,,History,,,,,,,,,,,,,,,Kinesiology,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Other:,,Greek,Greek,,Greek,,,,,,,,,,,Disablities,,,Greek,,,,,,,,Greek,Greek,Greek,,,,,,,,Greek,,Greek,Disablities,LGBTQ,,,,,,,,,,,,,,,,,,,,,,,Greek
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Strict Gender:,,1,1,,1,,,,,,,,,,,,,,1,,1,,,,,,1,1,1,,,,,,1,,1,,1,,,,,,,,,,,,,,,,,,,,,,,,,1
