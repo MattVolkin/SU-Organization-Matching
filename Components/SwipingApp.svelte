@@ -232,12 +232,37 @@
 		padding: 0;
 	}
 
+@media (prefers-color-scheme: dark) {
+		:root {
+
+	--in-darkmode: 255;
+	--text-color: white;
+	--background-color: #1a1a1a;
+
+	}
+
+}
+
+@media (prefers-color-scheme: light) {
+		:root {
+
+	--in-darkmode: 0;
+	--text-color: #1a1a1a;
+	--background-color: white;
+
+	}
+
+}
+
+
+
+
 	h1 {
 		margin: 10px;
 		margin-bottom: 1px;
 		text-align: center;
 		font-size: 4vw;
-		color: white;
+		color: var(--text-color);
 	}
 
 	button {
@@ -246,8 +271,8 @@
 		width: 10vw;
 		font-size: 3vw;
 		margin: 10px;
-		background-color:  #1a1a1a;
-		color:white;
+		background-color:  var(--background-color);
+		color:var(--text-color);
 	}
 	
 	.content {
@@ -263,7 +288,7 @@
 	.swipedContainer {
 		overflow: hidden;
 		background: #ad0000;
-		background: linear-gradient(90deg, rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, 255) 33%, rgba(0, 0, 0, 255) 66%, rgba(0, 168, 67, 1) 100%);
+		background: linear-gradient(90deg, rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, var(--in-darkmode)) 33%, rgba(0, 0, 0, var(--in-darkmode)) 66%, rgba(0, 168, 67, 1) 100%);
 	}
 
 	.bar {

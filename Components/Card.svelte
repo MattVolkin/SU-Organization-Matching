@@ -201,6 +201,21 @@
 	--card-height: 60vh;
 	--card--color: #1a1a1a;
 	--text--color: white;
+	--border-color: #ccc
+	
+
+	}
+}
+
+ @media (prefers-color-scheme: light) {
+	:root {
+		/* shared variables */
+  	--card-width: 50vw;
+	--card-height: 60vh;
+	--card--color: #1ef4ff;
+	--text--color:#1a1a1a;
+	--border-color: #000000;
+	
 
 	}
 }
@@ -209,7 +224,7 @@
 		
 		font-size: 4vw;
 		margin: 10px;
-		border-bottom: 3px solid #ccc;
+		border-bottom: 3px solid var(--border-color);
 		font-weight: 1000; /* make the text a larger weight so it stands out more*/
 		color: var(--text--color);
 		
@@ -248,7 +263,7 @@
     height: var(--card-height); /* make the cards slightly smaller than the top card so that they look like they are under the top card */
     background: var(--card--color);
 		
-    border: 4px solid #ccc; 
+    border: 4px solid var(--border-color); 
     border-radius: 8px;
     transition: transform 0.3s ease;
 		margin-bottom: 200px;
@@ -270,7 +285,7 @@
     height: var(--card-height);
     background: var(--card--color);
 			
-    border: 4px solid #ccc;
+    border: 4px solid var(--border-color);
     border-radius: 8px;
     transition: transform 0.3s ease;
 			
