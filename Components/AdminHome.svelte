@@ -46,11 +46,13 @@
     }
 
     function editClub(club) {
-        console.log('Edit club:', club)
+        Window.location.href = `/SettingsPage.html?clubId=${club.id}` 
     }
 
     function deleteClub(club) {
-        console.log('Delete club:', club)
+       APICreater('DELETE', '/api/admin/orgs/', {"id":club.id})
+
+
     }
 
 </script>
