@@ -109,7 +109,7 @@
 	export async function sendSwipeInformation(IDNumber, answer) { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
 
 		try {
-      	 APICreater('POST', '/response', { "questionId": IDNumber, "answer": answer });
+      	await APICreater('POST', '/response', { "questionId": IDNumber, "answer": answer });
 	} catch (error) {
       console.error('Unable to send swipe information', error);
     }
