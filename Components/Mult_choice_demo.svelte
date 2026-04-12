@@ -1,16 +1,17 @@
 <script>
 import Header from './header.svelte'
 import Footer from './footer.svelte'
+import { APICreater } from './APIHandler.svelte';
 
-  let name = ''
-  let club = ''
-  let contact = ''
-  let officer = ""
-  let email = ''
-	let gender = ''
-  let race = []
-	let religion = ''
-  let major = []
+  let name = $state('')
+  let club = $state('')
+  let contact = $state('')
+  let officer = $state('')
+  let email = $state('')
+	let gender = $state('')
+  let race = $state([])
+	let religion = $state('')
+  let major = $state([])
 
   const genderOptions = [
     'Man',
@@ -93,26 +94,19 @@ import Footer from './footer.svelte'
   ]
 
 
-  function submit() {
-    console.log(`Name: ${name}, Club: ${club}, Contact: ${contact}, Officer : ${officer}, Email: ${email}`)
-    fetch('/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name, club, contact, officer, email })
+  async function submit(event) {
+    event.preventDefault()
+    await APICreater('POST', '/submit', {
+      name,
+      gender,
+      race,
+      religion,
+      major,
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data)
-    })
-    .catch((error) => {
-      console.error('Error:', error)
-    })
+     window.location.href = '/swiping.html';
   }
 </script>
 
-<Header />
 
 <main>
   <section class="settings-page">
@@ -120,10 +114,9 @@ import Footer from './footer.svelte'
    
 
     <section class="club-settings-card">
-      <p class="club-title">Form Preview</p>
-      <p class="description">A cleaner version of the demographic and interest form with grouped controls and a live summary.</p>
 
-      <form on:submit|preventDefault={submit}>
+
+      <form onsubmit={submit}>
         <fieldset>
           <legend>Identity</legend>
           <div class="option-stack">
@@ -178,15 +171,21 @@ import Footer from './footer.svelte'
 			</div>
 		</fieldset>
 
-        <button type="submit">Submit</button>
+        <button type="submit">Submit and Continue</button>
       </form>
     </section>
   </section>
 </main>
 
-<Footer />
+
 
 <style>
+  :global(html),
+  :global(body) {
+    margin: 0;
+    padding: 0;
+  }
+
   main {
     width: 100%;
     margin: 0;
@@ -216,17 +215,6 @@ import Footer from './footer.svelte'
     margin-bottom: 1rem;
     background: #fafcff;
     box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
-  }
-
-  .club-title {
-    margin-top: 0;
-    font-weight: 700;
-  }
-
-  .description {
-    margin-top: 0.25rem;
-    color: #31506e;
-    line-height: 1.5;
   }
 
   form {

@@ -21,7 +21,7 @@
 	
 </script>
 
-<div bind:clientWidth={elmWidth} bind:clientHeight={elmHeight}>
+<div class="progress-shell" bind:clientWidth={elmWidth} bind:clientHeight={elmHeight}>
 	<!-- <h1>
 		width height is : ({elmWidth}, {elmHeight})
 	</h1>
@@ -35,14 +35,20 @@
 <style>
 
 #progBar {
-		height: 30px;
+		height: 100%;
 		background-color: rgb(87, 247, 17);	
-		border: 1px solid rgb(87, 247, 17);
+		border: none;
+		transition: width 0.2s ease;
 }
 
-div {
-	      border: 5px solid;
-				background: #1C6EA4;
+.progress-shell {
+	width: 100%;
+	max-width: min(56rem, 90vw);
+	height: clamp(0.55rem, 1.25vh, 0.85rem);
+	border: 2px solid #1C6EA4;
+	border-radius: 999px;
+	background: rgba(28, 110, 164, 0.2);
+	overflow: hidden;
 }
 	
 </style>

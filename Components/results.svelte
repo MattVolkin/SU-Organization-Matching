@@ -25,16 +25,41 @@
   import { APICreater } from './APIHandler.svelte';
 
   const defaultResultImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23dbeafe'/><stop offset='100%' stop-color='%23f8fafc'/></linearGradient></defs><rect width='640' height='360' fill='url(%23sky)'/><rect y='235' width='640' height='125' fill='%23d1d5db'/><path d='M0 250L120 190L210 235L330 165L440 235L520 205L640 250V360H0Z' fill='%239ca3af'/><circle cx='110' cy='84' r='34' fill='%23fde68a'/><text x='320' y='330' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' fill='%234b5563'>Organization Image</text></svg>";
+  const orgPhotoLibrary = new Map([
+    ['computerscienceclub', new URL('./OrgPhotos/CSClub.jpg', import.meta.url).href],
+    ['piratesforpride', new URL('./OrgPhotos/P4P.jpg', import.meta.url).href],
+    ['reproductivejusticealliance', new URL('./OrgPhotos/ReproductiveJusticeAlliance.png', import.meta.url).href],
+    ['sutertulias', new URL('./OrgPhotos/SUTertulias.jpeg', import.meta.url).href],
+    ['thegame', new URL('./OrgPhotos/THEGAME.jpeg', import.meta.url).href],
+    ['unitedmethodiststudentfellowship', new URL('./OrgPhotos/UnitedMethodistStudentFellowship.jpeg', import.meta.url).href],
+  ])
 
   let results = $state([]) // stores matched clubs returned by the results API
   let pageNum = $state(1) // for keeping track of what page of results the user is on.
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
+  let resultsPageElement = $state(null)
   let ClubsPerPage = 5
   let threshold = 50
 
+  function scrollToResultsTop() {
+    if (resultsPageElement) {
+      resultsPageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   function normalizeClubScore(value) {
-    return typeof value === 'number' ? value : Number(value || 0)
+    const numeric = typeof value === 'number' ? value : Number(value || 0)
+    if (!Number.isFinite(numeric)) {
+      return 0
+    }
+    if (numeric > 0 && numeric <= 1) {
+      return numeric * 100
+    }
+    return numeric
   }
 
   function getClubName(club) {
@@ -47,11 +72,57 @@
     }
 
     const description = club?.description ?? club?.Description ?? club?.clubDescription ?? club?.ClubDescription ?? ''
-    return typeof description === 'string' ? description.trim() : ''
+    const normalized = typeof description === 'string' ? description.trim() : ''
+    return isOfficerPlaceholder(normalized) ? '' : normalized
   }
 
   function getClubScore(club) {
     return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
+  }
+
+  function normalizeClubKey(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  }
+
+  function isOfficerPlaceholder(value) {
+    const text = typeof value === 'string' ? value.trim().toLowerCase() : ''
+    if (!text) {
+      return false
+    }
+
+    return text.includes('updated by officer')
+  }
+
+  function getClubImagePath(club) {
+    const configuredPath = typeof club?.imagePath === 'string' ? club.imagePath.trim() : ''
+    if (configuredPath) {
+      return configuredPath
+    }
+
+    const normalizedName = normalizeClubKey(getClubName(club))
+    return orgPhotoLibrary.get(normalizedName) || ''
+  }
+
+  function getVisibleContactInfo(value) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (!text) {
+      return ''
+    }
+
+    if (isOfficerPlaceholder(text)) {
+      return ''
+    }
+
+    return text
+  }
+
+  function getVisibleExternalLink(value) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (!text || isOfficerPlaceholder(text)) {
+      return ''
+    }
+
+    return text
   }
 
   function formatUpdatedAt(updatedAt) {
@@ -115,33 +186,67 @@
   }
 
   async function getResults() {
-    const payload = await APICreater('GET', '/api/results', null,true)
-    results = Array.isArray(payload) && payload.length > 0
-      ? payload.map((item) => ({
-          id: typeof item?.id === 'number' ? item.id : 0,
-          clubName: getClubName(item),
-          matchPercentage: getClubScore(item),
-          description: getClubDescription(item),
-          meetingTime: typeof item?.meetingTime === 'string' ? item.meetingTime.trim() : '',
-          imagePath: typeof item?.imagePath === 'string' ? item.imagePath.trim() : '',
-          externalLink: typeof item?.externalLink === 'string' ? item.externalLink.trim() : '',
-          contactInfo: typeof item?.contactInfo === 'string' ? item.contactInfo.trim() : '',
-          includeOfficerEmails: Boolean(item?.includeOfficerEmails),
-          updatedAt: typeof item?.updatedAt === 'string' ? item.updatedAt.trim() : '',
-        }))
-      : []
+    const [detailPayload, scorePayload] = await Promise.all([
+      APICreater('GET', '/api/results', null),
+      APICreater('GET', '/api/results?includeScores=true', null),
+    ])
+
+    const detailList = Array.isArray(detailPayload) ? detailPayload : []
+    const scoreList = Array.isArray(scorePayload) ? scorePayload : []
+
+    const detailById = new Map()
+    const detailByName = new Map()
+    for (const item of detailList) {
+      const clubName = getClubName(item)
+      const clubId = typeof item?.id === 'number' ? item.id : 0
+
+      if (clubId > 0) {
+        detailById.set(clubId, item)
+      }
+      detailByName.set(normalizeClubKey(clubName), item)
+    }
+
+    const sourceList = scoreList.length > 0 ? scoreList : detailList
+
+    results = sourceList.map((item) => {
+      const clubId = typeof item?.id === 'number' ? item.id : 0
+      const clubName = getClubName(item)
+      const matchedDetail = clubId > 0
+        ? (detailById.get(clubId) || detailByName.get(normalizeClubKey(clubName)))
+        : detailByName.get(normalizeClubKey(clubName))
+
+      const mergedClub = matchedDetail || item
+
+      return {
+        id: clubId,
+        clubName,
+        matchPercentage: getClubScore(item),
+        description: getClubDescription(mergedClub),
+        meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
+        imagePath: getClubImagePath(mergedClub),
+        externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
+        contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
+        includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails),
+        updatedAt: typeof (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt) === 'string'
+          ? (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt).trim()
+          : '',
+      }
+    })
+
     pageNum = 1
   }
 
   async function nextPage() {
     if (pageNum < getTotalPages()) {
       pageNum += 1
+      scrollToResultsTop()
     }
   }
 
   async function prevPage() {
     if (pageNum > 1) {
       pageNum -= 1
+      scrollToResultsTop()
     }
   }
 
@@ -160,7 +265,7 @@
 
 <LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
-<main class="results-page">
+<main class="results-page" bind:this={resultsPageElement}>
   {#if isAuthChecking}
     <section class="status-card">
       <p>Checking sign-in status...</p>
@@ -201,13 +306,7 @@
                 <p><strong>Contact:</strong> {club.contactInfo}</p>
               {/if}
 
-              {#if club.includeOfficerEmails}
-                <p>Officer emails are included for this organization.</p>
-              {/if}
-
-              {#if formatUpdatedAt(club.updatedAt)}
-                <p><strong>Updated:</strong> {formatUpdatedAt(club.updatedAt)}</p>
-              {/if}
+              
             </div>
           </article>
         {/each}
@@ -302,8 +401,10 @@
 
   .club-hero-image {
     width: 100%;
-    max-height: 280px;
-    object-fit: cover;
+    height: clamp(180px, 28vw, 320px);
+    object-fit: contain;
+    object-position: center;
+    background: rgba(8, 22, 44, 0.25);
     border-radius: 0.8rem;
     margin: 0.9rem 0;
     border: none;

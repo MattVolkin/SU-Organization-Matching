@@ -230,6 +230,7 @@
 	:global(body) {
 		margin: 0;
 		padding: 0;
+		height: 100%;
 	}
 
 @media (prefers-color-scheme: dark) {
@@ -258,19 +259,19 @@
 
 
 	h1 {
-		margin: 10px;
-		margin-bottom: 1px;
+		margin: 0;
 		text-align: center;
-		font-size: 4vw;
+		font-size: clamp(1.35rem, 2.3vw, 2.5rem);
 		color: var(--text-color);
+		line-height: 1.12;
 	}
 
 	button {
 		align-self: flex-start;
-		height: 8vw;
-		width: 10vw;
-		font-size: 3vw;
-		margin: 10px;
+		height: clamp(2.15rem, 4.2vh, 3rem);
+		width: clamp(5.2rem, 9vw, 8rem);
+		font-size: clamp(0.95rem, 1.35vw, 1.35rem);
+		margin: 0.3rem 0 0.4rem 0.45rem;
 		background-color:  var(--background-color);
 		color:var(--text-color);
 	}
@@ -279,22 +280,51 @@
 		user-select: none;
 		align-items: center;
 		justify-content: center;
-		
+		min-height: 0;
 		display: grid;
   place-items: center; /* Centers both horizontally and vertically */
-  height: 100vh;       /* Example height to fill the viewport */
+	height: 100%;
 	}
 
 	.swipedContainer {
 		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.35rem 0.6rem 0.45rem;
+		box-sizing: border-box;
 		background: #ad0000;
 		background: linear-gradient(90deg, rgba(173, 0, 0, 1) 0%, rgba(0, 0, 0, var(--in-darkmode)) 33%, rgba(0, 0, 0, var(--in-darkmode)) 66%, rgba(0, 168, 67, 1) 100%);
 	}
 
 	.bar {
-		margin-top: 20px;
-		margin-bottom: 20px;
-		width: 50vw;
+		margin: 0.25rem 0 0.35rem;
+		width: min(56rem, 78vw);
+	}
+
+	.box {
+		flex: 1;
+		min-height: 0;
+		width: min(94vw, 76rem);
+		display: grid;
+		grid-template-rows: auto 1fr;
+	}
+
+	@media (max-width: 900px) {
+		h1 {
+			font-size: clamp(1.05rem, 4.1vw, 1.55rem);
+		}
+
+		.bar,
+		.box {
+			width: 92vw;
+		}
+
+		button {
+			margin-left: 0.2rem;
+		}
 	}
 
 </style>

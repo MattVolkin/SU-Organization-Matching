@@ -197,8 +197,8 @@
  @media (prefers-color-scheme: dark) {
 	:root {
 		/* shared variables */
-  	--card-width: 50vw;
-	--card-height: 60vh;
+	  	--card-width: min(46vw, 42rem);
+	--card-height: min(42vh, 24rem);
 	--card--color: #1a1a1a;
 	--text--color: white;
 	--border-color: #ccc
@@ -210,8 +210,8 @@
  @media (prefers-color-scheme: light) {
 	:root {
 		/* shared variables */
-  	--card-width: 50vw;
-	--card-height: 60vh;
+	  	--card-width: min(46vw, 42rem);
+	--card-height: min(42vh, 24rem);
 	--card--color: #1ef4ff;
 	--text--color:#1a1a1a;
 	--border-color: #000000;
@@ -222,7 +222,7 @@
 
 	h1 {
 		
-		font-size: 4vw;
+		font-size: clamp(1.5rem, 3vw, 3rem);
 		margin: 10px;
 		border-bottom: 3px solid var(--border-color);
 		font-weight: 1000; /* make the text a larger weight so it stands out more*/
@@ -231,14 +231,18 @@
 	}
 
 	p {
-		font-size: 3vw;
+		font-size: clamp(1.2rem, 2.3vw, 2.2rem);
 				margin: 10px;
 						color: var(--text--color);
 
 	}
 
 	.parent {
-		/* althougth there is nothing in the styling for the parent element, this is here just incase somthing needs to be added*/
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: var(--card-width);
+		height: var(--card-height);
 	}
 	
 	.card:not(:first-child) {
@@ -248,9 +252,9 @@
 	
   .card {
 		
-		position: relative; /* render following cards under the top card*/
+		position: absolute; /* render following cards under the top card*/
+		inset: 0;
 		z-index: 0;
-;
 
 		
 		transition: none; /* clear the transitions so that cards look normal until hovered over */
@@ -266,14 +270,15 @@
     border: 4px solid var(--border-color); 
     border-radius: 8px;
     transition: transform 0.3s ease;
-		margin-bottom: 200px;
+		transform: translate(0.5rem, 0.5rem);
 
 
   }
 
-    .TopCard {
+	.TopCard {
 			
 	  position: absolute;
+		inset: 0;
 		z-index: 1; /* setting this index to 1 allows it to render above the background stack*/
 
 		transition: none;
@@ -298,9 +303,24 @@
 	.TopCard:hover {
 		/* if the card is hovered over, it does a small rotation animation */
 
-		transform: translateY(-1rem) rotate(3deg);
+		transform: translateY(-0.45rem) rotate(2deg);
         
 
     }
+
+	@media (max-width: 900px) {
+		:root {
+			--card-width: min(88vw, 30rem);
+			--card-height: min(45vh, 22rem);
+		}
+
+		h1 {
+			font-size: clamp(1.25rem, 6vw, 2rem);
+		}
+
+		p {
+			font-size: clamp(1rem, 4.8vw, 1.5rem);
+		}
+	}
 
 </style>
