@@ -275,6 +275,13 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, demographics, err := dbClient.Query().FetchUserDemographicsByEmail(r.Context(), email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user demographics"})
+		return
+	}
+
 	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -285,16 +292,16 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	includeScores := strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("includeScores")), "true") || strings.TrimSpace(r.URL.Query().Get("includeScores")) == "1"
 	if includeScores {
-		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, clubs))
+		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, demographics, clubs))
 		return
 	}
 
-	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, clubs))
+	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, demographics, clubs))
 }
 
-// getClubsFromAnswers ranks clubs for a user by converting stored answers into
-// matcher input and sorting all clubs by normalized match score.
-func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
+// getClubsFromAnswers ranks clubs for a user by converting stored answers and
+// demographics into matcher input and sorting all clubs by normalized match score.
+func getClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clubs []*ent.Club) []OrgJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -327,7 +334,15 @@ func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 		})
 	}
 
-	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	userInfo := matching.UserFromAnswers(matchAnswers)
+	if demographics != nil {
+		userInfo.Genders = demographics.Genders
+		userInfo.Ethnicities = demographics.Ethnicities
+		userInfo.Religions = demographics.Religions
+		userInfo.DedicatedMajors = demographics.DedicatedMajors
+	}
+
+	ranked := matching.Sort(userInfo, matchClubs)
 	ordered := make([]OrgJSON, 0, len(ranked))
 	for _, result := range ranked {
 		clubJSON, ok := clubsByID[result.Organization.ID]
@@ -340,7 +355,7 @@ func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 	return ordered
 }
 
-func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatchJSON {
+func getScoredClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clubs []*ent.Club) []OrgMatchJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -371,7 +386,15 @@ func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatch
 		})
 	}
 
-	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	userInfo := matching.UserFromAnswers(matchAnswers)
+	if demographics != nil {
+		userInfo.Genders = demographics.Genders
+		userInfo.Ethnicities = demographics.Ethnicities
+		userInfo.Religions = demographics.Religions
+		userInfo.DedicatedMajors = demographics.DedicatedMajors
+	}
+
+	ranked := matching.Sort(userInfo, matchClubs)
 	ordered := make([]OrgMatchJSON, 0, len(ranked))
 	for _, result := range ranked {
 		ordered = append(ordered, OrgMatchJSON{
