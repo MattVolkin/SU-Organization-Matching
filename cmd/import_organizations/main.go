@@ -17,6 +17,14 @@ import (
 
 type clubImportData struct {
 	Name             string
+	Description      string
+	MeetingTime      string
+	MeetingLocation  string
+	SocialMedia      string
+	OtherLinks       []string
+	ContactInfo      string
+	ExternalLink     string
+	ProfileOnly      bool
 	Activities       []string
 	Personality      []string
 	Genders          []string
@@ -82,17 +90,28 @@ func main() {
 		}
 
 		if found {
-			err = client.Club.UpdateOneID(existing.ID).
-				SetClubName(row.Name).
-				SetActivities(row.Activities).
-				SetPersonality(row.Personality).
-				SetGenders(row.Genders).
-				SetEthnicities(row.Ethnicities).
-				SetReligions(row.Religions).
-				SetDedicatedMajors(row.DedicatedMajors).
-				SetAssociatedMajors(row.AssociatedMajors).
-				SetOther(row.Other).
-				Exec(ctx)
+			update := client.Club.UpdateOneID(existing.ID).
+				SetClubName(row.Name)
+
+			if row.ProfileOnly {
+				update.
+					SetDescription(row.Description).
+					SetMeetingTime(row.MeetingTime).
+					SetExternalLink(row.ExternalLink).
+					SetContactInfo(row.ContactInfo)
+			} else {
+				update.
+					SetActivities(row.Activities).
+					SetPersonality(row.Personality).
+					SetGenders(row.Genders).
+					SetEthnicities(row.Ethnicities).
+					SetReligions(row.Religions).
+					SetDedicatedMajors(row.DedicatedMajors).
+					SetAssociatedMajors(row.AssociatedMajors).
+					SetOther(row.Other)
+			}
+
+			err = update.Exec(ctx)
 			if err != nil {
 				log.Fatalf("failed updating club %q: %v", row.Name, err)
 			}
@@ -100,17 +119,28 @@ func main() {
 			continue
 		}
 
-		_, err = client.Club.Create().
-			SetClubName(row.Name).
-			SetActivities(row.Activities).
-			SetPersonality(row.Personality).
-			SetGenders(row.Genders).
-			SetEthnicities(row.Ethnicities).
-			SetReligions(row.Religions).
-			SetDedicatedMajors(row.DedicatedMajors).
-			SetAssociatedMajors(row.AssociatedMajors).
-			SetOther(row.Other).
-			Save(ctx)
+		create := client.Club.Create().
+			SetClubName(row.Name)
+
+		if row.ProfileOnly {
+			create.
+				SetDescription(row.Description).
+				SetMeetingTime(row.MeetingTime).
+				SetExternalLink(row.ExternalLink).
+				SetContactInfo(row.ContactInfo)
+		} else {
+			create.
+				SetActivities(row.Activities).
+				SetPersonality(row.Personality).
+				SetGenders(row.Genders).
+				SetEthnicities(row.Ethnicities).
+				SetReligions(row.Religions).
+				SetDedicatedMajors(row.DedicatedMajors).
+				SetAssociatedMajors(row.AssociatedMajors).
+				SetOther(row.Other)
+		}
+
+		_, err = create.Save(ctx)
 		if err != nil {
 			log.Fatalf("failed creating club %q: %v", row.Name, err)
 		}
@@ -147,6 +177,86 @@ func readCSV(path string) ([][]string, error) {
 }
 
 func parseClubs(records [][]string) ([]clubImportData, error) {
+	if isResultsPageFormat(records) {
+		return parseProfileRows(records)
+	}
+
+	return parseLegacyMatrix(records)
+}
+
+func parseProfileRows(records [][]string) ([]clubImportData, error) {
+	if len(records) == 0 {
+		return nil, fmt.Errorf("csv is empty")
+	}
+
+	header := records[0]
+	orgCol := findHeaderColumn(header, "organizations")
+	meetingTimeCol := findHeaderColumn(header, "meetingtime")
+	meetingLocationCol := findHeaderColumn(header, "meetinglocation")
+	descriptionCol := findHeaderColumn(header, "description")
+	socialMediaCol := findHeaderColumn(header, "socialmedia")
+	otherLinksCol := findHeaderColumn(header, "otherlinks")
+
+	if orgCol == -1 {
+		return nil, fmt.Errorf("could not find Organizations header column")
+	}
+
+	clubs := make([]clubImportData, 0, len(records)-1)
+	for rowIdx := 1; rowIdx < len(records); rowIdx++ {
+		row := records[rowIdx]
+		name := strings.TrimSpace(cell(row, orgCol))
+		if name == "" {
+			continue
+		}
+
+		meetingTime := strings.TrimSpace(cell(row, meetingTimeCol))
+		meetingLocation := strings.TrimSpace(cell(row, meetingLocationCol))
+		meetingTimeWithLocation := combineMeetingTimeAndLocation(meetingTime, meetingLocation)
+		description := strings.TrimSpace(cell(row, descriptionCol))
+		socialMedia := strings.TrimSpace(cell(row, socialMediaCol))
+		otherLinks := collectOtherLinks(row, otherLinksCol)
+
+		allLinks := make([]string, 0, len(otherLinks)+1)
+		if socialMedia != "" {
+			allLinks = append(allLinks, socialMedia)
+		}
+		allLinks = append(allLinks, otherLinks...)
+		allLinks = dedupeStrings(allLinks)
+
+		externalLink := ""
+		if len(allLinks) > 0 {
+			externalLink = allLinks[0]
+		}
+
+		contactLines := make([]string, 0, len(allLinks)+1)
+		if meetingLocation != "" {
+			contactLines = append(contactLines, "Meeting Location: "+meetingLocation)
+		}
+		if len(allLinks) > 0 {
+			contactLines = append(contactLines, "Links: "+strings.Join(allLinks, ", "))
+		}
+
+		clubs = append(clubs, clubImportData{
+			Name:            name,
+			Description:     description,
+			MeetingTime:     meetingTimeWithLocation,
+			MeetingLocation: meetingLocation,
+			SocialMedia:     socialMedia,
+			OtherLinks:      otherLinks,
+			ContactInfo:     strings.TrimSpace(strings.Join(contactLines, "\n")),
+			ExternalLink:    externalLink,
+			ProfileOnly:     true,
+		})
+	}
+
+	if len(clubs) == 0 {
+		return nil, fmt.Errorf("no organizations found in profile CSV")
+	}
+
+	return clubs, nil
+}
+
+func parseLegacyMatrix(records [][]string) ([]clubImportData, error) {
 	orgRow := -1
 	maxColumns := 0
 	for i, row := range records {
@@ -238,6 +348,60 @@ func parseClubs(records [][]string) ([]clubImportData, error) {
 	}
 
 	return result, nil
+}
+
+func isResultsPageFormat(records [][]string) bool {
+	if len(records) == 0 {
+		return false
+	}
+	header := records[0]
+	if len(header) == 0 {
+		return false
+	}
+
+	return findHeaderColumn(header, "organizations") != -1 &&
+		findHeaderColumn(header, "description") != -1 &&
+		findHeaderColumn(header, "meetingtime") != -1
+}
+
+func findHeaderColumn(header []string, normalizedHeader string) int {
+	for i, raw := range header {
+		if normalizeHeader(raw) == normalizedHeader {
+			return i
+		}
+	}
+	return -1
+}
+
+func collectOtherLinks(row []string, otherLinksCol int) []string {
+	if otherLinksCol == -1 {
+		return nil
+	}
+
+	links := make([]string, 0)
+	for i := otherLinksCol; i < len(row); i++ {
+		value := strings.TrimSpace(cell(row, i))
+		if value == "" {
+			continue
+		}
+		links = append(links, value)
+	}
+
+	return dedupeStrings(links)
+}
+
+func combineMeetingTimeAndLocation(meetingTime string, meetingLocation string) string {
+	meetingTime = strings.TrimSpace(meetingTime)
+	meetingLocation = strings.TrimSpace(meetingLocation)
+
+	switch {
+	case meetingTime != "" && meetingLocation != "":
+		return meetingTime + " - " + meetingLocation
+	case meetingTime != "":
+		return meetingTime
+	default:
+		return meetingLocation
+	}
 }
 
 func knownSections() map[string]struct{} {
