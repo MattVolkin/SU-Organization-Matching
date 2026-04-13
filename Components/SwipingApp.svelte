@@ -19,6 +19,7 @@
  
 	let activities = $state(['']) // track the activities that the user likes doing to be fed into the fitness function
 	let personality = $state(['']) // track personality traits that the user likes doing (to feed into fitness function)
+	let surveyResponses = $state([]); // full quiz responses, sent as one replacement payload
 
 	let direction = $state("none yet"); // track direction swiping goes to determine which direction elements move
 	let directionInt = $state(-1); // represent direction as an integer for calculations of speed and position
@@ -32,6 +33,7 @@
 	let target: HTMLElement | null; // what kind of element is being interacted with as well as 
 
 	function swipeLeft() { // method to swipe left, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
+		recordCurrentCardResponse(false);
 			
 		//animation code
 		left = !left;
@@ -45,11 +47,13 @@
 			cardObject.advanceCard(count);
 				barObject.advanceProgress(count)
 
-			checkIfFinished()
+
+			void checkIfFinished();
 
 	}
 
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
+			recordCurrentCardResponse(true);
 		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
@@ -73,12 +77,13 @@
 			cardObject.advanceCard(count);
 			barObject.advanceProgress(count)		
 
-			checkIfFinished()
+			void checkIfFinished();
 
 	}
 
 	function rewind() { // method to go back to the previous card, this is called when the user clicks the undo button
 		if(count > 0) { // prevent user from setting count to invalid values/trying to rewind past the stack of terms
+			surveyResponses = surveyResponses.slice(0, -1);
 
 			// same animation code as swipeLeft
 		left = !left;
@@ -99,6 +104,15 @@
 
 			
 		}
+	}
+
+	function recordCurrentCardResponse(answerValue: boolean) {
+		const currentId = Number(cardObject.getID?.());
+		if (!Number.isFinite(currentId) || currentId <= 0) {
+			return;
+		}
+
+		surveyResponses = [...surveyResponses, { questionId: currentId, answer: answerValue }];
 	}
 
 	function deleteGivenCardFromUserArray(string: GivenItem) { // remove last term in array if it is the card we rewinded to
@@ -146,15 +160,19 @@
 
 	}
 
-		function checkIfFinished() { // method to check if we have gone through all the cards, if so, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+		async function checkIfFinished() { // method to check if we have gone through all the cards, if so, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
 					console.log("count is " + count + " and card list length is " + cardObject.getListLength());
+		const listLength = cardObject.getListLength?.() ?? 0;
 
-		
-		if(count >= cardObject.getListLength()-1) { // if we have gone through all the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+		if (listLength <= 0) {
+			return;
+		}
+
+		if(count >= listLength) { // redirect only after the user has answered the final card
 			
 			console.log("finished all cards, sending information to backend");
 
-			pushAllUserInformationToBackend();
+			await pushAllUserInformationToBackend();
 			window.location.replace("/results.html");
 
 
@@ -162,15 +180,18 @@
 		}	
 	}
 
-		function pushAllUserInformationToBackend() { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
-			
-		for(let i = 0; i < activities.length; i++) { // loop through all the cards and send information about whether the user liked them or not to the backend to be used in the fitness function and matching algorithm
-				
-			cardObject.sendSwipeInformation(activities[i].id, true);
-				console.log("sent activity information to backend about liking " + activities[i].term);
+		async function pushAllUserInformationToBackend() { // send full replacement payload as an array of {questionId, answer}
+			const payload = surveyResponses.map((entry) => ({
+				questionId: Number(entry.questionId),
+				answer: Boolean(entry.answer),
+			}));
 
-		}
-
+			try {
+				await APICreater('POST', '/response', payload);
+				console.log('sent response payload to backend', payload.length);
+			} catch (error) {
+				console.error('Unable to send survey responses', error);
+			}
 	}
 
 

@@ -276,15 +276,15 @@
       <h2>/submit — Demographics form</h2>
     </div>
     <div class="section-body">
-      <p class="hint">Validates and persists demographics data to the authenticated user's profile.</p>
+      <p class="hint">Validates and echoes demographics data. Does not persist.</p>
       <div class="field-group">
         <label for="submit-body">Request body (JSON)</label>
         <textarea id="submit-body">{
-  "name": "",
+  "name": "Test Student",
   "gender": "Woman",
   "race": ["Asian"],
-  "religion": "No religion",
-  "major": []
+  "religion": "None",
+  "major": ["Computer Science"]
 }</textarea>
       </div>
       <div class="controls">
@@ -587,10 +587,10 @@
       'Giving Presentations',
     ],
     demographics: {
-      name: '',
+      name: 'Example User',
       gender: 'Man',
       race: ['White'],
-      religion: 'No religion',
+      religion: 'No Religion',
       major: ['Computer Science'],
     },
   };

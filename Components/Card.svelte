@@ -11,51 +11,9 @@
 
 	let counter = $state(0); // count what term we are on to stay on the list
 	let directionInt = $state('none'); // gets direction information from swiping app
-
-	let Hardcodeditems = $state([ // terms that will be included in the cards shown to the user
-
-{id:0, question_type: "activities", en: {term: "Community Service/Fundraising", def: "Voluntary work/raising funds intended to help people in a particular area."}},
-{id:1, question_type: "activities", en: {term: "Social Justice", def: "Advocating for the fair treatment and equitable status of all individuals and social groups within a society"}},
-{id:2, question_type: "activities", en: {term: "Retreats", def: "Planned off-campus getaway or sleepover for organization members designed to bond, foster unity, and align on organizational goals"}},
-{id:3, question_type: "activities", en: {term: "Dance", def: "Moving rhythmically to music, typically following a set sequence of steps"}},
-{id:4, question_type: "activities", en: {term: "Board Games", def: "Playing games that involves the movement of counters or other pieces on a marked board, often with the use of other components such as dice or cards"}},
-{id:5, question_type: "activities", en: {term: "Movies", def: "Watching a story or event recorded by a camera as a set of moving images and shown in a theater or on television; a motion picture"}},
-{id:6, question_type: "activities", en: {term: "Video Games", def: "Playing games by electronically manipulating images produced by a computer program on a television screen or other display screen."}},
-{id:7, question_type: "activities", en: {term: "Arts & Crafts", def: "Making objects, such as decorations, toys, furniture, and pottery by hand"}},
-{id:8, question_type: "activities", en: {term: "Music", def: ""}},
-{id:9, question_type: "activities", en: {term: "Exercise", def: ""}},
-{id:10, question_type: "activities", en: {term: "Writing", def: ""}},
-{id:11, question_type: "activities", en: {term: "Professional Development", def: "Help for finding future jobs/educational opperunities"}},
-{id:12, question_type: "activities", en: {term: "Caring for Animals", def: ""}},
-{id:13, question_type: "activities", en: {term: "Giving Presentations", def: ""}},
-{id:14, question_type: "activities", en: {term: "Trivia", def: "A game involving questions about various subjects"}},
-{id:15, question_type: "activities", en: {term: "Literary Analysis", def: ""}},
-{id:16, question_type: "activities", en: {term: "Study Groups", def: ""}},
-{id:17, question_type: "activities", en: {term: "Guest Speakers", def: ""}},
-{id:18, question_type: "activities", en: {term: "Group Lunch/Dinner", def: ""}},
-{id:19, question_type: "activities", en: {term: "Discussion", def: ""}},
-{id:20, question_type: "personality", en: {term: "Welcoming", def: "To greet hospitably and with courtesy or cordiality"}},
-{id:21, question_type: "personality", en: {term: "Hard Working", def: "Constantly, regularly, or habitually engaged in earnest and energetic work"}},
-{id:22, question_type: "personality", en: {term: "Caring", def: "Feeling or showing concern for or kindness to others"}},
-{id:23, question_type: "personality", en: {term: "Creative", def: "The ability or power to make something"}},
-{id:24, question_type: "personality", en: {term: "Outgoing", def: "Openly friendly and responsive"}},
-{id:25, question_type: "personality", en: {term: "Open Minded", def: "Receptive to arguments or ideas"}},
-{id:26, question_type: "personality", en: {term: "Eager to Learn", def: "Someone with a strong, enthusiastic desire to acquire new knowledge, skills, or experiences"}},
-{id:27, question_type: "personality", en: {term: "Confident", def: "Having or showing assurance and self-reliance"}},
-{id:28, question_type: "personality", en: {term: "Nerdy", def: "A person devoted to intellectual, academic, or technical pursuits or interests"}},
-{id:29, question_type: "personality", en: {term: "Leader", def: "A person who guides "}},
-{id:30, question_type: "personality", en: {term: "Enthusiastic", def: "Filled with or marked by strong excitement of feeling"}},
-{id:31, question_type: "personality", en: {term: "Collaborative", def: "Involving or done by two or more people or groups working together"}},
-{id:32, question_type: "personality", en: {term: "Curious", def: "Desire to investigate and learn"}},
-{id:33, question_type: "personality", en: {term: "Organized", def: "Arranged in a systematic way, especially on a large scale."}},
-{id:34, question_type: "personality", en: {term: "Social", def: "Pleasant companionship with friends or associates"}},
-{id:35, question_type: "personality", en: {term: "Fun", def: "Providing entertainment, amusement, or enjoyment"}},
-{id:36, question_type: "personality", en: {term: "Ending", def: "All Cards are finished! You will be redirected to the results page in a few seconds!"}}
-
-
-	]);
-
-	let items = $state(Hardcodeditems); // active card list used by the component at runtime
+	let items = $state([]); // active card list used by the component at runtime
+	let showServerErrorPopup = $state(false);
+	let isLoadingQuestions = $state(true);
 
 	function normalizeApiCardItems(payload) {
 		if (!Array.isArray(payload)) {
@@ -71,11 +29,15 @@
 				const questionType = item.question_type === 'personality_traits'
 					? 'personality'
 					: (item.question_type || 'activities');
-				const englishValue = typeof item.en === 'string'
-					? item.en
-					: (item.en?.term || item.en?.def || '');
+				const englishTranslation = item.translations?.en;
+				const englishTerm = Array.isArray(englishTranslation)
+					? (englishTranslation[0] || '')
+					: (typeof item.en === 'string' ? item.en : (item.en?.term || ''));
+				const englishDef = Array.isArray(englishTranslation)
+					? (englishTranslation[1] || '')
+					: (typeof item.en?.def === 'string' ? item.en.def : '');
 
-				if (!englishValue) {
+				if (!englishTerm) {
 					return null;
 				}
 
@@ -83,8 +45,8 @@
 					id: item.id,
 					question_type: questionType,
 					en: {
-						term: englishValue,
-						def: typeof item.en?.def === 'string' ? item.en.def : '',
+						term: englishTerm,
+						def: englishDef,
 					},
 				};
 			})
@@ -93,23 +55,34 @@
 
 
 
-	async function loadAdjectivesAndPersonalityTraits() { // load the adjectives and personality traits from the backend to be used in the cards or, if unable to load, use the hardcoded list of items
-    try {
-      const adjectivesList = await APICreater('GET', '/api/adjectives', null);
-	  const normalizedItems = normalizeApiCardItems(adjectivesList);
-	  items = normalizedItems.length > 0 ? normalizedItems : Hardcodeditems;
-
-	} catch (error) {
-      console.error('Unable to load adjectives and personality traits', error);
-	  items = Hardcodeditems;
-    }
-}
-
-
-	export async function sendSwipeInformation(IDNumber, answer) { // after finishing all of the cards, send the information about the activities and personality traits that the user likes to the backend to be used in the fitness function and matching algorithm
+	async function loadAdjectivesAndPersonalityTraits() { // load the adjectives and personality traits from the backend to be used in the cards
+		isLoadingQuestions = true;
+		showServerErrorPopup = false;
 
 		try {
-      	await APICreater('POST', '/response', { "questionId": IDNumber, "answer": answer });
+			const adjectivesList = await APICreater('GET', '/api/adjectives', null);
+			const normalizedItems = normalizeApiCardItems(adjectivesList);
+
+			if (normalizedItems.length === 0) {
+				throw new Error('No questions were returned by the server');
+			}
+
+			items = normalizedItems;
+			counter = 0;
+		} catch (error) {
+			console.error('Unable to load adjectives and personality traits', error);
+			items = [];
+			showServerErrorPopup = true;
+		} finally {
+			isLoadingQuestions = false;
+		}
+	}
+
+
+	export async function sendSwipeInformation(responses) { // send all swipe responses at once using the array payload expected by /response
+
+		try {
+	      	await APICreater('POST', '/response', responses);
 	} catch (error) {
       console.error('Unable to send swipe information', error);
     }
@@ -124,12 +97,19 @@
 
   let lang = $state('en'); // language variable to be used in the future when the app is translated into multiple languages, currently just set to english
 	
-	let term = $derived(items[counter][lang].term); // create a local variable using the derived rune that dynamically updates as we move cards back and forth
-	let def = $derived(items[counter][lang].def);	// same as the term but for the definition
-    let question_type = $derived(items[counter].question_type); // same as the term but for the type (personality or activity)
+	let term = $derived(items[counter]?.[lang]?.term || (isLoadingQuestions ? 'Loading questions...' : 'No questions available')); // create a local variable using the derived rune that dynamically updates as we move cards back and forth
+	let def = $derived(items[counter]?.[lang]?.def || '');	// same as the term but for the definition
+    let question_type = $derived(items[counter]?.question_type || ''); // same as the term but for the type (personality or activity)
 
 
 	export function advanceCard( index = 0) { // update card information
+		if (items.length === 0) {
+			return;
+		}
+
+		if (index < 0 || index >= items.length) {
+			return;
+		}
 		
 		counter = index;
 		term = items[counter][lang].term;
@@ -152,7 +132,7 @@
 	}
 
 	export function getID() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current id before changing it
-		return items[counter].id;
+		return items[counter]?.id;
 	}
 
 	export function getListLength() {
@@ -167,6 +147,12 @@
 
 
 <div class="parent">
+	{#if showServerErrorPopup}
+		<div class="errorPopup" role="alert" aria-live="assertive">
+			<p>Server could not be reached. Please try again later.</p>
+			<button type="button" onclick={() => (showServerErrorPopup = false)}>Close</button>
+		</div>
+	{/if}
 
 
 	<!-- first card which has to be animated differently from the rest of the stack -->
@@ -243,6 +229,36 @@
 		place-items: center;
 		width: var(--card-width);
 		height: var(--card-height);
+	}
+
+	.errorPopup {
+		position: absolute;
+		top: 1rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 2;
+		width: min(90vw, 28rem);
+		padding: 0.9rem 1rem;
+		border: 2px solid var(--border-color);
+		border-radius: 10px;
+		background: var(--card--color);
+		box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.2);
+		text-align: center;
+	}
+
+	.errorPopup p {
+		margin: 0 0 0.7rem 0;
+		font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+		color: var(--text--color);
+	}
+
+	.errorPopup button {
+		padding: 0.35rem 0.8rem;
+		border: 2px solid var(--border-color);
+		border-radius: 6px;
+		background: transparent;
+		color: var(--text--color);
+		cursor: pointer;
 	}
 	
 	.card:not(:first-child) {
