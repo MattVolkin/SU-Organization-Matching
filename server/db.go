@@ -40,14 +40,6 @@ type DBAnswer struct {
 	IsActive     bool
 }
 
-// UserDemographics holds demographic profile data for a user.
-type UserDemographics struct {
-	Genders         []string
-	Ethnicities     []string
-	Religions       []string
-	DedicatedMajors []string
-}
-
 var (
 	databaseClientsMu sync.RWMutex
 	databaseClients   = map[string]*DatabaseClient{}
@@ -1208,41 +1200,6 @@ func (db *DatabaseClient) ReplaceSurveyResponsesByUserEmail(ctx context.Context,
 
 	next.lastErr = nil
 	return next, nil
-}
-
-// FetchUserDemographicsByEmail retrieves demographic fields for one user.
-func (db *DatabaseClient) FetchUserDemographicsByEmail(ctx context.Context, email string) (*DatabaseClient, *UserDemographics, error) {
-	next := db.clone()
-	if next.lastErr != nil {
-		return next, nil, next.lastErr
-	}
-	if next.client == nil {
-		next.lastErr = fmt.Errorf("database not initialized")
-		return next, nil, next.lastErr
-	}
-
-	lookupEmail := strings.TrimSpace(email)
-	if lookupEmail == "" {
-		next.lastErr = fmt.Errorf("email is required")
-		return next, nil, next.lastErr
-	}
-
-	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
-	if err != nil {
-		next.lastErr = err
-		return next, nil, err
-	}
-
-	demographics := &UserDemographics{
-		Genders:         storedUser.Genders,
-		Ethnicities:     storedUser.Ethnicities,
-		Religions:       storedUser.Religions,
-		DedicatedMajors: storedUser.DedicatedMajors,
-	}
-
-	next.userEmail = lookupEmail
-	next.lastErr = nil
-	return next, demographics, nil
 }
 
 // UpsertUserDemographicsByEmail updates demographics fields for one user.

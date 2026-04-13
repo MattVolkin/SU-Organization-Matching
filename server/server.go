@@ -77,12 +77,12 @@ type OrgJSON struct {
 	Officers             []string  `json:"officers"`
 	Personality          []string  `json:"personality"`
 	Activities           []string  `json:"activities"`
-	Genders              []string  `json:"genders"`
-	Ethnicities          []string  `json:"ethnicities"`
-	Religions            []string  `json:"religions"`
-	StrictGenders        bool      `json:"strict_genders"`
-	DedicatedMajors      []string  `json:"dedicated_majors"`
-	Other                []string  `json:"other"`
+	Genders 			 []string  `json:"genders"`
+	Ethnicities 		 []string  `json:"ethnicities"`
+	Religions 			 []string  `json:"religions"`
+	StrictGenders 		 bool 	   `json:"strict_genders"`
+	DedicatedMajors 	 []string  `json:"dedicated_majors"`
+	Other 				 []string  `json:"other"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
@@ -275,13 +275,6 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, demographics, err := dbClient.Query().FetchUserDemographicsByEmail(r.Context(), email)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user demographics"})
-		return
-	}
-
 	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -292,16 +285,16 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	includeScores := strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("includeScores")), "true") || strings.TrimSpace(r.URL.Query().Get("includeScores")) == "1"
 	if includeScores {
-		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, demographics, clubs))
+		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, clubs))
 		return
 	}
 
-	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, demographics, clubs))
+	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, clubs))
 }
 
-// getClubsFromAnswers ranks clubs for a user by converting stored answers and
-// demographics into matcher input and sorting all clubs by normalized match score.
-func getClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clubs []*ent.Club) []OrgJSON {
+// getClubsFromAnswers ranks clubs for a user by converting stored answers into
+// matcher input and sorting all clubs by normalized match score.
+func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -334,15 +327,7 @@ func getClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clu
 		})
 	}
 
-	userInfo := matching.UserFromAnswers(matchAnswers)
-	if demographics != nil {
-		userInfo.Genders = demographics.Genders
-		userInfo.Ethnicities = demographics.Ethnicities
-		userInfo.Religions = demographics.Religions
-		userInfo.DedicatedMajors = demographics.DedicatedMajors
-	}
-
-	ranked := matching.Sort(userInfo, matchClubs)
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
 	ordered := make([]OrgJSON, 0, len(ranked))
 	for _, result := range ranked {
 		clubJSON, ok := clubsByID[result.Organization.ID]
@@ -355,7 +340,7 @@ func getClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clu
 	return ordered
 }
 
-func getScoredClubsFromAnswers(answers []DBAnswer, demographics *UserDemographics, clubs []*ent.Club) []OrgMatchJSON {
+func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatchJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -386,15 +371,7 @@ func getScoredClubsFromAnswers(answers []DBAnswer, demographics *UserDemographic
 		})
 	}
 
-	userInfo := matching.UserFromAnswers(matchAnswers)
-	if demographics != nil {
-		userInfo.Genders = demographics.Genders
-		userInfo.Ethnicities = demographics.Ethnicities
-		userInfo.Religions = demographics.Religions
-		userInfo.DedicatedMajors = demographics.DedicatedMajors
-	}
-
-	ranked := matching.Sort(userInfo, matchClubs)
+	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
 	ordered := make([]OrgMatchJSON, 0, len(ranked))
 	for _, result := range ranked {
 		ordered = append(ordered, OrgMatchJSON{
@@ -537,7 +514,7 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		DedicatedMajors:      club.DedicatedMajors,
 		Other:                club.Other,
 
-		UpdatedAt: club.UpdatedAt,
+		UpdatedAt:            club.UpdatedAt,
 	}
 }
 
@@ -711,10 +688,10 @@ func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"email":         email,
-		"responses":     payload,
+		"email":        email,
+		"responses":    payload,
 		"responseCount": len(payload),
-		"message":       "Responses accepted and replaced",
+		"message":      "Responses accepted and replaced",
 	})
 }
 
@@ -724,6 +701,12 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 	var submission DemographicsPayload
 	if !decodeJSONBody(w, r, &submission) {
 		return
+	}
+
+	if strings.TrimSpace(submission.Gender) == "" ||
+		strings.TrimSpace(submission.Religion) == "" ||
+		len(submission.Race) == 0 && len(submission.Major) == 0 && strings.TrimSpace(submission.Name) == "" {
+		// Keep at least one optional demographic signal when only required fields are present.
 	}
 
 	if strings.TrimSpace(submission.Gender) == "" ||
@@ -796,21 +779,21 @@ func sendEmailToOfficers(club *ent.Club) {
 func sendEmail(to, subject, body string) {
 	message := gomail.NewMessage()
 
-	// Set email headers
-	message.SetHeader("From", "youremail@email.com")
-	message.SetHeader("To", to)
-	message.SetHeader("Subject", subject)
+    // Set email headers
+    message.SetHeader("From", "youremail@email.com")
+    message.SetHeader("To", to)
+    message.SetHeader("Subject", subject)
 
-	// Set email body
-	message.SetBody("text/plain", body)
+    // Set email body
+    message.SetBody("text/plain", body)
 
-	// Set up the SMTP dialer
-	dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+    // Set up the SMTP dialer
+    dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
 
-	// Send the email
-	if err := dialer.DialAndSend(message); err != nil {
-		fmt.Println("Error:", err)
-	}
+    // Send the email
+    if err := dialer.DialAndSend(message); err != nil {
+        fmt.Println("Error:", err)
+    }
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response
