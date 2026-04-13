@@ -75,6 +75,14 @@ type OrgJSON struct {
 	ContactInfo          string    `json:"contactInfo"`
 	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
 	Officers             []string  `json:"officers"`
+	Personality          []string  `json:"personality"`
+	Activities           []string  `json:"activities"`
+	Genders 			 []string  `json:"genders"`
+	Ethnicities 		 []string  `json:"ethnicities"`
+	Religions 			 []string  `json:"religions"`
+	StrictGenders 		 bool 	   `json:"strict_genders"`
+	DedicatedMajors 	 []string  `json:"dedicated_majors"`
+	Other 				 []string  `json:"other"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
@@ -89,6 +97,14 @@ type OrgUpdatePayload struct {
 	ContactInfo          *string   `json:"contactInfo,omitempty"`
 	IncludeOfficerEmails *bool     `json:"includeOfficerEmails,omitempty"`
 	Officers             *[]string `json:"officers,omitempty"`
+	Personality          *[]string `json:"personality,omitempty"`
+	Activities           *[]string `json:"activities,omitempty"`
+	Genders              *[]string `json:"genders,omitempty"`
+	Ethnicities          *[]string `json:"ethnicities,omitempty"`
+	Religions            *[]string `json:"religions,omitempty"`
+	StrictGenders        *bool     `json:"strict_genders,omitempty"`
+	DedicatedMajors      *[]string `json:"dedicated_majors,omitempty"`
+	Other                *[]string `json:"other,omitempty"`
 }
 
 type OrgDeletePayload struct {
@@ -485,6 +501,15 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		ContactInfo:          club.ContactInfo,
 		IncludeOfficerEmails: club.IncludeOfficerEmails,
 		Officers:             officerEmailsFromClub(club),
+		Personality:          club.Personality,
+		Activities:           club.Activities,
+		Genders:              club.Genders,
+		Ethnicities:          club.Ethnicities,
+		Religions:            club.Religions,
+		StrictGenders:        club.StrictGenders,
+		DedicatedMajors:      club.DedicatedMajors,
+		Other:                club.Other,
+
 		UpdatedAt:            club.UpdatedAt,
 	}
 }

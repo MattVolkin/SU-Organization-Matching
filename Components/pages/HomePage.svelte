@@ -43,7 +43,6 @@ function goToQuiz() {
 <div class="page-shell">
     <main class="home-page">
         <section class="hero-content">
-            <p class="kicker">Southwestern University</p>
             <h1>Find The Organization That Fits You</h1>
             <p class="lead">
                 Explore clubs and student organizations based on your interests, activities,
@@ -112,14 +111,6 @@ function goToQuiz() {
         text-align: center;
     }
 
-    .kicker {
-        margin: 0;
-        color: #3f5f80;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        font-size: 0.88rem;
-    }
 
     h1 {
         margin: 0.55rem 0 0.9rem 0;

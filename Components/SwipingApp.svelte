@@ -9,8 +9,6 @@
 	import Bar from './ProgressBar.svelte'
 	import API, { APICreater } from './APIHandler.svelte' // import the API handler to make calls to the backend and get the data for the cards
 
-
-
 	let cardObject = $state({}); //create this object as a blank version of the Card class so that we can refer to one object that can internally track its data
 	let barObject = $state({}); // create object so we can call methods from the bar file
 	

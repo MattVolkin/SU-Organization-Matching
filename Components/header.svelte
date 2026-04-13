@@ -134,7 +134,6 @@
     window.addEventListener('message', onAuthMessage);
     isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
     refreshUser();
-    refreshOfficerClubs();
   });
 
   onDestroy(() => {
@@ -160,7 +159,7 @@
   function getManageClubs() {
     const clubs = Array.isArray(officerClubs) ? officerClubs : [];
     if (clubs.length === 0) {
-      return ['Test Club'];
+      return isTestMode ? ['Test Club'] : [];
     }
 
     if (!isTestMode) {
@@ -170,6 +169,21 @@
     const hasTestClub = clubs.some((club) => getClubName(club).trim().toLowerCase() === 'test club');
     return hasTestClub ? clubs : ['Test Club', ...clubs];
   }
+
+  $effect(() => {
+    const navType = getNavUserType();
+
+    if (isAuthChecking) {
+      return;
+    }
+
+    if (navType === 'officer') {
+      void refreshOfficerClubs();
+      return;
+    }
+
+    officerClubs = [];
+  });
 
   function getManageClubHref(club) {
     const clubName = getClubName(club);

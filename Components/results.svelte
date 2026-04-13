@@ -312,8 +312,8 @@
         {/each}
 
         <div class="pager">
-          <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
-          <button onclick={nextPage} disabled={pageNum >= getTotalPages()}>Next</button>
+          <button onclick={prevPage} disabled={pageNum === 1}>Previous Organizations</button>
+          <button onclick={nextPage} disabled={pageNum >= getTotalPages()}>Next Organizations</button>
         </div>
       {/if}
     </section>

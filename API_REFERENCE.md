@@ -110,6 +110,14 @@ Used by:
   "contactInfo": "club@example.edu",
   "includeOfficerEmails": false,
   "officers": ["president@example.edu", "vp@example.edu"],
+  "personality": ["Welcoming", "Curious"],
+  "activities": ["Community Service", "Guest Speakers"],
+  "genders": ["Any"],
+  "ethnicities": ["Any"],
+  "religions": ["Any"],
+  "strict_genders": false,
+  "dedicated_majors": ["Computer Science"],
+  "other": ["Open to first-year students"],
   "updatedAt": "2026-04-09T18:30:00Z"
 }
 ```
@@ -117,7 +125,7 @@ Used by:
 Notes:
 
 - `officers` is an array of officer email addresses derived from the club leaders relationship.
-- `personalityTraits` and `activities` are not part of the current wire format.
+- `strict_genders` and `dedicated_majors` intentionally use snake_case in JSON.
 - `updatedAt` is returned by read endpoints and create/patch responses.
 
 ### Organization PATCH body
@@ -141,7 +149,15 @@ Only include fields that should change:
   "externalLink": "https://example.com",
   "contactInfo": "updated@example.edu",
   "includeOfficerEmails": true,
-  "officers": ["president@example.edu", "vp@example.edu"]
+  "officers": ["president@example.edu", "vp@example.edu"],
+  "personality": ["Welcoming", "Collaborative"],
+  "activities": ["Board Games", "Discussion"],
+  "genders": ["Any"],
+  "ethnicities": ["Any"],
+  "religions": ["Any"],
+  "strict_genders": false,
+  "dedicated_majors": ["Computer Science"],
+  "other": ["No experience required"]
 }
 ```
 
@@ -457,6 +473,15 @@ Success response:
     "externalLink": "https://example.com",
     "contactInfo": "club@example.edu",
     "includeOfficerEmails": false,
+    "officers": ["president@example.edu", "vp@example.edu"],
+    "personality": ["Welcoming", "Curious"],
+    "activities": ["Community Service", "Guest Speakers"],
+    "genders": ["Any"],
+    "ethnicities": ["Any"],
+    "religions": ["Any"],
+    "strict_genders": false,
+    "dedicated_majors": ["Computer Science"],
+    "other": ["Open to first-year students"],
     "updatedAt": "2026-04-09T18:30:00Z"
   }
 ]
@@ -495,6 +520,15 @@ Success response:
     "externalLink": "https://example.com",
     "contactInfo": "club@example.edu",
     "includeOfficerEmails": false,
+    "officers": ["president@example.edu", "vp@example.edu"],
+    "personality": ["Welcoming", "Curious"],
+    "activities": ["Community Service", "Guest Speakers"],
+    "genders": ["Any"],
+    "ethnicities": ["Any"],
+    "religions": ["Any"],
+    "strict_genders": false,
+    "dedicated_majors": ["Computer Science"],
+    "other": ["Open to first-year students"],
     "updatedAt": "2026-04-09T18:30:00Z"
   }
 ]
@@ -589,7 +623,15 @@ Request body:
   "externalLink": "https://example.com/new-club",
   "contactInfo": "new-club@example.edu",
   "includeOfficerEmails": false,
-  "officers": ["president@example.edu"]
+  "officers": ["president@example.edu"],
+  "personality": ["Welcoming", "Collaborative"],
+  "activities": ["Study Groups", "Guest Speakers"],
+  "genders": ["Any"],
+  "ethnicities": ["Any"],
+  "religions": ["Any"],
+  "strict_genders": false,
+  "dedicated_majors": ["Computer Science"],
+  "other": ["Bring your laptop"]
 }
 ```
 

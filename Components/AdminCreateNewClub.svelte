@@ -8,11 +8,11 @@
     let PresidentEmail = $state('');
     let statusMessage = $state('');
 
-    function createClub(event) {
+    async function createClub(event) {
         event.preventDefault();
-        APICreater('POST', '/api/admin/orgs', {
-            OrgName: clubName,
-            Officers: [PresidentEmail],
+        await APICreater('POST', '/api/admin/orgs', {
+            clubName,
+            officers: [PresidentEmail],
         });
 
         statusMessage = `Submitted ${clubName} for creation.`;

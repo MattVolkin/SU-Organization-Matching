@@ -545,8 +545,24 @@ func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *O
 	update.SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink))
 	update.SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo))
 	update.SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
+	update.SetPersonality(newClubInfo.Personality)
+	update.SetActivities(newClubInfo.Activities)
+	update.SetGenders(newClubInfo.Genders)
+	update.SetEthnicities(newClubInfo.Ethnicities)
+	update.SetReligions(newClubInfo.Religions)
+	update.SetStrictGenders(newClubInfo.StrictGenders)
+	update.SetDedicatedMajors(newClubInfo.DedicatedMajors)
+	update.SetOther(newClubInfo.Other)
+	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	if len(leaders) > 0 {
+		update.AddLeaders(leaders...)
+	}
 
-	err := update.Exec(ctx)
+	err = update.Exec(ctx)
 	next.lastErr = err
 	return next, err
 }
@@ -593,6 +609,38 @@ func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, pat
 	}
 	if patch.ContactInfo != nil {
 		update.SetContactInfo(strings.TrimSpace(*patch.ContactInfo))
+		hasUpdate = true
+	}
+	if patch.Personality != nil {
+		update.SetPersonality(*patch.Personality)
+		hasUpdate = true
+	}
+	if patch.Activities != nil {
+		update.SetActivities(*patch.Activities)
+		hasUpdate = true
+	}
+	if patch.Genders != nil {
+		update.SetGenders(*patch.Genders)
+		hasUpdate = true
+	}
+	if patch.Ethnicities != nil {
+		update.SetEthnicities(*patch.Ethnicities)
+		hasUpdate = true
+	}
+	if patch.Religions != nil {
+		update.SetReligions(*patch.Religions)
+		hasUpdate = true
+	}
+	if patch.StrictGenders != nil {
+		update.SetStrictGenders(*patch.StrictGenders)
+		hasUpdate = true
+	}
+	if patch.DedicatedMajors != nil {
+		update.SetDedicatedMajors(*patch.DedicatedMajors)
+		hasUpdate = true
+	}
+	if patch.Other != nil {
+		update.SetOther(*patch.Other)
 		hasUpdate = true
 	}
 	if patch.IncludeOfficerEmails != nil {
@@ -658,7 +706,15 @@ func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *O
 		SetImagePath(strings.TrimSpace(newClubInfo.ImagePath)).
 		SetExternalLink(strings.TrimSpace(newClubInfo.ExternalLink)).
 		SetContactInfo(strings.TrimSpace(newClubInfo.ContactInfo)).
-		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
+		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
+		SetPersonality(newClubInfo.Personality).
+		SetActivities(newClubInfo.Activities).
+		SetGenders(newClubInfo.Genders).
+		SetEthnicities(newClubInfo.Ethnicities).
+		SetReligions(newClubInfo.Religions).
+		SetStrictGenders(newClubInfo.StrictGenders).
+		SetDedicatedMajors(newClubInfo.DedicatedMajors).
+		SetOther(newClubInfo.Other)
 
 	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)
 	if err != nil {

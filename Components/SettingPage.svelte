@@ -3,10 +3,12 @@
   import { APICreater } from './APIHandler.svelte';
 
   type ClubValue = string | {
+    id?: number;
     ID?: number;
     clubName?: string;
     ClubName?: string;
     officers?: string[];
+    personality?: string[];
     personalityTraits?: string[];
     activities?: string[];
   };
@@ -106,7 +108,7 @@
     if (typeof club === 'string') {
       return 0;
     }
-    const rawID = (club as { ID?: number }).ID;
+    const rawID = (club as { id?: number; ID?: number }).id ?? (club as { id?: number; ID?: number }).ID;
     return typeof rawID === 'number' ? rawID : 0;
   }
 
@@ -132,13 +134,107 @@
     return Array.isArray(response) ? response : [];
   }
 
+  function normalizeAdjectiveLabel(value: unknown) {
+    if (typeof value !== 'string') {
+      return '';
+    }
+
+    const normalized = value.trim();
+    if (!normalized) {
+      return '';
+    }
+
+    const lower = normalized.toLowerCase();
+    if (lower === 'personality_traits' || lower === 'adjective') {
+      return '';
+    }
+
+    return normalized;
+  }
+
+  function firstStringFromValue(value: unknown) {
+    if (typeof value === 'string') {
+      return normalizeAdjectiveLabel(value);
+    }
+
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (typeof entry === 'string') {
+          const normalized = normalizeAdjectiveLabel(entry);
+          if (normalized) {
+            return normalized;
+          }
+        }
+      }
+    }
+
+    return '';
+  }
+
+  function extractAdjectiveLabel(item: unknown) {
+    if (typeof item === 'string') {
+      return normalizeAdjectiveLabel(item);
+    }
+
+    if (!item || typeof item !== 'object') {
+      return '';
+    }
+
+    const record = item as Record<string, unknown>;
+    const directKeys = ['label', 'name', 'value', 'text', 'en'];
+
+    for (const key of directKeys) {
+      const directValue = firstStringFromValue(record[key]);
+      if (directValue) {
+        return directValue;
+      }
+    }
+
+    const translations = record.translations;
+    if (translations && typeof translations === 'object' && !Array.isArray(translations)) {
+      const translationMap = translations as Record<string, unknown>;
+      const preferredLocales = ['en', 'en-US', 'english'];
+
+      for (const locale of preferredLocales) {
+        const preferredValue = firstStringFromValue(translationMap[locale]);
+        if (preferredValue) {
+          return preferredValue;
+        }
+      }
+
+      for (const value of Object.values(translationMap)) {
+        const fallbackValue = firstStringFromValue(value);
+        if (fallbackValue) {
+          return fallbackValue;
+        }
+      }
+    }
+
+    return '';
+  }
+
   async function loadAdjectives() {
     const response = await APICreater('GET', '/api/adjectives', null);
-    allAdjectives = Array.isArray(response)
+    const source = Array.isArray(response)
       ? response
-          .map((item) => (typeof item === 'string' ? item : (item?.en || item?.question_type || '')))
-          .filter((item) => typeof item === 'string' && item.trim().length > 0)
-      : [];
+      : (Array.isArray((response as { adjectives?: unknown[] } | null)?.adjectives)
+        ? (response as { adjectives: unknown[] }).adjectives
+        : []);
+
+    const seen = new Set<string>();
+    const labels: string[] = [];
+
+    for (const item of source) {
+      const label = extractAdjectiveLabel(item);
+      const dedupeKey = label.toLowerCase();
+      if (!label || seen.has(dedupeKey)) {
+        continue;
+      }
+      seen.add(dedupeKey);
+      labels.push(label);
+    }
+
+    allAdjectives = labels;
   }
 
   async function getClubOfficers() {
@@ -289,7 +385,7 @@
 
     return APICreater('PATCH', getOrgApiPath(), {
       id: clubID,
-      personalityTraits: adjectives,
+      personality: adjectives,
       activities: getClubActivities(clubInfo || ''),
     });
   }
@@ -356,8 +452,12 @@
       }
 
       const requestedClubInfo = officerClubs.find((club) => getClubName(club) === requestedClub);
-      if (requestedClubInfo && typeof requestedClubInfo !== 'string' && Array.isArray(requestedClubInfo.personalityTraits)) {
-        selectedAdjectives = requestedClubInfo.personalityTraits;
+      if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
+        if (Array.isArray(requestedClubInfo.personality)) {
+          selectedAdjectives = requestedClubInfo.personality;
+        } else if (Array.isArray(requestedClubInfo.personalityTraits)) {
+          selectedAdjectives = requestedClubInfo.personalityTraits;
+        }
       }
 
       pageNotice = '';
@@ -387,14 +487,6 @@
   {#if pageNotice}
     <!-- <p class="club-warning">{pageNotice}</p> -->
   {/if}
-
-  {#if !isTestMode}
-    <p class="preview-help">
-      Want to quickly test this layout without API access?
-      <a href={previewUrl}>Open preview mode</a>
-    </p>
-  {/if}
-
   {#if accessibleClubs.length === 0}
     <p class="club-warning">No editable club loaded.</p>
   {:else}
@@ -496,21 +588,6 @@
     border-radius: 0.65rem;
     padding: 0.75rem 0.9rem;
     margin: 0.8rem 0;
-  }
-
-  .preview-help {
-    margin: 0.25rem 0 1rem 0;
-    padding: 0.7rem 0.9rem;
-    border-radius: 0.65rem;
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    color: #9a3412;
-    font-weight: 600;
-  }
-
-  .preview-help a {
-    margin-left: 0.35rem;
-    color: #c2410c;
   }
 
   select,
