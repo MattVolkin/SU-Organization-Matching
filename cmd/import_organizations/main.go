@@ -179,7 +179,6 @@ func parseClubs(records [][]string) ([]clubImportData, error) {
 		if header != "" {
 			if _, ok := knownSections()[header]; ok {
 				currentSection = header
-				continue
 			}
 			if header == "organizations" {
 				continue

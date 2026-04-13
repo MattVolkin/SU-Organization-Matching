@@ -3,12 +3,10 @@
   import { APICreater } from './APIHandler.svelte';
 
   type ClubValue = string | {
-    id?: number;
     ID?: number;
     clubName?: string;
     ClubName?: string;
     officers?: string[];
-    personality?: string[];
     personalityTraits?: string[];
     activities?: string[];
   };
@@ -108,7 +106,7 @@
     if (typeof club === 'string') {
       return 0;
     }
-    const rawID = (club as { id?: number; ID?: number }).id ?? (club as { id?: number; ID?: number }).ID;
+    const rawID = (club as { ID?: number }).ID;
     return typeof rawID === 'number' ? rawID : 0;
   }
 
@@ -452,12 +450,8 @@
       }
 
       const requestedClubInfo = officerClubs.find((club) => getClubName(club) === requestedClub);
-      if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
-        if (Array.isArray(requestedClubInfo.personality)) {
-          selectedAdjectives = requestedClubInfo.personality;
-        } else if (Array.isArray(requestedClubInfo.personalityTraits)) {
-          selectedAdjectives = requestedClubInfo.personalityTraits;
-        }
+      if (requestedClubInfo && typeof requestedClubInfo !== 'string' && Array.isArray(requestedClubInfo.personalityTraits)) {
+        selectedAdjectives = requestedClubInfo.personalityTraits;
       }
 
       pageNotice = '';
