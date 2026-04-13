@@ -212,8 +212,8 @@
 		/* shared variables */
 	  	--card-width: min(46vw, 42rem);
 	--card-height: min(42vh, 24rem);
-	--card--color: #1ef4ff;
-	--text--color:#1a1a1a;
+	--card--color: #ffffff;
+	--text--color:#000000;
 	--border-color: #000000;
 	
 

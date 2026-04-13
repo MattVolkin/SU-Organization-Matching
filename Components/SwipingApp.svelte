@@ -26,6 +26,8 @@
 	let directionInt = $state(-1); // represent direction as an integer for calculations of speed and position
 	let pointerType: string; // debug information of what type (mouse or touch control)
 
+	let IsPersonality = $state(false); // track whether the current card is a personality trait or an activity to know which heading to use
+
 	let mx: number; // x position of cursor
 	let my: number; // y position of cursor
 
@@ -54,6 +56,7 @@
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
 			} else {
+				IsPersonality = true; // if the user swiped right on a personality trait, we know that all future cards will be personality traits, so we can change the heading to reflect that
 				personality = [...personality, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
 			}
 
@@ -196,8 +199,8 @@
 
 
 <div class="swipedContainer">
-	<h1>Swipe right if you like the activity</h1>
-	<h1>Swipe left if you don't like the activity!</h1>
+	<h1>{IsPersonality ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1>
+	<h1>Swipe left if you don't like the {IsPersonality ? 'personality trait' : 'activity'}!</h1>
 
 	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
 
