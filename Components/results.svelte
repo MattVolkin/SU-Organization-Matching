@@ -66,14 +66,39 @@
     return typeof club === 'string' ? club : (club?.clubName || club?.ClubName || 'Unknown Club')
   }
 
-  function getClubDescription(club) {
+  function getClubID(club) {
+    if (!club || typeof club !== 'object') {
+      return 0
+    }
+
+    const rawId = club?.id ?? club?.ID
+    const numericId = typeof rawId === 'number' ? rawId : Number(rawId)
+    return Number.isFinite(numericId) ? numericId : 0
+  }
+
+  function getTrimmedText(value) {
+    return typeof value === 'string' ? value.trim() : ''
+  }
+
+  function getClubDescription(club, fallbackClub = null) {
     if (typeof club === 'string') {
+      return typeof fallbackClub === 'string' ? '' : getClubDescription(fallbackClub)
+    }
+
+    const primaryDescription = getTrimmedText(
+      club?.description ?? club?.Description ?? club?.clubDescription ?? club?.ClubDescription
+    )
+    if (primaryDescription) {
+      return primaryDescription
+    }
+
+    if (!fallbackClub || typeof fallbackClub === 'string') {
       return ''
     }
 
-    const description = club?.description ?? club?.Description ?? club?.clubDescription ?? club?.ClubDescription ?? ''
-    const normalized = typeof description === 'string' ? description.trim() : ''
-    return isOfficerPlaceholder(normalized) ? '' : normalized
+    return getTrimmedText(
+      fallbackClub?.description ?? fallbackClub?.Description ?? fallbackClub?.clubDescription ?? fallbackClub?.ClubDescription
+    )
   }
 
   function getClubScore(club) {
@@ -198,7 +223,7 @@
     const detailByName = new Map()
     for (const item of detailList) {
       const clubName = getClubName(item)
-      const clubId = typeof item?.id === 'number' ? item.id : 0
+      const clubId = getClubID(item)
 
       if (clubId > 0) {
         detailById.set(clubId, item)
@@ -209,19 +234,23 @@
     const sourceList = scoreList.length > 0 ? scoreList : detailList
 
     results = sourceList.map((item) => {
-      const clubId = typeof item?.id === 'number' ? item.id : 0
+      const clubId = getClubID(item)
       const clubName = getClubName(item)
       const matchedDetail = clubId > 0
         ? (detailById.get(clubId) || detailByName.get(normalizeClubKey(clubName)))
         : detailByName.get(normalizeClubKey(clubName))
 
-      const mergedClub = matchedDetail || item
+      const mergedClub = {
+        ...(item && typeof item === 'object' ? item : {}),
+        ...(matchedDetail && typeof matchedDetail === 'object' ? matchedDetail : {}),
+      }
+      const resolvedId = getClubID(mergedClub) || clubId
 
       return {
-        id: clubId,
+        id: resolvedId,
         clubName,
         matchPercentage: getClubScore(item),
-        description: getClubDescription(mergedClub),
+        description: getClubDescription(mergedClub, item),
         meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
         imagePath: getClubImagePath(mergedClub),
         externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),

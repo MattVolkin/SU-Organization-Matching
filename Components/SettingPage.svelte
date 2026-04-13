@@ -1,14 +1,32 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { APICreater } from './APIHandler.svelte';
 
   type ClubValue = string | {
+    id?: number;
     ID?: number;
     clubName?: string;
     ClubName?: string;
+    description?: string;
+    Description?: string;
+    meetingTime?: string;
+    MeetingTime?: string;
+    externalLink?: string;
+    ExternalLink?: string;
+    contactInfo?: string;
+    ContactInfo?: string;
+    includeOfficerEmails?: boolean;
+    IncludeOfficerEmails?: boolean;
+    personality?: string[];
     officers?: string[];
     personalityTraits?: string[];
     activities?: string[];
+    genders?: string[];
+    ethnicities?: string[];
+    religions?: string[];
+    strict_genders?: boolean;
+    dedicated_majors?: string[];
+    other?: string[];
   };
 
   const uploadedImagesStorageKey = 'club-uploaded-images';
@@ -18,8 +36,22 @@
   let pageNotice = $state('');
   let accessibleClubs = $state<string[]>(["Test Club 1"]);
   let selectedClubFromUrl = $state('');
+  let generalMeetingTime = $state('');
+  let generalSocialMedia = $state('');
+  let resultContactInfo = $state('');
+  let includeOfficerEmailsInResults = $state(false);
+  let resultDescription = $state('');
+  let resultActivitiesText = $state('');
   let selectedAdjectives = $state<string[]>([]);
   let allAdjectives = $state<string[]>([]);
+  let allClubActivities = $state<string[]>([]);
+  let combinedTraitOptions = $derived(getTraitSelectOptions());
+  let trendsGender = $state('');
+  let trendsEthnicities = $state('');
+  let trendsReligions = $state('');
+  let trendsDedicatedMajors = $state('');
+  let trendsOther = $state('');
+  let trendsStrictGenders = $state(false);
   let officerClubs = $state<ClubValue[]>([]);
   let clubImageLibrary = $state<Record<string, string[]>>({});
   let selectedImageByClub = $state<Record<string, string>>({});
@@ -54,7 +86,7 @@
     const role = String(data?.role || '').toLowerCase();
     userType = role === 'admin' || role === 'officer' ? role : 'user';
   }
-  
+
   const testAdjectives = [
     'Welcoming',
     'Community Service',
@@ -63,6 +95,7 @@
     'Board Games',
     'Nerdy',
   ];
+
 
   function makePreviewImage(label: string, color: string) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="${color}"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><rect width="1200" height="720" fill="url(#g)"/><circle cx="280" cy="280" r="180" fill="rgba(255,255,255,0.15)"/><circle cx="910" cy="470" r="240" fill="rgba(255,255,255,0.12)"/><text x="70" y="640" fill="white" font-family="Arial" font-size="62" font-weight="700">${label}</text></svg>`;
@@ -76,7 +109,20 @@
     selectedClubFromUrl = requestedTestClub;
     accessibleClubs = [requestedTestClub];
     allAdjectives = testAdjectives;
+    allClubActivities = csvToList('Board Games, Study Group, Movies, Guest Speakers, Community Service, Leadership');
     selectedAdjectives = ['Welcoming', 'Community-focused'];
+    generalMeetingTime = 'Thursdays at 6:30 PM';
+    generalSocialMedia = 'https://instagram.com/yourclub';
+    resultContactInfo = '';
+    includeOfficerEmailsInResults = false;
+    resultDescription = 'Add your club description for the results page here.';
+    resultActivitiesText = 'Board Games, Study Group, Movies, Guest Speakers, Community Service';
+    trendsGender = 'Any';
+    trendsEthnicities = 'Any';
+    trendsReligions = 'Any';
+    trendsDedicatedMajors = 'Computer Science';
+    trendsOther = 'No experience required';
+    trendsStrictGenders = false;
 
     if (!(clubImageLibrary[requestedTestClub] || []).length) {
       const previewImages = [
@@ -106,7 +152,7 @@
     if (typeof club === 'string') {
       return 0;
     }
-    const rawID = (club as { ID?: number }).ID;
+    const rawID = (club as { ID?: number; id?: number }).ID ?? (club as { ID?: number; id?: number }).id;
     return typeof rawID === 'number' ? rawID : 0;
   }
 
@@ -122,6 +168,89 @@
       return [];
     }
     return Array.isArray(club.activities) ? club.activities : [];
+  }
+
+  function getClubPersonalityTraits(club: ClubValue) {
+    if (typeof club === 'string') {
+      return [];
+    }
+    if (Array.isArray(club.personality)) {
+      return club.personality;
+    }
+    return Array.isArray(club.personalityTraits) ? club.personalityTraits : [];
+  }
+
+  function listToCSV(value: unknown) {
+    return Array.isArray(value)
+      ? value
+          .map((entry) => String(entry || '').trim())
+          .filter((entry) => entry.length > 0)
+          .join(', ')
+      : '';
+  }
+
+  function csvToList(value: string) {
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
+  function buildContactInfoForSave(club: ClubValue) {
+    const baseContact = resultContactInfo.trim();
+    if (!includeOfficerEmailsInResults) {
+      return baseContact;
+    }
+
+    const officerEmails = getExistingClubOfficers(club)
+      .map((email) => String(email || '').trim())
+      .filter((email) => email.length > 0);
+
+    if (officerEmails.length === 0) {
+      return baseContact;
+    }
+
+    const existingText = baseContact.toLowerCase();
+    const missingEmails = officerEmails.filter((email) => !existingText.includes(email.toLowerCase()));
+    if (missingEmails.length === 0) {
+      return baseContact;
+    }
+
+    const officerLine = `Officer emails: ${missingEmails.join(', ')}`;
+    return baseContact ? `${baseContact}\n${officerLine}` : officerLine;
+  }
+
+  function getTraitSelectOptions() {
+    const seen = new Set<string>();
+    const merged: string[] = [];
+
+    for (const item of allAdjectives) {
+      const normalized = String(item || '').trim();
+      const key = normalized.toLowerCase();
+      if (normalized && !seen.has(key)) {
+        seen.add(key);
+        merged.push(normalized);
+      }
+    }
+
+    for (const activity of csvToList(resultActivitiesText)) {
+      const key = activity.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(activity);
+      }
+    }
+
+    for (const activity of allClubActivities) {
+      const normalized = String(activity || '').trim();
+      const key = normalized.toLowerCase();
+      if (normalized && !seen.has(key)) {
+        seen.add(key);
+        merged.push(normalized);
+      }
+    }
+
+    return merged;
   }
 
   function toClubSlug(clubName: string) {
@@ -211,7 +340,7 @@
     return '';
   }
 
-  async function loadAdjectives() {
+  async function createTraitsFromAdjectivesAPI() {
     const response = await APICreater('GET', '/api/adjectives', null);
     const source = Array.isArray(response)
       ? response
@@ -235,9 +364,34 @@
     allAdjectives = labels;
   }
 
+  async function loadAdjectives() {
+    await createTraitsFromAdjectivesAPI();
+  }
+
   async function getClubOfficers() {
     const response = await APICreater('GET', getOrgApiPath(), null);
     officerClubs = normalizeClubList(response);
+  }
+
+  async function loadAllClubActivities() {
+    const response = await APICreater('GET', '/api/results', null);
+    const clubs = Array.isArray(response) ? response : [];
+    const seen = new Set<string>();
+    const merged: string[] = [];
+
+    for (const club of clubs) {
+      const activities = Array.isArray(club?.activities) ? club.activities : [];
+      for (const activity of activities) {
+        const normalized = String(activity || '').trim();
+        const key = normalized.toLowerCase();
+        if (normalized && !seen.has(key)) {
+          seen.add(key);
+          merged.push(normalized);
+        }
+      }
+    }
+
+    allClubActivities = merged;
   }
 
   async function saveClubOfficer(club: string, officerEmail: string) {
@@ -383,13 +537,25 @@
 
     return APICreater('PATCH', getOrgApiPath(), {
       id: clubID,
+      description: resultDescription.trim(),
+      meetingTime: generalMeetingTime.trim(),
+      externalLink: generalSocialMedia.trim(),
+      contactInfo: buildContactInfoForSave(clubInfo || ''),
+      includeOfficerEmails: includeOfficerEmailsInResults,
       personality: adjectives,
-      activities: getClubActivities(clubInfo || ''),
+      activities: csvToList(resultActivitiesText),
+      genders: csvToList(trendsGender),
+      ethnicities: csvToList(trendsEthnicities),
+      religions: csvToList(trendsReligions),
+      strict_genders: trendsStrictGenders,
+      dedicated_majors: csvToList(trendsDedicatedMajors),
+      other: csvToList(trendsOther),
     });
   }
 
-  onMount(async () => {
+  async function initializeSettingsPage() {
     loadSavedClubMedia();
+    loading = true;
 
     const searchParams = new URLSearchParams(window.location.search);
     const previewParams = new URLSearchParams(window.location.search);
@@ -420,7 +586,7 @@
         return;
       }
 
-      await Promise.all([loadAdjectives(), getClubOfficers()]);
+      await Promise.all([createTraitsFromAdjectivesAPI(), getClubOfficers(), loadAllClubActivities()]);
 
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const slugFromPath = pathParts[0] === 'manage-club' ? (pathParts[1] || '') : '';
@@ -450,8 +616,31 @@
       }
 
       const requestedClubInfo = officerClubs.find((club) => getClubName(club) === requestedClub);
-      if (requestedClubInfo && typeof requestedClubInfo !== 'string' && Array.isArray(requestedClubInfo.personalityTraits)) {
-        selectedAdjectives = requestedClubInfo.personalityTraits;
+      selectedAdjectives = getClubPersonalityTraits(requestedClubInfo || '');
+      generalMeetingTime = requestedClubInfo && typeof requestedClubInfo !== 'string'
+        ? String(requestedClubInfo.meetingTime ?? requestedClubInfo.MeetingTime ?? '').trim()
+        : '';
+      generalSocialMedia = requestedClubInfo && typeof requestedClubInfo !== 'string'
+        ? String(requestedClubInfo.externalLink ?? requestedClubInfo.ExternalLink ?? '').trim()
+        : '';
+      resultContactInfo = requestedClubInfo && typeof requestedClubInfo !== 'string'
+        ? String(requestedClubInfo.contactInfo ?? requestedClubInfo.ContactInfo ?? '').trim()
+        : '';
+      includeOfficerEmailsInResults = requestedClubInfo && typeof requestedClubInfo !== 'string'
+        ? Boolean(requestedClubInfo.includeOfficerEmails ?? requestedClubInfo.IncludeOfficerEmails)
+        : false;
+      resultDescription = requestedClubInfo && typeof requestedClubInfo !== 'string'
+        ? String(requestedClubInfo.description ?? requestedClubInfo.Description ?? '').trim()
+        : '';
+      resultActivitiesText = listToCSV(getClubActivities(requestedClubInfo || ''));
+
+      if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
+        trendsGender = listToCSV(requestedClubInfo.genders);
+        trendsEthnicities = listToCSV(requestedClubInfo.ethnicities);
+        trendsReligions = listToCSV(requestedClubInfo.religions);
+        trendsDedicatedMajors = listToCSV(requestedClubInfo.dedicated_majors);
+        trendsOther = listToCSV(requestedClubInfo.other);
+        trendsStrictGenders = Boolean(requestedClubInfo.strict_genders);
       }
 
       pageNotice = '';
@@ -467,6 +656,31 @@
         loading = false;
       }
     }
+  }
+
+  function handleAuthLogin() {
+    if (isTestMode) {
+      return;
+    }
+    void initializeSettingsPage();
+  }
+
+  function handleAuthLogout() {
+    if (isTestMode) {
+      return;
+    }
+    void initializeSettingsPage();
+  }
+
+  onMount(() => {
+    window.addEventListener('auth-login', handleAuthLogin);
+    window.addEventListener('auth-logout', handleAuthLogout);
+    void initializeSettingsPage();
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('auth-login', handleAuthLogin);
+    window.removeEventListener('auth-logout', handleAuthLogout);
   });
 </script>
 
@@ -484,56 +698,120 @@
   {#if accessibleClubs.length === 0}
     <p class="club-warning">No editable club loaded.</p>
   {:else}
-    {#each accessibleClubs as club}
-      <section class="club-settings-card">
-        <p class="club-title">{club} Settings</p>
-        <p>Change adjectives to describe the club:</p>
+    <section class="club-settings-card">
 
-        <div class="adjective-row">
-          <select multiple bind:value={selectedAdjectives}>
-            {#each allAdjectives as adjective}
-              <option value={adjective}>{adjective}</option>
+      <h3>Results page content</h3>
+      <div class="results-content-grid">
+        <label>
+          Description
+          <textarea rows="4" bind:value={resultDescription}></textarea>
+        </label>
+
+        <label>
+          Activities (comma-separated)
+          <textarea rows="3" bind:value={resultActivitiesText}></textarea>
+        </label>
+
+        <div class="general-info-grid">
+          <label>
+            Meeting time
+            <input type="text" bind:value={generalMeetingTime} />
+          </label>
+
+          <label>
+            Social media / website
+            <input type="text" bind:value={generalSocialMedia} placeholder="https://instagram.com/yourclub" />
+          </label>
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" bind:checked={includeOfficerEmailsInResults} />
+          Include officer emails in contact info
+        </label>
+
+        <div>
+          <h3>Upload club images for results page</h3>
+          <input type="file" accept="image/*" multiple onchange={(event) => handleImageUpload(selectedClubFromUrl, event)} />
+
+          {#if (clubImageLibrary[selectedClubFromUrl] || []).length > 0}
+            <p>Select one image to use on the results page:</p>
+            <div class="image-grid">
+              {#each clubImageLibrary[selectedClubFromUrl] as imageUrl}
+                <button
+                  class:selected={selectedImageByClub[selectedClubFromUrl] === imageUrl}
+                  class="image-choice"
+                  onclick={() => chooseResultImage(selectedClubFromUrl, imageUrl)}
+                  type="button"
+                >
+                  <img src={imageUrl} alt={`Uploaded image for ${selectedClubFromUrl}`} />
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <h3>Personality + activities trait select</h3>
+      <div class="adjective-row">
+        <div class="traits-column">
+          <label for="personality-select"></label>
+          <select id="personality-select" multiple bind:value={selectedAdjectives}>
+            {#each combinedTraitOptions as traitOption}
+              <option value={traitOption}>{traitOption}</option>
             {/each}
           </select>
-
-          <button class="save-button action-button" type="button" onclick={() => saveClubAdjectives(club, selectedAdjectives)}>Save Adjectives</button>
         </div>
+      </div>
 
-        <h3>Add new officer</h3>
-        <div class="officer-row">
-          <input
-            type="email"
-            placeholder="southwestern.edu"
-            value={pendingOfficerEmailByClub[club] || ''}
-            oninput={(event) => setPendingOfficerEmail(club, (event.currentTarget as HTMLInputElement).value)}
-          />
-          <button type="button" onclick={() => addOfficer(club)}>Add Officer</button>
-        </div>
-        {#if officerStatusByClub[club]}
-          <p class="officer-status">{officerStatusByClub[club]}</p>
-        {/if}
+      <button class="save-button action-button" type="button" onclick={() => saveClubAdjectives(selectedClubFromUrl, selectedAdjectives)}>Save Adjectives</button>
 
-        <h3>Upload club images for results page</h3>
-        <input type="file" accept="image/*" multiple onchange={(event) => handleImageUpload(club, event)} />
+      <h3>Trends</h3>
+      <div class="trends-grid">
+        <label>
+          Genders (comma-separated)
+          <input type="text" bind:value={trendsGender} />
+        </label>
 
-        {#if (clubImageLibrary[club] || []).length > 0}
-          <p>Select one image to use on the results page:</p>
-          <div class="image-grid">
-            {#each clubImageLibrary[club] as imageUrl}
-              <button
-                class:selected={selectedImageByClub[club] === imageUrl}
-                class="image-choice"
-                onclick={() => chooseResultImage(club, imageUrl)}
-                type="button"
-              >
-                <img src={imageUrl} alt={`Uploaded image for ${club}`} />
-              </button>
-            {/each}
+        <label>
+          Ethnicities (comma-separated)
+          <input type="text" bind:value={trendsEthnicities} />
+        </label>
 
-          </div>
-        {/if}
-      </section>
-    {/each}
+        <label>
+          Religions (comma-separated)
+          <input type="text" bind:value={trendsReligions} />
+        </label>
+
+        <label>
+          Dedicated majors (comma-separated)
+          <input type="text" bind:value={trendsDedicatedMajors} />
+        </label>
+
+        <label class="trends-full-row">
+          Other (comma-separated)
+          <input type="text" bind:value={trendsOther} />
+        </label>
+
+        <label class="checkbox-label trends-full-row">
+          <input type="checkbox" bind:checked={trendsStrictGenders} />
+          Strict genders matching
+        </label>
+      </div>
+
+      <h3>Add new officer</h3>
+      <div class="officer-row">
+        <input
+          type="email"
+          placeholder="southwestern.edu"
+          value={pendingOfficerEmailByClub[selectedClubFromUrl] || ''}
+          oninput={(event) => setPendingOfficerEmail(selectedClubFromUrl, (event.currentTarget as HTMLInputElement).value)}
+        />
+        <button type="button" onclick={() => addOfficer(selectedClubFromUrl)}>Add Officer</button>
+      </div>
+      {#if officerStatusByClub[selectedClubFromUrl]}
+        <p class="officer-status">{officerStatusByClub[selectedClubFromUrl]}</p>
+      {/if}
+    </section>
   {/if}
 </main>
 
@@ -555,24 +833,19 @@
     padding: 0.8rem 0.95rem;
     border-radius: 0.75rem;
     background: #edf7fb;
-    border: 1px solid #bfdde8;
+    border: none;
     color: #24485e;
     font-weight: 600;
   }
 
   .club-settings-card {
-    border: 1px solid #d7dee8;
-    border-radius: 0.85rem;
+    border: none;
+    border-radius: 0;
     padding: 1rem;
     margin-bottom: 1rem;
-    background: #fafcff;
-    box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    background: transparent;
+    box-shadow: none;
     color: black;
-  }
-
-  .club-title {
-    margin-top: 0;
-    font-weight: 700;
   }
 
   .club-warning {
@@ -585,6 +858,8 @@
   }
 
   select,
+  textarea,
+  input[type='text'],
   input[type='email'],
   input[type='file'] {
     width: 100%;
@@ -592,12 +867,18 @@
     margin-top: 0.35rem;
   }
 
-  input[type='email'] {
+  input[type='email'],
+  input[type='text'],
+  textarea {
     border: 1px solid #c9d6e5;
     border-radius: 0.5rem;
     padding: 0.55rem 0.65rem;
     font-size: 0.98rem;
     background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
   }
 
   select {
@@ -628,8 +909,84 @@
   }
 
   .adjective-row select {
-    flex: 1 1 30rem;
+    flex: 1 1 18rem;
     max-width: 43rem;
+  }
+
+  .traits-column {
+    flex: 1 1 18rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .traits-column label {
+    font-weight: 700;
+  }
+
+  .results-content-grid {
+    display: grid;
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .general-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .general-info-grid label {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+  }
+
+  .results-content-grid label {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+  }
+
+  .trends-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .trends-grid label {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+    min-width: 0;
+  }
+
+  .trends-grid input[type='text'] {
+    width: min(75%, 460px);
+    max-width: 460px;
+  }
+
+  .trends-full-row input[type='text'] {
+    width: min(75%, 520px);
+    max-width: 520px;
+  }
+
+  .trends-full-row {
+    grid-column: 1 / -1;
+  }
+
+  .checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .checkbox-label input[type='checkbox'] {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    accent-color: #0f6d8c;
+    flex: 0 0 auto;
   }
 
   .officer-row {
@@ -659,6 +1016,18 @@
 
   .save-button:hover {
     background: #0b5a74;
+  }
+
+  @media (max-width: 860px) {
+    .trends-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .trends-grid input[type='text'],
+    .trends-full-row input[type='text'] {
+      width: 100%;
+      max-width: none;
+    }
   }
 
   .officer-status {

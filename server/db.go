@@ -476,7 +476,7 @@ func (db *DatabaseClient) FetchAllQuestions(ctx context.Context) (*DatabaseClien
 // FetchSwipeQuestionContents returns question IDs plus translation payloads
 // for all adjective and personality traits questions.
 func (db *DatabaseClient) FetchSwipeQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]any, error) {
-	questions := db.FetchQuestionsByTypeAndAppend(ctx, "adjective").FetchQuestionsByTypeAndAppend(ctx, "personality_traits").Results()
+	questions := db.FetchQuestionsByTypeAndAppend(ctx, "activities").FetchQuestionsByTypeAndAppend(ctx, "personality_traits").Results()
 
 	return db, questions, nil
 }

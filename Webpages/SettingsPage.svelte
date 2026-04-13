@@ -1,9 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import Header from '../header.svelte';
-	import Footer from '../footer.svelte';
-	import LoginPopup from '../login_popup.svelte';
-	import SettingPage from '../SettingPage.svelte';
+	import Header from '../Components/header.svelte';
+	import Footer from '../Components/footer.svelte';
+	import LoginPopup from '../Components/login_popup.svelte';
+	import SettingPage from '../Components/Setting.svelte';
 
 	let userType = 'user';
 
@@ -38,9 +38,3 @@
 <Header userType={userType} />
 <SettingPage />
 <Footer />
-
-<style>
-	:global(body) {
-		margin: 0;
-	}
-</style>

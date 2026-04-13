@@ -125,7 +125,7 @@
         width: min(100%, 1040px);
         margin: 0 auto 1rem auto;
         padding: 1rem;
-        border: 1px solid var(--border);
+        border: none;
         border-radius: 1rem;
         background: var(--card);
         box-shadow: 0 10px 24px rgba(13, 37, 62, 0.1);

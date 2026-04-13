@@ -21,7 +21,7 @@
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
  */
   let { userType = "user", previewAs = '' } = $props();
-  const getNavUserType = () => (previewAs || userType);
+  const getNavUserType = () => (previewAs || resolvedUserType || userType);
   let isMenuOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
@@ -111,6 +111,8 @@
     });
     userEmail = '';
     authToken = '';
+    resolvedUserType = 'user';
+    officerClubs = [];
     localStorage.removeItem('authToken');
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
@@ -128,16 +130,33 @@
       localStorage.setItem('authToken', event.data.token);
     }
     userEmail = event.data.email || '';
+    void refreshUser();
+  }
+
+  function handleAuthLogin() {
+    void refreshUser();
+  }
+
+  function handleAuthLogout() {
+    userEmail = '';
+    authToken = '';
+    resolvedUserType = 'user';
+    officerClubs = [];
+    isAuthChecking = false;
   }
 
   onMount(() => {
     window.addEventListener('message', onAuthMessage);
+    window.addEventListener('auth-login', handleAuthLogin);
+    window.addEventListener('auth-logout', handleAuthLogout);
     isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
-    refreshUser();
+    void refreshUser();
   });
 
   onDestroy(() => {
     window.removeEventListener('message', onAuthMessage);
+    window.removeEventListener('auth-login', handleAuthLogin);
+    window.removeEventListener('auth-logout', handleAuthLogout);
   });
 
   function toggleMenu() {

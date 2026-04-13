@@ -12,6 +12,8 @@ import { APICreater } from './APIHandler.svelte';
   let race = $state([])
 	let religion = $state('')
   let major = $state([])
+  let LGBTQ = $state("")
+  let disability = $state("")
 
   const genderOptions = [
     'Man',
@@ -31,6 +33,7 @@ import { APICreater } from './APIHandler.svelte';
     'White',
     'Prefer not to say',
   ]
+  let yes_no_options = ['Yes', 'No', 'Prefer not to say']
 
   const religionOptions = [
     'Protestantism',
@@ -152,6 +155,29 @@ import { APICreater } from './APIHandler.svelte';
               </label>
             {/each}
           </div>
+        </fieldset>
+        <fieldset>
+        <legend>LGBTQ+ Identity</legend>
+        <div class="option-grid compact">
+          {#each yes_no_options as option}
+            <label>
+              <input type="radio" name="LGBTQ" value={option} bind:group={LGBTQ} required />
+              <span>{option}</span>
+            </label>  
+          {/each}
+        </div>
+        </fieldset>
+    
+        <fieldset>
+        <legend>Disability Status</legend>
+        <div class="option-grid compact">
+          {#each yes_no_options as option}
+            <label>
+              <input type="radio" name="disability" value={option} bind:group={disability} required />
+              <span>{option}</span>
+            </label>  
+          {/each}
+        </div>
         </fieldset>
 
         <fieldset>
