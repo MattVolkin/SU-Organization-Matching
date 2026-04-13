@@ -150,6 +150,23 @@
     return text
   }
 
+  function getVisibleActivities(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => String(entry || '').trim())
+        .filter((entry) => entry.length > 0)
+    }
+
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+    }
+
+    return []
+  }
+
   function formatUpdatedAt(updatedAt) {
     if (!updatedAt) {
       return ''
@@ -252,10 +269,11 @@
         matchPercentage: getClubScore(item),
         description: getClubDescription(mergedClub, item),
         meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
+        activities: getVisibleActivities(mergedClub?.activities ?? mergedClub?.Activities),
         imagePath: getClubImagePath(mergedClub),
         externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
         contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
-        includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails),
+        includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails ?? mergedClub?.IncludeOfficerEmails),
         updatedAt: typeof (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt) === 'string'
           ? (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt).trim()
           : '',
@@ -326,12 +344,17 @@
               <p>{club.meetingTime}</p>
             {/if}
 
+            {#if Array.isArray(club.activities) && club.activities.length > 0}
+              <h3>Activities</h3>
+              <p>{club.activities.join(', ')}</p>
+            {/if}
+
             <div class="club-meta">
               {#if club.externalLink}
                 <a href={club.externalLink} target="_blank" rel="noopener noreferrer">Visit website</a>
               {/if}
 
-              {#if club.contactInfo}
+              {#if club.includeOfficerEmails && club.contactInfo}
                 <p><strong>Contact:</strong> {club.contactInfo}</p>
               {/if}
 
