@@ -1117,6 +1117,146 @@ func (db *DatabaseClient) UpsertSurveyResponseByUserEmail(ctx context.Context, e
 	return next, err
 }
 
+// ReplaceSurveyResponsesByUserEmail fully replaces one user's survey responses.
+// Existing responses are deleted, then the provided list is stored in one transaction.
+func (db *DatabaseClient) ReplaceSurveyResponsesByUserEmail(ctx context.Context, email string, responses []SurveyResponsePayload) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+
+	// Normalize to one response per question, with later values winning.
+	normalized := make([]SurveyResponsePayload, 0, len(responses))
+	indexesByQuestionID := make(map[int]int, len(responses))
+	for i, response := range responses {
+		if response.QuestionID <= 0 {
+			next.lastErr = fmt.Errorf("responses[%d].questionId must be a positive integer", i)
+			return next, next.lastErr
+		}
+
+		if existingIndex, ok := indexesByQuestionID[response.QuestionID]; ok {
+			normalized[existingIndex].Answer = response.Answer
+			continue
+		}
+
+		indexesByQuestionID[response.QuestionID] = len(normalized)
+		normalized = append(normalized, response)
+	}
+
+	tx, err := next.client.Tx(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	defer func() {
+		if next.lastErr != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	storedUser, err := tx.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if _, err = tx.Answer.Delete().Where(answer.HasUserWith(user.IDEQ(storedUser.ID))).Exec(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	submittedAt := time.Now()
+	for i, response := range normalized {
+		if _, err = tx.Question.Query().Where(question.IDEQ(response.QuestionID)).Only(ctx); err != nil {
+			next.lastErr = fmt.Errorf("responses[%d]: question %d does not exist", i, response.QuestionID)
+			return next, next.lastErr
+		}
+
+		if _, err = tx.Answer.Create().
+			SetAnswerText(strconv.FormatBool(response.Answer)).
+			SetQuestionID(response.QuestionID).
+			SetUserID(storedUser.ID).
+			SetSubmittedAt(submittedAt).
+			Save(ctx); err != nil {
+			next.lastErr = err
+			return next, err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.lastErr = nil
+	return next, nil
+}
+
+// UpsertUserDemographicsByEmail updates demographics fields for one user.
+func (db *DatabaseClient) UpsertUserDemographicsByEmail(
+	ctx context.Context,
+	email string,
+	name string,
+	genders []string,
+	ethnicities []string,
+	religions []string,
+	dedicatedMajors []string,
+) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	normalizedGenders := normalizeUniqueTrimmed(genders)
+	normalizedEthnicities := normalizeUniqueTrimmed(ethnicities)
+	normalizedReligions := normalizeUniqueTrimmed(religions)
+	normalizedMajors := normalizeUniqueTrimmed(dedicatedMajors)
+	tags := mergeProfileNameTag(storedUser.Tags, name)
+
+	err = next.client.User.UpdateOneID(storedUser.ID).
+		SetTags(tags).
+		SetGenders(normalizedGenders).
+		SetEthnicities(normalizedEthnicities).
+		SetReligions(normalizedReligions).
+		SetDedicatedMajors(normalizedMajors).
+		Exec(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.userGoogleID = strings.TrimSpace(storedUser.GoogleID)
+	next.userEmail = strings.TrimSpace(storedUser.Email)
+	next.lastErr = nil
+	return next, nil
+}
+
 // FetchAnswersByQuestionID returns all answers belonging to one question.
 func (db *DatabaseClient) FetchAnswersByQuestionID(ctx context.Context, questionID int) (*DatabaseClient, []*ent.Answer, error) {
 	next := db.clone()
@@ -1260,4 +1400,27 @@ func (db *DatabaseClient) clone() *DatabaseClient {
 		}
 	}
 	return &cp
+}
+
+func normalizeUniqueTrimmed(values []string) []string {
+	if len(values) == 0 {
+		return []string{}
+	}
+
+	normalized := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			continue
+		}
+		key := strings.ToLower(trimmed)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, trimmed)
+	}
+
+	return normalized
 }

@@ -197,8 +197,12 @@
 
 
 <div class="swipedContainer">
-	<h1>{IsPersonality ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1>
-	<h1>Swipe left if you don't like the {IsPersonality ? 'personality trait' : 'activity'}!</h1>
+<!-- For cardObject.getTag?.(), the '?' indicates that the method might not exist on the object, so we can safely call it without throwing an error and move to the false case-->
+	
+	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1> 
+	<h1>Swipe left if you don't like the {(cardObject.getTag?.() === 'personality') ? 'personality trait' : 'activity'}!</h1>
+
+
 
 	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
 

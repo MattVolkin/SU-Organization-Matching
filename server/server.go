@@ -48,7 +48,7 @@ func (role UserRole) MarshalJSON() ([]byte, error) {
 	return json.Marshal(role.String())
 }
 
-// SurveyResponsePayload is the request body accepted by the /response endpoint.
+// SurveyResponsePayload is one item in the /response request payload array.
 type SurveyResponsePayload struct {
 	QuestionID int  `json:"questionId"`
 	Answer     bool `json:"answer"`
@@ -77,12 +77,12 @@ type OrgJSON struct {
 	Officers             []string  `json:"officers"`
 	Personality          []string  `json:"personality"`
 	Activities           []string  `json:"activities"`
-	Genders 			 []string  `json:"genders"`
-	Ethnicities 		 []string  `json:"ethnicities"`
-	Religions 			 []string  `json:"religions"`
-	StrictGenders 		 bool 	   `json:"strict_genders"`
-	DedicatedMajors 	 []string  `json:"dedicated_majors"`
-	Other 				 []string  `json:"other"`
+	Genders              []string  `json:"genders"`
+	Ethnicities          []string  `json:"ethnicities"`
+	Religions            []string  `json:"religions"`
+	StrictGenders        bool      `json:"strict_genders"`
+	DedicatedMajors      []string  `json:"dedicated_majors"`
+	Other                []string  `json:"other"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
@@ -109,6 +109,10 @@ type OrgUpdatePayload struct {
 
 type OrgDeletePayload struct {
 	ID int `json:"id"`
+}
+
+type ResultsPayload struct {
+	Results []OrgJSON `json:"results"`
 }
 
 type OrgMatchJSON struct {
@@ -510,7 +514,7 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		DedicatedMajors:      club.DedicatedMajors,
 		Other:                club.Other,
 
-		UpdatedAt:            club.UpdatedAt,
+		UpdatedAt: club.UpdatedAt,
 	}
 }
 
@@ -665,21 +669,16 @@ func makeRequireUserRoleHandlerMiddleware(requiredRole UserRole) func(next http.
 	}
 }
 
-// handleSurveyResponseSubmission validates and echoes a response payload from an
-// authenticated user.
+// handleSurveyResponseSubmission validates and stores a full replacement set of
+// responses from an authenticated user.
 func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
-	var payload SurveyResponsePayload
+	var payload []SurveyResponsePayload
 	if !decodeJSONBody(w, r, &payload) {
-		return
-	}
-	if payload.QuestionID <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "questionId must be a positive integer"})
 		return
 	}
 
 	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
-	if _, err := dbClient.Query().UpsertSurveyResponseByUserEmail(r.Context(), email, payload.QuestionID, payload.Answer); err != nil {
+	if _, err := dbClient.Query().ReplaceSurveyResponsesByUserEmail(r.Context(), email, payload); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
@@ -689,10 +688,10 @@ func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"email":      email,
-		"questionId": payload.QuestionID,
-		"answer":     payload.Answer,
-		"message":    "Response accepted and stored",
+		"email":         email,
+		"responses":     payload,
+		"responseCount": len(payload),
+		"message":       "Responses accepted and replaced",
 	})
 }
 
@@ -704,28 +703,53 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.TrimSpace(submission.Name) == "" ||
-		strings.TrimSpace(submission.Gender) == "" ||
-		strings.TrimSpace(submission.Religion) == "" ||
-		len(submission.Race) == 0 ||
-		len(submission.Major) == 0 {
+	if strings.TrimSpace(submission.Gender) == "" ||
+		strings.TrimSpace(submission.Religion) == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Missing one or more required demographics fields"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Missing one or more required demographics fields: gender and religion are required"})
 		return
 	}
 
-	// Echo submitted data as a simple success response for the client.
+	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if email == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: missing authenticated user email"})
+		return
+	}
+
+	religions := []string{}
+	if trimmed := strings.TrimSpace(submission.Religion); trimmed != "" {
+		religions = []string{trimmed}
+	}
+
+	if _, err := dbClient.Query().UpsertUserDemographicsByEmail(
+		r.Context(),
+		email,
+		submission.Name,
+		[]string{submission.Gender},
+		submission.Race,
+		religions,
+		submission.Major,
+	); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	// Echo submitted data and return persistence confirmation for the client.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"message":  "Demographics submitted successfully",
+		"message":  "Demographics submitted and saved successfully",
 		"name":     submission.Name,
 		"gender":   submission.Gender,
 		"race":     submission.Race,
 		"religion": submission.Religion,
 		"major":    submission.Major,
-		"email":    r.Header.Get("X-User-Email"),
+		"email":    email,
 	})
 }
 
@@ -749,21 +773,21 @@ func sendEmailToOfficers(club *ent.Club) {
 func sendEmail(to, subject, body string) {
 	message := gomail.NewMessage()
 
-    // Set email headers
-    message.SetHeader("From", "youremail@email.com")
-    message.SetHeader("To", to)
-    message.SetHeader("Subject", subject)
+	// Set email headers
+	message.SetHeader("From", "youremail@email.com")
+	message.SetHeader("To", to)
+	message.SetHeader("Subject", subject)
 
-    // Set email body
-    message.SetBody("text/plain", body)
+	// Set email body
+	message.SetBody("text/plain", body)
 
-    // Set up the SMTP dialer
-    dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+	// Set up the SMTP dialer
+	dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
 
-    // Send the email
-    if err := dialer.DialAndSend(message); err != nil {
-        fmt.Println("Error:", err)
-    }
+	// Send the email
+	if err := dialer.DialAndSend(message); err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response

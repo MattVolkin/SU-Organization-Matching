@@ -246,20 +246,22 @@
   <div class="section" id="sec-response">
     <div class="section-header" onclick="toggleSection('sec-response')">
       <span class="method-badge POST">POST</span>
-      <h2>/response — Submit one swipe answer</h2>
+      <h2>/response — Replace swipe answers</h2>
     </div>
     <div class="section-body">
-      <p class="hint">Validates and echoes one survey answer. Does not persist.</p>
+      <p class="hint">Replaces all stored survey answers for the signed-in user with this array payload.</p>
       <div class="field-group">
-        <label for="resp-questionId">questionId (positive integer)</label>
-        <input type="number" id="resp-questionId" value="1" min="1" />
-      </div>
-      <div class="field-group">
-        <label for="resp-answer">answer (true / false)</label>
-        <select id="resp-answer" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #d1d5db;border-radius:0.4rem;background:#f9fafb;font-size:0.8rem;">
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
+        <label for="resp-body">Request body (JSON array)</label>
+        <textarea id="resp-body">[
+  {
+    "questionId": 1,
+    "answer": true
+  },
+  {
+    "questionId": 2,
+    "answer": false
+  }
+]</textarea>
       </div>
       <div class="controls">
         <button class="btn-primary" onclick="runResponse()">Run</button>
@@ -274,15 +276,15 @@
       <h2>/submit — Demographics form</h2>
     </div>
     <div class="section-body">
-      <p class="hint">Validates and echoes demographics data. Does not persist.</p>
+      <p class="hint">Validates and persists demographics data to the authenticated user's profile.</p>
       <div class="field-group">
         <label for="submit-body">Request body (JSON)</label>
         <textarea id="submit-body">{
-  "name": "Test Student",
+  "name": "",
   "gender": "Woman",
   "race": ["Asian"],
-  "religion": "None",
-  "major": ["Computer Science"]
+  "religion": "No religion",
+  "major": []
 }</textarea>
       </div>
       <div class="controls">
@@ -316,7 +318,7 @@
       <h2>Example User Sort Test (from sorting.go)</h2>
     </div>
     <div class="section-body">
-      <p class="hint">Loads adjectives, maps Example User answers from sorting.go, submits them to <code>/response</code>, then fetches scored matches from <code>/api/results?includeScores=true</code>.</p>
+      <p class="hint">Loads adjectives, maps Example User answers from sorting.go, sends them as one array to <code>/response</code>, then fetches scored matches from <code>/api/results?includeScores=true</code>.</p>
       <div class="controls">
         <button class="btn-primary" onclick="runExampleUserSortTest()">Run Example User Match</button>
       </div>
@@ -585,10 +587,10 @@
       'Giving Presentations',
     ],
     demographics: {
-      name: 'Example User',
+      name: '',
       gender: 'Man',
       race: ['White'],
-      religion: 'No Religion',
+      religion: 'No religion',
       major: ['Computer Science'],
     },
   };
@@ -668,9 +670,9 @@
   }
 
   async function runResponse() {
-    const questionId = parseInt(document.getElementById('resp-questionId').value, 10);
-    const answer = document.getElementById('resp-answer').value === 'true';
-    try { showResult('res-response', await api('POST', '/response', { questionId, answer })); }
+    const parsed = parseBodyField('resp-body');
+    if (!parsed.ok) { showResult('res-response', { status: 0, data: parsed.error, ok: false }); return; }
+    try { showResult('res-response', await api('POST', '/response', parsed.value)); }
     catch (e) { showResult('res-response', e); }
   }
 
@@ -706,38 +708,35 @@
 
       const adjectiveQuestions = adjectivesResponse.data.filter((q) => q && Number(q.id) > 0);
       const submitted = [];
-      let submitFailures = 0;
-      let firstFailure = null;
 
       for (const question of adjectiveQuestions) {
         const term = extractQuestionTerm(question);
         const answerValue = determineExampleAnswer(question.question_type, term);
-        const responsePayload = {
-          questionId: Number(question.id),
-          answer: answerValue,
-        };
-
-        const submitResponse = await api('POST', '/response', responsePayload);
-        if (!submitResponse.ok) {
-          submitFailures += 1;
-          if (!firstFailure) {
-            firstFailure = {
-              questionId: responsePayload.questionId,
-              term,
-              answer: answerValue,
-              status: submitResponse.status,
-              response: submitResponse.data,
-            };
-          }
-          continue;
-        }
-
         submitted.push({
-          questionId: responsePayload.questionId,
+          questionId: Number(question.id),
           questionType: question.question_type,
           term,
           answer: answerValue,
         });
+      }
+
+      const responsePayload = submitted.map((entry) => ({
+        questionId: entry.questionId,
+        answer: entry.answer,
+      }));
+
+      const submitResponse = await api('POST', '/response', responsePayload);
+      if (!submitResponse.ok) {
+        showResult(resultId, {
+          status: submitResponse.status,
+          ok: false,
+          data: {
+            error: 'Failed to submit response batch',
+            attemptedCount: responsePayload.length,
+            response: submitResponse.data,
+          },
+        });
+        return;
       }
 
       // Keep demographic payload aligned with the example user as part of the simulation flow.
@@ -751,7 +750,7 @@
           data: {
             error: 'Failed to fetch scored results',
             submittedCount: submitted.length,
-            submitFailures,
+            batchSubmitFailed: false,
             response: scoredResultsResponse.data,
           },
         });
@@ -763,8 +762,7 @@
         'HTTP 200',
         '',
         `Submitted adjective/personality responses: ${submitted.length}/${adjectiveQuestions.length}`,
-        `Submit failures: ${submitFailures}`,
-        firstFailure ? `First failure: ${JSON.stringify(firstFailure, null, 2)}` : 'First failure: none',
+        'Batch submit failures: 0',
         '',
         summaryText,
       ];
