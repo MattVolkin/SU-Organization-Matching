@@ -21,7 +21,6 @@
   import { onDestroy, onMount } from 'svelte';
   import Header from './header.svelte'
   import Footer from './footer.svelte'
-  import LoginPopup from './login_popup.svelte'
   import { APICreater } from './APIHandler.svelte';
 
   const defaultResultImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23dbeafe'/><stop offset='100%' stop-color='%23f8fafc'/></linearGradient></defs><rect width='640' height='360' fill='url(%23sky)'/><rect y='235' width='640' height='125' fill='%23d1d5db'/><path d='M0 250L120 190L210 235L330 165L440 235L520 205L640 250V360H0Z' fill='%239ca3af'/><circle cx='110' cy='84' r='34' fill='%23fde68a'/><text x='320' y='330' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' fill='%234b5563'>Organization Image</text></svg>";
@@ -309,8 +308,6 @@
   });
     
 </script>
-
-<LoginPopup autoOpen={!isAuthChecking && !isAuthenticated} />
 
 <main class="results-page" bind:this={resultsPageElement}>
   {#if isAuthChecking}

@@ -21,6 +21,14 @@
 
   let popupBlocked = $state(false);
 
+  function setBodyLock(locked) {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.body.classList.toggle('login-required-open', locked);
+  }
+
   function openLoginPopup() {
     popupBlocked = false;
     const popup = window.open(
@@ -66,6 +74,8 @@
     if (!autoOpen) {
       popupBlocked = false;
     }
+
+    setBodyLock(autoOpen);
   });
 
   onMount(() => {
@@ -74,32 +84,46 @@
 
   onDestroy(() => {
     window.removeEventListener('message', onAuthMessage);
+    setBodyLock(false);
   });
 </script>
 
 {#if autoOpen}
-  <dialog open class="login-popup" aria-label="Sign in">
-    <h2>Sign in required</h2>
-    <p>Use Google sign-in to continue viewing your matches.</p>
-    <button type="button" onclick={openLoginPopup}>Continue with Google</button>
-    {#if popupBlocked}
-      <p class="warn">Popup was blocked. Allow popups for this site, then click the button again.</p>
-    {/if}
-  </dialog>
+  <div class="login-overlay" role="presentation" aria-hidden="false">
+    <div class="login-popup" role="dialog" aria-modal="true" aria-label="Sign in">
+      <h2>Sign in required</h2>
+      <p>Use Google sign-in to continue viewing your matches.</p>
+      <button type="button" onclick={openLoginPopup}>Continue with Google</button>
+      {#if popupBlocked}
+        <p class="warn">Popup was blocked. Allow popups for this site, then click the button again.</p>
+      {/if}
+    </div>
+  </div>
 {/if}
 
 <style>
-  .login-popup {
+  :global(body.login-required-open) {
+    overflow: hidden;
+  }
+
+  .login-overlay {
     position: fixed;
-    top: 6.5rem;
-    right: 1rem;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(7, 16, 27, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 2000;
+  }
+
+  .login-popup {
     width: min(24rem, calc(100vw - 2rem));
     padding: 1rem;
     background: #ffffff;
     border: 1px solid #d1d5db;
     border-radius: 0.75rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    z-index: 20;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
   }
 
   h2 {
@@ -134,9 +158,6 @@
 
   @media (max-width: 640px) {
     .login-popup {
-      left: 1rem;
-      right: 1rem;
-      top: 5.75rem;
       width: auto;
     }
   }

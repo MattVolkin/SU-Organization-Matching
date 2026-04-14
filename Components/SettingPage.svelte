@@ -940,12 +940,20 @@
     display: grid;
     gap: 0.35rem;
     font-weight: 700;
+    min-width: 0;
+  }
+
+  .general-info-grid input[type='text'] {
+    width: 75%;
+    max-width: 75%;
+    min-width: 0;
   }
 
   .results-content-grid label {
     display: grid;
     gap: 0.35rem;
     font-weight: 700;
+    min-width: 0;
   }
 
   .trends-grid {

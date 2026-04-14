@@ -23,6 +23,7 @@
   let { userType = "user", previewAs = '' } = $props();
   const getNavUserType = () => (previewAs || resolvedUserType || userType);
   let isMenuOpen = $state(false);
+  let isManageClubOpen = $state(false);
   let userEmail = $state('');
   let authToken = $state('');
   let resolvedUserType = $state('user');
@@ -161,10 +162,28 @@
 
   function toggleMenu() {
     isMenuOpen = !isMenuOpen;
+    if (!isMenuOpen) {
+      isManageClubOpen = false;
+    }
   }
 
   function closeMenu() {
     isMenuOpen = false;
+    isManageClubOpen = false;
+  }
+
+  function isMobileNav() {
+    return window.matchMedia('(max-width: 767px)').matches;
+  }
+
+  function handleManageClubClick(event) {
+    if (!isMobileNav()) {
+      closeMenu();
+      return;
+    }
+
+    event.preventDefault();
+    isManageClubOpen = !isManageClubOpen;
   }
 
   function toClubSlug(clubName) {
@@ -256,8 +275,13 @@
       <a href="/admin-home.html" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
       {@const managedClubs = getManageClubs()}
-      <div class="nav-item manage-club-menu">
-        <a href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/settings.html'} onclick={closeMenu}>Manage Club</a>
+      <div class={`nav-item manage-club-menu ${isManageClubOpen ? 'open' : ''}`}>
+        <a
+          href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/settings.html'}
+          onclick={handleManageClubClick}
+          aria-expanded={isManageClubOpen}
+          aria-haspopup="true"
+        >Manage Club</a>
         <div class="club-dropdown" aria-label="Clubs you can manage">
           {#if managedClubs.length > 0}
             {#each managedClubs as club}
@@ -436,6 +460,7 @@
   }
 
   .manage-club-menu:hover .club-dropdown,
+  .manage-club-menu.open .club-dropdown,
   .manage-club-menu:focus-within .club-dropdown {
     display: flex;
   }
@@ -560,7 +585,7 @@
     }
 
     .club-dropdown {
-      display: flex;
+      display: none;
       position: static;
       transform: none;
       min-width: 0;
@@ -570,6 +595,10 @@
       border-radius: 0;
       box-shadow: none;
       background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .manage-club-menu.open .club-dropdown {
+      display: flex;
     }
 
     .club-dropdown a,

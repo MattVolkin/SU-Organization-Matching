@@ -123,15 +123,15 @@
 	}
 
 
-	export function getTerm() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current term before changing it
+	export function getTerm() { // because the list building is done in another file (SwipingApp.svelte) we need a way to get the current term before changing it
 		return term;
 	}
 
-	export function getTag() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current question_type before changing it
+	export function getTag() { // because the list building is done in another file (SwipingApp.svelte) we need a way to get the current question_type before changing it
 		return question_type;
 	}
 
-	export function getID() { // because the list building is done in another file (SwipeingApp.svelte) we need a way to get the current id before changing it
+	export function getID() { // because the list building is done in another file (SwipingApp.svelte) we need a way to get the current id before changing it
 		return items[counter]?.id;
 	}
 
