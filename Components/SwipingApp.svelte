@@ -227,7 +227,7 @@
 	
 	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you align with the personality trait' : 'Swipe right if you like the activity'}!</h1> 
 	<h1>Swipe left if you don't!</h1>
-	<p>(Arrow Keys can also work)</p>
+	<p>(Arrow Keys also work)</p>
 
 
 

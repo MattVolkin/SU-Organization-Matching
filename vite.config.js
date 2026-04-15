@@ -18,6 +18,7 @@ export default defineConfig({
         swiping: resolve(webpagesDir, 'swiping.html'),
         results: resolve(webpagesDir, 'results.html'),
         settings: resolve(webpagesDir, 'settings.html'),
+        deleteAccount: resolve(webpagesDir, 'delete-account.html'),
         adminHome: resolve(webpagesDir, 'admin-home.html'),
       },
     },
