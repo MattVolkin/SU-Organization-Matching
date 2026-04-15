@@ -204,12 +204,10 @@
 		else if (event.key === 'ArrowRight') {
 			swipeRight();
 		}
-		else if (event.ctrlKey && event.key === 'z') { // TODO add ctrl-z functionality to go back to previous card
+		else if (event.ctrlKey && event.key === 'z') { // ctrl-z functionality to go back to previous card
 			rewind();
 		}
-		else {
-			console.log(event.key);
-		}
+
 
 	}
 
@@ -227,7 +225,7 @@
 <div class="swipedContainer">
 <!-- For cardObject.getTag?.(), the '?' indicates that the method might not exist on the object, so we can safely call it without throwing an error and move to the false case-->
 	
-	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1> 
+	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you align with the personality trait' : 'Swipe right if you like the activity'}!</h1> 
 	<h1>Swipe left if you don't!</h1>
 	<p>(Arrow Keys can also work)</p>
 
