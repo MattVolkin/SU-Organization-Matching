@@ -243,6 +243,46 @@
     </div>
   </div>
 
+  <div class="section" id="sec-test-questions">
+    <div class="section-header" onclick="toggleSection('sec-test-questions')">
+      <span class="method-badge PATCH">PATCH</span>
+      <h2>/api/test/questions — Replace activity + personality question lists</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Restricted to approved test users. Use Load Current to prefill from <code>/api/adjectives</code>, then edit terms, descriptions, and any language entries in <code>translations</code>.</p>
+      <div class="field-group">
+        <label for="test-questions-body">Request body (JSON)</label>
+        <textarea id="test-questions-body">{
+  "activities": [
+    {
+      "term": "Board Games",
+      "definition": "Enjoys tabletop strategy and social games",
+      "translations": {
+        "en": ["Board Games", "Enjoys tabletop strategy and social games"],
+        "es": ["Juegos de mesa", "Disfruta juegos de estrategia y sociales"]
+      }
+    }
+  ],
+  "personalityTraits": [
+    {
+      "term": "Welcoming",
+      "definition": "Open and friendly with new people",
+      "translations": {
+        "en": ["Welcoming", "Open and friendly with new people"],
+        "es": ["Acogedor", "Abierto y amable con gente nueva"]
+      }
+    }
+  ]
+}</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-secondary" onclick="runLoadTestQuestionsEditor()">Load Current</button>
+        <button class="btn-primary" onclick="runTestQuestionsPatch()">Run</button>
+      </div>
+      <div class="result" id="res-test-questions"></div>
+    </div>
+  </div>
+
   <div class="section" id="sec-response">
     <div class="section-header" onclick="toggleSection('sec-response')">
       <span class="method-badge POST">POST</span>
@@ -284,7 +324,9 @@
   "gender": "Woman",
   "race": ["Asian"],
   "religion": "None",
-  "major": ["Computer Science"]
+        "major": ["Computer Science"],
+        "lgbtq": "Prefer not to say",
+        "disability": "Prefer not to say"
 }</textarea>
       </div>
       <div class="controls">
@@ -592,6 +634,8 @@
       race: ['White'],
       religion: 'No Religion',
       major: ['Computer Science'],
+      lgbtq: 'Prefer not to say',
+      disability: 'Prefer not to say',
     },
   };
 
@@ -646,6 +690,221 @@
     return lines.join('\n');
   }
 
+  function extractQuestionDefinition(question) {
+    const translations = question && question.translations ? question.translations : {};
+    const english = Array.isArray(translations.en) ? translations.en : [];
+    if (english.length > 1 && String(english[1]).trim() !== '') {
+      return String(english[1]).trim();
+    }
+    const term = Array.isArray(translations.term) ? translations.term : [];
+    if (term.length > 1 && String(term[1]).trim() !== '') {
+      return String(term[1]).trim();
+    }
+    return '';
+  }
+
+  function normalizeQuestionTypeForPatch(rawType) {
+    const normalized = normalizeTerm(rawType).replaceAll('_', '').replaceAll('-', '').replaceAll(' ', '');
+    if (normalized === 'activity' || normalized === 'activities' || normalized === 'adjective') {
+      return 'activities';
+    }
+    if (normalized === 'personality' || normalized === 'personalitytrait' || normalized === 'personalitytraits') {
+      return 'personalityTraits';
+    }
+    return '';
+  }
+
+  function normalizeTranslationsForPatch(translations) {
+    const source = translations && typeof translations === 'object' ? translations : {};
+    const normalized = {};
+    Object.keys(source).forEach((key) => {
+      const lang = String(key || '').trim();
+      if (!lang) return;
+      const values = Array.isArray(source[key]) ? source[key] : [];
+      const cleaned = values
+        .map((value) => String(value || '').trim())
+        .filter((value) => value !== '');
+      if (cleaned.length > 0) {
+        normalized[lang] = cleaned;
+      }
+    });
+    return normalized;
+  }
+
+  function buildPatchPayloadFromExistingQuestions(questions) {
+    const payload = {
+      activities: [],
+      personalityTraits: [],
+    };
+
+    for (const question of questions) {
+      const bucket = normalizeQuestionTypeForPatch(question?.question_type);
+      if (!bucket) continue;
+
+      const term = extractQuestionTerm(question);
+      if (!term) continue;
+
+      payload[bucket].push({
+        term,
+        definition: extractQuestionDefinition(question),
+        translations: normalizeTranslationsForPatch(question?.translations),
+      });
+    }
+
+    payload.activities.sort((a, b) => a.term.localeCompare(b.term));
+    payload.personalityTraits.sort((a, b) => a.term.localeCompare(b.term));
+    return payload;
+  }
+
+  function extractPatchItemTerm(item) {
+    const direct = String(item?.term || '').trim();
+    if (direct) return direct;
+
+    const fromEn = Array.isArray(item?.translations?.en) ? item.translations.en : [];
+    if (fromEn.length > 0 && String(fromEn[0]).trim() !== '') {
+      return String(fromEn[0]).trim();
+    }
+
+    const fromTerm = Array.isArray(item?.translations?.term) ? item.translations.term : [];
+    if (fromTerm.length > 0 && String(fromTerm[0]).trim() !== '') {
+      return String(fromTerm[0]).trim();
+    }
+
+    return '';
+  }
+
+  function validateTranslationsObject(translations, path, errors) {
+    if (translations === undefined || translations === null) {
+      return;
+    }
+
+    if (typeof translations !== 'object' || Array.isArray(translations)) {
+      errors.push(`${path}.translations must be an object like { "en": ["term", "definition"] }`);
+      return;
+    }
+
+    Object.keys(translations).forEach((langKey) => {
+      const lang = String(langKey || '').trim();
+      if (!lang) {
+        errors.push(`${path}.translations has an empty language key`);
+        return;
+      }
+
+      const values = translations[langKey];
+      if (!Array.isArray(values)) {
+        errors.push(`${path}.translations.${lang} must be an array of strings`);
+        return;
+      }
+      if (values.length === 0) {
+        errors.push(`${path}.translations.${lang} must include at least one string (the term)`);
+        return;
+      }
+
+      values.forEach((value, index) => {
+        if (typeof value !== 'string') {
+          errors.push(`${path}.translations.${lang}[${index}] must be a string`);
+          return;
+        }
+        if (value.trim() === '') {
+          errors.push(`${path}.translations.${lang}[${index}] cannot be empty`);
+        }
+      });
+    });
+  }
+
+  function validateQuestionBucket(payload, bucketName, errors) {
+    const items = payload?.[bucketName];
+    if (!Array.isArray(items)) {
+      errors.push(`${bucketName} must be an array`);
+      return;
+    }
+    if (items.length === 0) {
+      errors.push(`${bucketName} must contain at least one question`);
+      return;
+    }
+
+    const seenTerms = new Set();
+    items.forEach((item, index) => {
+      const path = `${bucketName}[${index}]`;
+
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        errors.push(`${path} must be an object`);
+        return;
+      }
+
+      if (item.term !== undefined && typeof item.term !== 'string') {
+        errors.push(`${path}.term must be a string when provided`);
+      }
+      if (item.definition !== undefined && typeof item.definition !== 'string') {
+        errors.push(`${path}.definition must be a string when provided`);
+      }
+
+      validateTranslationsObject(item.translations, path, errors);
+
+      const term = extractPatchItemTerm(item);
+      if (!term) {
+        errors.push(`${path} must provide a term via term or translations.en[0]`);
+        return;
+      }
+
+      const key = term.toLowerCase();
+      if (seenTerms.has(key)) {
+        errors.push(`${bucketName} contains duplicate term "${term}"`);
+        return;
+      }
+      seenTerms.add(key);
+    });
+  }
+
+  function validateTestQuestionsPatchPayload(payload) {
+    const errors = [];
+
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return { ok: false, errors: ['Request body must be a JSON object'] };
+    }
+
+    validateQuestionBucket(payload, 'activities', errors);
+    validateQuestionBucket(payload, 'personalityTraits', errors);
+
+    return {
+      ok: errors.length === 0,
+      errors,
+    };
+  }
+
+  async function runLoadTestQuestionsEditor() {
+    const editor = document.getElementById('test-questions-body');
+    try {
+      const response = await api('GET', '/api/adjectives');
+      if (!response.ok || !Array.isArray(response.data)) {
+        showResult('res-test-questions', {
+          status: response.status,
+          ok: false,
+          data: {
+            error: 'Failed to load existing adjectives/questions for editor',
+            response: response.data,
+          },
+        });
+        return;
+      }
+
+      const payload = buildPatchPayloadFromExistingQuestions(response.data);
+      editor.value = JSON.stringify(payload, null, 2);
+
+      showResult('res-test-questions', {
+        status: 200,
+        ok: true,
+        data: {
+          message: 'Loaded current questions into editor',
+          activitiesCount: payload.activities.length,
+          personalityTraitsCount: payload.personalityTraits.length,
+        },
+      });
+    } catch (e) {
+      showResult('res-test-questions', e);
+    }
+  }
+
   async function runUser() {
     try { showResult('res-user', await api('GET', '/api/user')); }
     catch (e) { showResult('res-user', e); }
@@ -667,6 +926,38 @@
   async function runAdjectives() {
     try { showResult('res-adjectives', await api('GET', '/api/adjectives')); }
     catch (e) { showResult('res-adjectives', e); }
+  }
+
+  async function runTestQuestionsPatch() {
+    const parsed = parseBodyField('test-questions-body');
+    if (!parsed.ok) {
+      showResult('res-test-questions', { status: 0, data: parsed.error, ok: false });
+      return;
+    }
+
+    const validation = validateTestQuestionsPatchPayload(parsed.value);
+    if (!validation.ok) {
+      showResult('res-test-questions', {
+        status: 0,
+        ok: false,
+        data: {
+          error: 'Client-side validation failed',
+          issues: validation.errors,
+        },
+      });
+      return;
+    }
+
+    try {
+      const response = await api('PATCH', '/api/test/questions', parsed.value);
+      showResult('res-test-questions', response);
+      if (response.ok && Array.isArray(response?.data?.questions)) {
+        const payload = buildPatchPayloadFromExistingQuestions(response.data.questions);
+        document.getElementById('test-questions-body').value = JSON.stringify(payload, null, 2);
+      }
+    } catch (e) {
+      showResult('res-test-questions', e);
+    }
   }
 
   async function runResponse() {

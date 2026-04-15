@@ -395,6 +395,38 @@ func (db *DatabaseClient) FetchUserProfileByEmail(ctx context.Context, email str
 	}, nil
 }
 
+// FetchUserByEmail returns the full user row for matching and profile decisions.
+func (db *DatabaseClient) FetchUserByEmail(ctx context.Context, email string) (*DatabaseClient, *ent.User, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, nil, next.lastErr
+	}
+
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, nil, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		lookupEmail = strings.TrimSpace(next.userEmail)
+	}
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, nil, next.lastErr
+	}
+
+	storedUser, err := next.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	next.lastErr = err
+	if err != nil {
+		return next, nil, err
+	}
+
+	next.userGoogleID = strings.TrimSpace(storedUser.GoogleID)
+	next.userEmail = strings.TrimSpace(storedUser.Email)
+	return next, storedUser, nil
+}
+
 // FetchQuestionByID returns one question by primary key.
 func (db *DatabaseClient) FetchQuestionByID(ctx context.Context, id int) (*DatabaseClient, *ent.Question, error) {
 	next := db.clone()
@@ -479,6 +511,198 @@ func (db *DatabaseClient) FetchSwipeQuestionContents(ctx context.Context) (*Data
 	questions := db.FetchQuestionsByTypeAndAppend(ctx, "activities").FetchQuestionsByTypeAndAppend(ctx, "personality_traits").Results()
 
 	return db, questions, nil
+}
+
+// ReplaceSwipeQuestionsForTesting fully replaces activities and personality
+// trait question sets in one transaction.
+func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, activities []SwipeQuestionInput, personalityTraits []SwipeQuestionInput) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	normalizedActivities, err := normalizeSwipeQuestionInputs(activities, "activities")
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	normalizedPersonalityTraits, err := normalizeSwipeQuestionInputs(personalityTraits, "personalityTraits")
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	tx, err := next.client.Tx(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	defer func() {
+		if next.lastErr != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if _, err := tx.Question.Delete().Where(question.QuestionTypeIn("activities", "personality_traits")).Exec(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	for _, item := range normalizedActivities {
+		if _, err := tx.Question.Create().
+			SetQuestionType("activities").
+			SetTranslations(item.Translations).
+			SetIsActive(true).
+			Save(ctx); err != nil {
+			next.lastErr = err
+			return next, err
+		}
+	}
+
+	for _, item := range normalizedPersonalityTraits {
+		if _, err := tx.Question.Create().
+			SetQuestionType("personality_traits").
+			SetTranslations(item.Translations).
+			SetIsActive(true).
+			Save(ctx); err != nil {
+			next.lastErr = err
+			return next, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.lastErr = nil
+	return next, nil
+}
+
+func normalizeSwipeQuestionInputs(items []SwipeQuestionInput, fieldName string) ([]SwipeQuestionInput, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("%s must include at least one question", fieldName)
+	}
+
+	normalized := make([]SwipeQuestionInput, 0, len(items))
+	seenTerms := make(map[string]struct{}, len(items))
+
+	for index, item := range items {
+		translations := normalizeQuestionTranslations(item.Translations)
+
+		term := strings.TrimSpace(item.Term)
+		if term == "" {
+			term = pickTermFromTranslations(translations)
+		}
+		if term == "" {
+			return nil, fmt.Errorf("%s[%d].term is required", fieldName, index)
+		}
+
+		definition := strings.TrimSpace(item.Definition)
+		if definition == "" {
+			definition = pickDefinitionFromTranslations(translations)
+		}
+
+		translations = withEnglishTermAndDefinition(translations, term, definition)
+
+		termKey := strings.ToLower(term)
+		if _, exists := seenTerms[termKey]; exists {
+			return nil, fmt.Errorf("%s includes duplicate term %q", fieldName, term)
+		}
+		seenTerms[termKey] = struct{}{}
+
+		normalized = append(normalized, SwipeQuestionInput{
+			Term:         term,
+			Definition:   definition,
+			Translations: translations,
+		})
+	}
+
+	return normalized, nil
+}
+
+func normalizeQuestionTranslations(raw map[string][]string) map[string][]string {
+	if len(raw) == 0 {
+		return map[string][]string{}
+	}
+
+	cleaned := make(map[string][]string, len(raw))
+	for key, values := range raw {
+		lang := strings.ToLower(strings.TrimSpace(key))
+		if lang == "" {
+			continue
+		}
+
+		normalizedValues := make([]string, 0, len(values))
+		for _, value := range values {
+			trimmed := strings.TrimSpace(value)
+			if trimmed == "" {
+				continue
+			}
+			normalizedValues = append(normalizedValues, trimmed)
+		}
+
+		if len(normalizedValues) == 0 {
+			continue
+		}
+
+		cleaned[lang] = normalizedValues
+	}
+
+	return cleaned
+}
+
+func pickTermFromTranslations(translations map[string][]string) string {
+	if en, ok := translations["en"]; ok && len(en) > 0 {
+		return strings.TrimSpace(en[0])
+	}
+	if term, ok := translations["term"]; ok && len(term) > 0 {
+		return strings.TrimSpace(term[0])
+	}
+	for _, values := range translations {
+		if len(values) == 0 {
+			continue
+		}
+		if v := strings.TrimSpace(values[0]); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func pickDefinitionFromTranslations(translations map[string][]string) string {
+	if en, ok := translations["en"]; ok && len(en) > 1 {
+		if v := strings.TrimSpace(en[1]); v != "" {
+			return v
+		}
+	}
+	if term, ok := translations["term"]; ok && len(term) > 1 {
+		if v := strings.TrimSpace(term[1]); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func withEnglishTermAndDefinition(translations map[string][]string, term string, definition string) map[string][]string {
+	result := make(map[string][]string, len(translations)+1)
+	for key, values := range translations {
+		copied := make([]string, len(values))
+		copy(copied, values)
+		result[key] = copied
+	}
+
+	english := []string{strings.TrimSpace(term)}
+	if trimmedDefinition := strings.TrimSpace(definition); trimmedDefinition != "" {
+		english = append(english, trimmedDefinition)
+	}
+	result["en"] = english
+
+	return result
 }
 
 // FetchClubByID returns one club by primary key.
@@ -1211,6 +1435,7 @@ func (db *DatabaseClient) UpsertUserDemographicsByEmail(
 	ethnicities []string,
 	religions []string,
 	dedicatedMajors []string,
+	other []string,
 ) (*DatabaseClient, error) {
 	next := db.clone()
 	if next.lastErr != nil {
@@ -1237,6 +1462,7 @@ func (db *DatabaseClient) UpsertUserDemographicsByEmail(
 	normalizedEthnicities := normalizeUniqueTrimmed(ethnicities)
 	normalizedReligions := normalizeUniqueTrimmed(religions)
 	normalizedMajors := normalizeUniqueTrimmed(dedicatedMajors)
+	normalizedOther := normalizeUniqueTrimmed(other)
 	tags := mergeProfileNameTag(storedUser.Tags, name)
 
 	err = next.client.User.UpdateOneID(storedUser.ID).
@@ -1245,6 +1471,7 @@ func (db *DatabaseClient) UpsertUserDemographicsByEmail(
 		SetEthnicities(normalizedEthnicities).
 		SetReligions(normalizedReligions).
 		SetDedicatedMajors(normalizedMajors).
+		SetOther(normalizedOther).
 		Exec(ctx)
 	if err != nil {
 		next.lastErr = err

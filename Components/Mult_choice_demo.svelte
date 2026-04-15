@@ -105,6 +105,8 @@ import { APICreater } from './APIHandler.svelte';
       race,
       religion,
       major,
+      lgbtq: LGBTQ,
+      disability,
     })
      window.location.href = '/swiping.html';
   }

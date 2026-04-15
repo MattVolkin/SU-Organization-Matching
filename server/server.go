@@ -56,11 +56,13 @@ type SurveyResponsePayload struct {
 
 // DemographicsPayload is the expected payload for the /submit endpoint.
 type DemographicsPayload struct {
-	Name     string   `json:"name"`
-	Gender   string   `json:"gender"`
-	Race     []string `json:"race"`
-	Religion string   `json:"religion"`
-	Major    []string `json:"major"`
+	Name       string   `json:"name"`
+	Gender     string   `json:"gender"`
+	Race       []string `json:"race"`
+	Religion   string   `json:"religion"`
+	Major      []string `json:"major"`
+	LGBTQ      string   `json:"lgbtq"`
+	Disability string   `json:"disability"`
 }
 
 // OrgJSON defines the reusable wire format for officer organization data.
@@ -77,12 +79,12 @@ type OrgJSON struct {
 	Officers             []string  `json:"officers"`
 	Personality          []string  `json:"personality"`
 	Activities           []string  `json:"activities"`
-	Genders 			 []string  `json:"genders"`
-	Ethnicities 		 []string  `json:"ethnicities"`
-	Religions 			 []string  `json:"religions"`
-	StrictGenders 		 bool 	   `json:"strict_genders"`
-	DedicatedMajors 	 []string  `json:"dedicated_majors"`
-	Other 				 []string  `json:"other"`
+	Genders              []string  `json:"genders"`
+	Ethnicities          []string  `json:"ethnicities"`
+	Religions            []string  `json:"religions"`
+	StrictGenders        bool      `json:"strict_genders"`
+	DedicatedMajors      []string  `json:"dedicated_majors"`
+	Other                []string  `json:"other"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
@@ -124,6 +126,17 @@ type OrgMatchJSON struct {
 type RoleSwitchTestPayload struct {
 	Email string `json:"email"`
 	Role  string `json:"role"`
+}
+
+type SwipeQuestionInput struct {
+	Term         string              `json:"term"`
+	Definition   string              `json:"definition"`
+	Translations map[string][]string `json:"translations"`
+}
+
+type TestSwipeQuestionUpdatePayload struct {
+	Activities        *[]SwipeQuestionInput `json:"activities"`
+	PersonalityTraits *[]SwipeQuestionInput `json:"personalityTraits"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -238,6 +251,7 @@ func main() {
 
 	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest)).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/test/role", handleTestRoleSwitchRequest).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/test/questions", handleTestQuestionBankUpdateRequest).Methods(http.MethodPatch)
 
 	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
@@ -275,6 +289,13 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, userProfile, err := dbClient.Query().FetchUserByEmail(r.Context(), email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user demographics"})
+		return
+	}
+
 	_, clubs, err := dbClient.Query().FetchAllClubs(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -285,16 +306,16 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	includeScores := strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("includeScores")), "true") || strings.TrimSpace(r.URL.Query().Get("includeScores")) == "1"
 	if includeScores {
-		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, clubs))
+		json.NewEncoder(w).Encode(getScoredClubsFromAnswers(answers, userProfile, clubs))
 		return
 	}
 
-	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, clubs))
+	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, userProfile, clubs))
 }
 
 // getClubsFromAnswers ranks clubs for a user by converting stored answers into
 // matcher input and sorting all clubs by normalized match score.
-func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
+func getClubsFromAnswers(answers []DBAnswer, userProfile *ent.User, clubs []*ent.Club) []OrgJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -327,7 +348,7 @@ func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 		})
 	}
 
-	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ranked := matching.Sort(buildMatchUser(matchAnswers, userProfile), matchClubs)
 	ordered := make([]OrgJSON, 0, len(ranked))
 	for _, result := range ranked {
 		clubJSON, ok := clubsByID[result.Organization.ID]
@@ -340,7 +361,7 @@ func getClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgJSON {
 	return ordered
 }
 
-func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatchJSON {
+func getScoredClubsFromAnswers(answers []DBAnswer, userProfile *ent.User, clubs []*ent.Club) []OrgMatchJSON {
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
@@ -371,7 +392,7 @@ func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatch
 		})
 	}
 
-	ranked := matching.Sort(matching.UserFromAnswers(matchAnswers), matchClubs)
+	ranked := matching.Sort(buildMatchUser(matchAnswers, userProfile), matchClubs)
 	ordered := make([]OrgMatchJSON, 0, len(ranked))
 	for _, result := range ranked {
 		ordered = append(ordered, OrgMatchJSON{
@@ -382,6 +403,73 @@ func getScoredClubsFromAnswers(answers []DBAnswer, clubs []*ent.Club) []OrgMatch
 	}
 
 	return ordered
+}
+
+// buildMatchUser merges swipe answers with persisted demographics so both
+// influence ranking.
+func buildMatchUser(answers []matching.Answer, profile *ent.User) matching.UserInfo {
+	user := matching.UserFromAnswers(answers)
+	if profile == nil {
+		return user
+	}
+
+	if user.Name == "" {
+		user.Name = extractProfileNameTag(profile.Tags)
+	}
+
+	user.Genders = mergeUniqueFoldStrings(user.Genders, profile.Genders)
+	user.Ethnicities = mergeUniqueFoldStrings(user.Ethnicities, profile.Ethnicities)
+	user.Religions = mergeUniqueFoldStrings(user.Religions, profile.Religions)
+	user.DedicatedMajors = mergeUniqueFoldStrings(user.DedicatedMajors, profile.DedicatedMajors)
+	user.Other = mergeUniqueFoldStrings(user.Other, profile.Other)
+
+	return user
+}
+
+func mergeUniqueFoldStrings(base []string, values []string) []string {
+	merged := append([]string{}, base...)
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			continue
+		}
+
+		exists := false
+		for _, existing := range merged {
+			if strings.EqualFold(strings.TrimSpace(existing), trimmed) {
+				exists = true
+				break
+			}
+		}
+		if exists {
+			continue
+		}
+
+		merged = append(merged, trimmed)
+	}
+
+	return merged
+}
+
+func demographicsToOtherSignals(rawLGBTQ string, rawDisability string) []string {
+	signals := []string{}
+	if normalizeYesNo(rawLGBTQ) == "yes" {
+		signals = append(signals, "lgbtq", "lgbtq+")
+	}
+	if normalizeYesNo(rawDisability) == "yes" {
+		signals = append(signals, "disability")
+	}
+	return signals
+}
+
+func normalizeYesNo(raw string) string {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	switch normalized {
+	case "yes", "no", "prefer not to say":
+		return normalized
+	default:
+		return ""
+	}
 }
 
 func handleAdminOrgsRequest(w http.ResponseWriter, r *http.Request) {
@@ -514,7 +602,7 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		DedicatedMajors:      club.DedicatedMajors,
 		Other:                club.Other,
 
-		UpdatedAt:            club.UpdatedAt,
+		UpdatedAt: club.UpdatedAt,
 	}
 }
 
@@ -615,6 +703,53 @@ func handleTestRoleSwitchRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request) {
+	actorEmail := strings.ToLower(strings.TrimSpace(r.Header.Get("X-User-Email")))
+	if !isAllowedRoleTestEmail(actorEmail) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: test question update endpoint is restricted to approved test users"})
+		return
+	}
+
+	var payload TestSwipeQuestionUpdatePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+
+	if payload.Activities == nil || payload.PersonalityTraits == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "both activities and personalityTraits arrays are required"})
+		return
+	}
+
+	if _, err := dbClient.Query().ReplaceSwipeQuestionsForTesting(r.Context(), *payload.Activities, *payload.PersonalityTraits); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	_, questions, err := dbClient.Query().FetchSwipeQuestionContents(r.Context())
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Questions updated but failed to fetch refreshed question set"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":                "Test swipe question lists updated",
+		"actorEmail":             actorEmail,
+		"activitiesCount":        len(*payload.Activities),
+		"personalityTraitsCount": len(*payload.PersonalityTraits),
+		"questions":              questions,
+	})
+}
+
 func isAllowedRoleTestEmail(email string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(email))
 	if normalized == "" {
@@ -688,10 +823,10 @@ func handleSurveyResponseSubmission(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"email":        email,
-		"responses":    payload,
+		"email":         email,
+		"responses":     payload,
 		"responseCount": len(payload),
-		"message":      "Responses accepted and replaced",
+		"message":       "Responses accepted and replaced",
 	})
 }
 
@@ -703,17 +838,16 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.TrimSpace(submission.Gender) == "" ||
-		strings.TrimSpace(submission.Religion) == "" ||
-		len(submission.Race) == 0 && len(submission.Major) == 0 && strings.TrimSpace(submission.Name) == "" {
-		// Keep at least one optional demographic signal when only required fields are present.
-	}
+	lgbtqAnswer := strings.TrimSpace(submission.LGBTQ)
+	disabilityAnswer := strings.TrimSpace(submission.Disability)
 
 	if strings.TrimSpace(submission.Gender) == "" ||
-		strings.TrimSpace(submission.Religion) == "" {
+		strings.TrimSpace(submission.Religion) == "" ||
+		normalizeYesNo(lgbtqAnswer) == "" ||
+		normalizeYesNo(disabilityAnswer) == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Missing one or more required demographics fields: gender and religion are required"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Missing one or more required demographics fields: gender, religion, lgbtq, and disability are required"})
 		return
 	}
 
@@ -738,6 +872,7 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		submission.Race,
 		religions,
 		submission.Major,
+		demographicsToOtherSignals(lgbtqAnswer, disabilityAnswer),
 	); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -749,13 +884,15 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"message":  "Demographics submitted and saved successfully",
-		"name":     submission.Name,
-		"gender":   submission.Gender,
-		"race":     submission.Race,
-		"religion": submission.Religion,
-		"major":    submission.Major,
-		"email":    email,
+		"message":    "Demographics submitted and saved successfully",
+		"name":       submission.Name,
+		"gender":     submission.Gender,
+		"race":       submission.Race,
+		"religion":   submission.Religion,
+		"major":      submission.Major,
+		"lgbtq":      lgbtqAnswer,
+		"disability": disabilityAnswer,
+		"email":      email,
 	})
 }
 
@@ -779,21 +916,21 @@ func sendEmailToOfficers(club *ent.Club) {
 func sendEmail(to, subject, body string) {
 	message := gomail.NewMessage()
 
-    // Set email headers
-    message.SetHeader("From", "youremail@email.com")
-    message.SetHeader("To", to)
-    message.SetHeader("Subject", subject)
+	// Set email headers
+	message.SetHeader("From", "youremail@email.com")
+	message.SetHeader("To", to)
+	message.SetHeader("Subject", subject)
 
-    // Set email body
-    message.SetBody("text/plain", body)
+	// Set email body
+	message.SetBody("text/plain", body)
 
-    // Set up the SMTP dialer
-    dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+	// Set up the SMTP dialer
+	dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
 
-    // Send the email
-    if err := dialer.DialAndSend(message); err != nil {
-        fmt.Println("Error:", err)
-    }
+	// Send the email
+	if err := dialer.DialAndSend(message); err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response
