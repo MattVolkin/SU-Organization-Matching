@@ -36,6 +36,8 @@ type Club struct {
 	Personality []string `json:"personality,omitempty"`
 	// Activities holds the value of the "activities" field.
 	Activities []string `json:"activities,omitempty"`
+	// ActivitiesDescription holds the value of the "activities_description" field.
+	ActivitiesDescription string `json:"activities_description,omitempty"`
 	// Genders holds the value of the "genders" field.
 	Genders []string `json:"genders,omitempty"`
 	// Ethnicities holds the value of the "ethnicities" field.
@@ -87,7 +89,7 @@ func (*Club) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case club.FieldID:
 			values[i] = new(sql.NullInt64)
-		case club.FieldClubName, club.FieldDescription, club.FieldMeetingTime, club.FieldImagePath, club.FieldExternalLink, club.FieldContactInfo:
+		case club.FieldClubName, club.FieldDescription, club.FieldMeetingTime, club.FieldImagePath, club.FieldExternalLink, club.FieldContactInfo, club.FieldActivitiesDescription:
 			values[i] = new(sql.NullString)
 		case club.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -169,6 +171,12 @@ func (_m *Club) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Activities); err != nil {
 					return fmt.Errorf("unmarshal field activities: %w", err)
 				}
+			}
+		case club.FieldActivitiesDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field activities_description", values[i])
+			} else if value.Valid {
+				_m.ActivitiesDescription = value.String
 			}
 		case club.FieldGenders:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -297,6 +305,9 @@ func (_m *Club) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("activities=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Activities))
+	builder.WriteString(", ")
+	builder.WriteString("activities_description=")
+	builder.WriteString(_m.ActivitiesDescription)
 	builder.WriteString(", ")
 	builder.WriteString("genders=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Genders))

@@ -68,45 +68,49 @@ type DemographicsPayload struct {
 // OrgJSON defines the reusable wire format for officer organization data.
 // This can be marshaled to JSON for responses and decoded from JSON in requests.
 type OrgJSON struct {
-	ID                   int       `json:"id"`
-	ClubName             string    `json:"clubName"`
-	Description          string    `json:"description"`
-	MeetingTime          string    `json:"meetingTime"`
-	ImagePath            string    `json:"imagePath"`
-	ExternalLink         string    `json:"externalLink"`
-	ContactInfo          string    `json:"contactInfo"`
-	IncludeOfficerEmails bool      `json:"includeOfficerEmails"`
-	Officers             []string  `json:"officers"`
-	Personality          []string  `json:"personality"`
-	Activities           []string  `json:"activities"`
-	Genders              []string  `json:"genders"`
-	Ethnicities          []string  `json:"ethnicities"`
-	Religions            []string  `json:"religions"`
-	StrictGenders        bool      `json:"strict_genders"`
-	DedicatedMajors      []string  `json:"dedicated_majors"`
-	Other                []string  `json:"other"`
-	UpdatedAt            time.Time `json:"updatedAt"`
+	ID                    int       `json:"id"`
+	ClubName              string    `json:"clubName"`
+	Description           string    `json:"description"`
+	MeetingTime           string    `json:"meetingTime"`
+	ImagePath             string    `json:"imagePath"`
+	ExternalLink          string    `json:"externalLink"`
+	ContactInfo           string    `json:"contactInfo"`
+	IncludeOfficerEmails  bool      `json:"includeOfficerEmails"`
+	Officers              []string  `json:"officers"`
+	Personality           []string  `json:"personality"`
+	Activities            []string  `json:"activities"`
+	ActivitiesDescription string    `json:"activitiesDescription"`
+	Genders               []string  `json:"genders"`
+	Ethnicities           []string  `json:"ethnicities"`
+	Religions             []string  `json:"religions"`
+	StrictGenders         bool      `json:"strict_genders"`
+	DedicatedMajors       []string  `json:"dedicated_majors"`
+	AssociatedMajors      []string  `json:"associated_majors"`
+	Other                 []string  `json:"other"`
+	UpdatedAt             time.Time `json:"updatedAt"`
 }
 
 // OrgUpdatePayload contains only mutable club fields for PATCH requests.
 type OrgUpdatePayload struct {
-	ID                   int       `json:"id"`
-	ClubName             *string   `json:"clubName,omitempty"`
-	Description          *string   `json:"description,omitempty"`
-	MeetingTime          *string   `json:"meetingTime,omitempty"`
-	ImagePath            *string   `json:"imagePath,omitempty"`
-	ExternalLink         *string   `json:"externalLink,omitempty"`
-	ContactInfo          *string   `json:"contactInfo,omitempty"`
-	IncludeOfficerEmails *bool     `json:"includeOfficerEmails,omitempty"`
-	Officers             *[]string `json:"officers,omitempty"`
-	Personality          *[]string `json:"personality,omitempty"`
-	Activities           *[]string `json:"activities,omitempty"`
-	Genders              *[]string `json:"genders,omitempty"`
-	Ethnicities          *[]string `json:"ethnicities,omitempty"`
-	Religions            *[]string `json:"religions,omitempty"`
-	StrictGenders        *bool     `json:"strict_genders,omitempty"`
-	DedicatedMajors      *[]string `json:"dedicated_majors,omitempty"`
-	Other                *[]string `json:"other,omitempty"`
+	ID                    int       `json:"id"`
+	ClubName              *string   `json:"clubName,omitempty"`
+	Description           *string   `json:"description,omitempty"`
+	MeetingTime           *string   `json:"meetingTime,omitempty"`
+	ImagePath             *string   `json:"imagePath,omitempty"`
+	ExternalLink          *string   `json:"externalLink,omitempty"`
+	ContactInfo           *string   `json:"contactInfo,omitempty"`
+	IncludeOfficerEmails  *bool     `json:"includeOfficerEmails,omitempty"`
+	Officers              *[]string `json:"officers,omitempty"`
+	Personality           *[]string `json:"personality,omitempty"`
+	Activities            *[]string `json:"activities,omitempty"`
+	ActivitiesDescription *string   `json:"activitiesDescription,omitempty"`
+	Genders               *[]string `json:"genders,omitempty"`
+	Ethnicities           *[]string `json:"ethnicities,omitempty"`
+	Religions             *[]string `json:"religions,omitempty"`
+	StrictGenders         *bool     `json:"strict_genders,omitempty"`
+	DedicatedMajors       *[]string `json:"dedicated_majors,omitempty"`
+	AssociatedMajors      *[]string `json:"associated_majors,omitempty"`
+	Other                 *[]string `json:"other,omitempty"`
 }
 
 type OrgDeletePayload struct {
@@ -135,8 +139,9 @@ type SwipeQuestionInput struct {
 }
 
 type TestSwipeQuestionUpdatePayload struct {
-	Activities        *[]SwipeQuestionInput `json:"activities"`
-	PersonalityTraits *[]SwipeQuestionInput `json:"personalityTraits"`
+	ID           int                 `json:"id,omitempty"`
+	QuestionType string              `json:"question_type"`
+	Translations map[string][]string `json:"translations"`
 }
 
 // organization defines either an organization or a user with various fields
@@ -584,23 +589,25 @@ func orgStructToJSON(clubs []*ent.Club) []OrgJSON {
 
 func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 	return OrgJSON{
-		ID:                   club.ID,
-		ClubName:             club.ClubName,
-		Description:          club.Description,
-		MeetingTime:          club.MeetingTime,
-		ImagePath:            club.ImagePath,
-		ExternalLink:         club.ExternalLink,
-		ContactInfo:          club.ContactInfo,
-		IncludeOfficerEmails: club.IncludeOfficerEmails,
-		Officers:             officerEmailsFromClub(club),
-		Personality:          club.Personality,
-		Activities:           club.Activities,
-		Genders:              club.Genders,
-		Ethnicities:          club.Ethnicities,
-		Religions:            club.Religions,
-		StrictGenders:        club.StrictGenders,
-		DedicatedMajors:      club.DedicatedMajors,
-		Other:                club.Other,
+		ID:                    club.ID,
+		ClubName:              club.ClubName,
+		Description:           club.Description,
+		MeetingTime:           club.MeetingTime,
+		ImagePath:             club.ImagePath,
+		ExternalLink:          club.ExternalLink,
+		ContactInfo:           club.ContactInfo,
+		IncludeOfficerEmails:  club.IncludeOfficerEmails,
+		Officers:              officerEmailsFromClub(club),
+		Personality:           club.Personality,
+		Activities:            club.Activities,
+		ActivitiesDescription: club.ActivitiesDescription,
+		Genders:               club.Genders,
+		Ethnicities:           club.Ethnicities,
+		Religions:             club.Religions,
+		StrictGenders:         club.StrictGenders,
+		DedicatedMajors:       club.DedicatedMajors,
+		AssociatedMajors:      club.AssociatedMajors,
+		Other:                 club.Other,
 
 		UpdatedAt: club.UpdatedAt,
 	}
@@ -712,19 +719,46 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var payload TestSwipeQuestionUpdatePayload
+	var payload []TestSwipeQuestionUpdatePayload
 	if !decodeJSONBody(w, r, &payload) {
 		return
 	}
 
-	if payload.Activities == nil || payload.PersonalityTraits == nil {
+	if len(payload) == 0 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "both activities and personalityTraits arrays are required"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "request body must include at least one question"})
 		return
 	}
 
-	if _, err := dbClient.Query().ReplaceSwipeQuestionsForTesting(r.Context(), *payload.Activities, *payload.PersonalityTraits); err != nil {
+	activities := make([]SwipeQuestionInput, 0, len(payload))
+	personalityTraits := make([]SwipeQuestionInput, 0, len(payload))
+	for i, item := range payload {
+		normalizedType := normalizeTestQuestionType(item.QuestionType)
+		if normalizedType == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("question at index %d has unsupported question_type", i)})
+			return
+		}
+
+		question := SwipeQuestionInput{Translations: item.Translations}
+		switch normalizedType {
+		case "activities":
+			activities = append(activities, question)
+		case "personality_traits":
+			personalityTraits = append(personalityTraits, question)
+		}
+	}
+
+	if len(activities) == 0 || len(personalityTraits) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "request must include both activities and personality_traits questions"})
+		return
+	}
+
+	if _, err := dbClient.Query().ReplaceSwipeQuestionsForTesting(r.Context(), activities, personalityTraits); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -741,13 +775,23 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]any{
-		"message":                "Test swipe question lists updated",
-		"actorEmail":             actorEmail,
-		"activitiesCount":        len(*payload.Activities),
-		"personalityTraitsCount": len(*payload.PersonalityTraits),
-		"questions":              questions,
-	})
+	json.NewEncoder(w).Encode(questions)
+}
+
+func normalizeTestQuestionType(raw string) string {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	normalized = strings.ReplaceAll(normalized, "_", "")
+	normalized = strings.ReplaceAll(normalized, "-", "")
+	normalized = strings.ReplaceAll(normalized, " ", "")
+
+	switch normalized {
+	case "activity", "activities", "adjective":
+		return "activities"
+	case "personality", "personalitytrait", "personalitytraits":
+		return "personality_traits"
+	default:
+		return ""
+	}
 }
 
 func isAllowedRoleTestEmail(email string) bool {

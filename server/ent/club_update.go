@@ -182,6 +182,20 @@ func (_u *ClubUpdate) AppendActivities(v []string) *ClubUpdate {
 	return _u
 }
 
+// SetActivitiesDescription sets the "activities_description" field.
+func (_u *ClubUpdate) SetActivitiesDescription(v string) *ClubUpdate {
+	_u.mutation.SetActivitiesDescription(v)
+	return _u
+}
+
+// SetNillableActivitiesDescription sets the "activities_description" field if the given value is not nil.
+func (_u *ClubUpdate) SetNillableActivitiesDescription(v *string) *ClubUpdate {
+	if v != nil {
+		_u.SetActivitiesDescription(*v)
+	}
+	return _u
+}
+
 // SetGenders sets the "genders" field.
 func (_u *ClubUpdate) SetGenders(v []string) *ClubUpdate {
 	_u.mutation.SetGenders(v)
@@ -411,6 +425,9 @@ func (_u *ClubUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, club.FieldActivities, value)
 		})
+	}
+	if value, ok := _u.mutation.ActivitiesDescription(); ok {
+		_spec.SetField(club.FieldActivitiesDescription, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Genders(); ok {
 		_spec.SetField(club.FieldGenders, field.TypeJSON, value)
@@ -683,6 +700,20 @@ func (_u *ClubUpdateOne) AppendActivities(v []string) *ClubUpdateOne {
 	return _u
 }
 
+// SetActivitiesDescription sets the "activities_description" field.
+func (_u *ClubUpdateOne) SetActivitiesDescription(v string) *ClubUpdateOne {
+	_u.mutation.SetActivitiesDescription(v)
+	return _u
+}
+
+// SetNillableActivitiesDescription sets the "activities_description" field if the given value is not nil.
+func (_u *ClubUpdateOne) SetNillableActivitiesDescription(v *string) *ClubUpdateOne {
+	if v != nil {
+		_u.SetActivitiesDescription(*v)
+	}
+	return _u
+}
+
 // SetGenders sets the "genders" field.
 func (_u *ClubUpdateOne) SetGenders(v []string) *ClubUpdateOne {
 	_u.mutation.SetGenders(v)
@@ -942,6 +973,9 @@ func (_u *ClubUpdateOne) sqlSave(ctx context.Context) (_node *Club, err error) {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, club.FieldActivities, value)
 		})
+	}
+	if value, ok := _u.mutation.ActivitiesDescription(); ok {
+		_spec.SetField(club.FieldActivitiesDescription, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Genders(); ok {
 		_spec.SetField(club.FieldGenders, field.TypeJSON, value)

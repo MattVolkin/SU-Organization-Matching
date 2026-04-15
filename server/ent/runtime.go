@@ -35,36 +35,40 @@ func init() {
 	clubDescActivities := clubFields[8].Descriptor()
 	// club.DefaultActivities holds the default value on creation for the activities field.
 	club.DefaultActivities = clubDescActivities.Default.([]string)
+	// clubDescActivitiesDescription is the schema descriptor for activities_description field.
+	clubDescActivitiesDescription := clubFields[9].Descriptor()
+	// club.DefaultActivitiesDescription holds the default value on creation for the activities_description field.
+	club.DefaultActivitiesDescription = clubDescActivitiesDescription.Default.(string)
 	// clubDescGenders is the schema descriptor for genders field.
-	clubDescGenders := clubFields[9].Descriptor()
+	clubDescGenders := clubFields[10].Descriptor()
 	// club.DefaultGenders holds the default value on creation for the genders field.
 	club.DefaultGenders = clubDescGenders.Default.([]string)
 	// clubDescEthnicities is the schema descriptor for ethnicities field.
-	clubDescEthnicities := clubFields[10].Descriptor()
+	clubDescEthnicities := clubFields[11].Descriptor()
 	// club.DefaultEthnicities holds the default value on creation for the ethnicities field.
 	club.DefaultEthnicities = clubDescEthnicities.Default.([]string)
 	// clubDescReligions is the schema descriptor for religions field.
-	clubDescReligions := clubFields[11].Descriptor()
+	clubDescReligions := clubFields[12].Descriptor()
 	// club.DefaultReligions holds the default value on creation for the religions field.
 	club.DefaultReligions = clubDescReligions.Default.([]string)
 	// clubDescStrictGenders is the schema descriptor for strict_genders field.
-	clubDescStrictGenders := clubFields[12].Descriptor()
+	clubDescStrictGenders := clubFields[13].Descriptor()
 	// club.DefaultStrictGenders holds the default value on creation for the strict_genders field.
 	club.DefaultStrictGenders = clubDescStrictGenders.Default.(bool)
 	// clubDescDedicatedMajors is the schema descriptor for dedicated_majors field.
-	clubDescDedicatedMajors := clubFields[13].Descriptor()
+	clubDescDedicatedMajors := clubFields[14].Descriptor()
 	// club.DefaultDedicatedMajors holds the default value on creation for the dedicated_majors field.
 	club.DefaultDedicatedMajors = clubDescDedicatedMajors.Default.([]string)
 	// clubDescAssociatedMajors is the schema descriptor for associated_majors field.
-	clubDescAssociatedMajors := clubFields[14].Descriptor()
+	clubDescAssociatedMajors := clubFields[15].Descriptor()
 	// club.DefaultAssociatedMajors holds the default value on creation for the associated_majors field.
 	club.DefaultAssociatedMajors = clubDescAssociatedMajors.Default.([]string)
 	// clubDescOther is the schema descriptor for other field.
-	clubDescOther := clubFields[15].Descriptor()
+	clubDescOther := clubFields[16].Descriptor()
 	// club.DefaultOther holds the default value on creation for the other field.
 	club.DefaultOther = clubDescOther.Default.([]string)
 	// clubDescUpdatedAt is the schema descriptor for updated_at field.
-	clubDescUpdatedAt := clubFields[16].Descriptor()
+	clubDescUpdatedAt := clubFields[17].Descriptor()
 	// club.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	club.DefaultUpdatedAt = clubDescUpdatedAt.Default.(func() time.Time)
 	// club.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

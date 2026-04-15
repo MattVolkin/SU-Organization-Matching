@@ -249,31 +249,25 @@
       <h2>/api/test/questions — Replace activity + personality question lists</h2>
     </div>
     <div class="section-body">
-      <p class="hint">Restricted to approved test users. Use Load Current to prefill from <code>/api/adjectives</code>, then edit terms, descriptions, and any language entries in <code>translations</code>.</p>
+      <p class="hint">Restricted to approved test users. Payload format matches <code>/api/adjectives</code>: an array of objects with <code>question_type</code> and <code>translations</code>.</p>
       <div class="field-group">
         <label for="test-questions-body">Request body (JSON)</label>
-        <textarea id="test-questions-body">{
-  "activities": [
-    {
-      "term": "Board Games",
-      "definition": "Enjoys tabletop strategy and social games",
-      "translations": {
-        "en": ["Board Games", "Enjoys tabletop strategy and social games"],
-        "es": ["Juegos de mesa", "Disfruta juegos de estrategia y sociales"]
-      }
+        <textarea id="test-questions-body">[
+  {
+    "question_type": "activities",
+    "translations": {
+      "en": ["Board Games", "Enjoys tabletop strategy and social games"],
+      "es": ["Juegos de mesa", "Disfruta juegos de estrategia y sociales"]
     }
-  ],
-  "personalityTraits": [
-    {
-      "term": "Welcoming",
-      "definition": "Open and friendly with new people",
-      "translations": {
-        "en": ["Welcoming", "Open and friendly with new people"],
-        "es": ["Acogedor", "Abierto y amable con gente nueva"]
-      }
+  },
+  {
+    "question_type": "personality_traits",
+    "translations": {
+      "en": ["Welcoming", "Open and friendly with new people"],
+      "es": ["Acogedor", "Abierto y amable con gente nueva"]
     }
-  ]
-}</textarea>
+  }
+]</textarea>
       </div>
       <div class="controls">
         <button class="btn-secondary" onclick="runLoadTestQuestionsEditor()">Load Current</button>
@@ -709,7 +703,7 @@
       return 'activities';
     }
     if (normalized === 'personality' || normalized === 'personalitytrait' || normalized === 'personalitytraits') {
-      return 'personalityTraits';
+      return 'personality_traits';
     }
     return '';
   }
@@ -732,45 +726,31 @@
   }
 
   function buildPatchPayloadFromExistingQuestions(questions) {
-    const payload = {
-      activities: [],
-      personalityTraits: [],
-    };
+    const payload = [];
 
     for (const question of questions) {
-      const bucket = normalizeQuestionTypeForPatch(question?.question_type);
-      if (!bucket) continue;
+      const questionType = normalizeQuestionTypeForPatch(question?.question_type);
+      if (!questionType) continue;
 
-      const term = extractQuestionTerm(question);
-      if (!term) continue;
+      const translations = normalizeTranslationsForPatch(question?.translations);
+      if (Object.keys(translations).length === 0) continue;
 
-      payload[bucket].push({
-        term,
-        definition: extractQuestionDefinition(question),
-        translations: normalizeTranslationsForPatch(question?.translations),
+      payload.push({
+        question_type: questionType,
+        translations,
       });
     }
 
-    payload.activities.sort((a, b) => a.term.localeCompare(b.term));
-    payload.personalityTraits.sort((a, b) => a.term.localeCompare(b.term));
+    payload.sort((a, b) => {
+      if (a.question_type !== b.question_type) {
+        return a.question_type.localeCompare(b.question_type);
+      }
+      const aTerm = Array.isArray(a?.translations?.en) ? String(a.translations.en[0] || '') : '';
+      const bTerm = Array.isArray(b?.translations?.en) ? String(b.translations.en[0] || '') : '';
+      return aTerm.localeCompare(bTerm);
+    });
+
     return payload;
-  }
-
-  function extractPatchItemTerm(item) {
-    const direct = String(item?.term || '').trim();
-    if (direct) return direct;
-
-    const fromEn = Array.isArray(item?.translations?.en) ? item.translations.en : [];
-    if (fromEn.length > 0 && String(fromEn[0]).trim() !== '') {
-      return String(fromEn[0]).trim();
-    }
-
-    const fromTerm = Array.isArray(item?.translations?.term) ? item.translations.term : [];
-    if (fromTerm.length > 0 && String(fromTerm[0]).trim() !== '') {
-      return String(fromTerm[0]).trim();
-    }
-
-    return '';
   }
 
   function validateTranslationsObject(translations, path, errors) {
@@ -812,59 +792,40 @@
     });
   }
 
-  function validateQuestionBucket(payload, bucketName, errors) {
-    const items = payload?.[bucketName];
-    if (!Array.isArray(items)) {
-      errors.push(`${bucketName} must be an array`);
-      return;
-    }
-    if (items.length === 0) {
-      errors.push(`${bucketName} must contain at least one question`);
+  function validateQuestionItem(item, index, errors, typeCounts) {
+    const path = `[${index}]`;
+
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      errors.push(`${path} must be an object`);
       return;
     }
 
-    const seenTerms = new Set();
-    items.forEach((item, index) => {
-      const path = `${bucketName}[${index}]`;
+    const normalizedType = normalizeQuestionTypeForPatch(item.question_type);
+    if (!normalizedType) {
+      errors.push(`${path}.question_type must be one of: activities, personality_traits`);
+    } else {
+      typeCounts[normalizedType] = (typeCounts[normalizedType] || 0) + 1;
+    }
 
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        errors.push(`${path} must be an object`);
-        return;
-      }
-
-      if (item.term !== undefined && typeof item.term !== 'string') {
-        errors.push(`${path}.term must be a string when provided`);
-      }
-      if (item.definition !== undefined && typeof item.definition !== 'string') {
-        errors.push(`${path}.definition must be a string when provided`);
-      }
-
-      validateTranslationsObject(item.translations, path, errors);
-
-      const term = extractPatchItemTerm(item);
-      if (!term) {
-        errors.push(`${path} must provide a term via term or translations.en[0]`);
-        return;
-      }
-
-      const key = term.toLowerCase();
-      if (seenTerms.has(key)) {
-        errors.push(`${bucketName} contains duplicate term "${term}"`);
-        return;
-      }
-      seenTerms.add(key);
-    });
+    validateTranslationsObject(item.translations, path, errors);
   }
 
   function validateTestQuestionsPatchPayload(payload) {
     const errors = [];
 
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      return { ok: false, errors: ['Request body must be a JSON object'] };
+    if (!Array.isArray(payload)) {
+      return { ok: false, errors: ['Request body must be a JSON array'] };
+    }
+    if (payload.length === 0) {
+      return { ok: false, errors: ['Request body must include at least one question'] };
     }
 
-    validateQuestionBucket(payload, 'activities', errors);
-    validateQuestionBucket(payload, 'personalityTraits', errors);
+    const typeCounts = { activities: 0, personality_traits: 0 };
+    payload.forEach((item, index) => validateQuestionItem(item, index, errors, typeCounts));
+
+    if (typeCounts.activities === 0 || typeCounts.personality_traits === 0) {
+      errors.push('Request must include both activities and personality_traits questions');
+    }
 
     return {
       ok: errors.length === 0,
@@ -891,13 +852,16 @@
       const payload = buildPatchPayloadFromExistingQuestions(response.data);
       editor.value = JSON.stringify(payload, null, 2);
 
+      const activityCount = payload.filter((q) => q.question_type === 'activities').length;
+      const personalityCount = payload.filter((q) => q.question_type === 'personality_traits').length;
+
       showResult('res-test-questions', {
         status: 200,
         ok: true,
         data: {
           message: 'Loaded current questions into editor',
-          activitiesCount: payload.activities.length,
-          personalityTraitsCount: payload.personalityTraits.length,
+          activitiesCount: activityCount,
+          personalityTraitsCount: personalityCount,
         },
       });
     } catch (e) {
@@ -951,8 +915,8 @@
     try {
       const response = await api('PATCH', '/api/test/questions', parsed.value);
       showResult('res-test-questions', response);
-      if (response.ok && Array.isArray(response?.data?.questions)) {
-        const payload = buildPatchPayloadFromExistingQuestions(response.data.questions);
+      if (response.ok && Array.isArray(response?.data)) {
+        const payload = buildPatchPayloadFromExistingQuestions(response.data);
         document.getElementById('test-questions-body').value = JSON.stringify(payload, null, 2);
       }
     } catch (e) {

@@ -474,16 +474,11 @@ func (db *DatabaseClient) FetchQuestionsByType(ctx context.Context, questionType
 			continue
 		}
 
-		questionPayload := make(map[string]any, len(q.Translations)+3)
-		questionPayload["id"] = q.ID
-		questionPayload["question_type"] = q.QuestionType
-		questionPayload["translations"] = q.Translations
-
-		if q.Translations == nil {
-			contents = append(contents, questionPayload)
-			continue
+		questionPayload := map[string]any{
+			"id":            q.ID,
+			"question_type": q.QuestionType,
+			"translations":  q.Translations,
 		}
-
 		contents = append(contents, questionPayload)
 	}
 	return next, contents, err
@@ -771,11 +766,13 @@ func (db *DatabaseClient) UpdateClubFromJSON(ctx context.Context, newClubInfo *O
 	update.SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails)
 	update.SetPersonality(newClubInfo.Personality)
 	update.SetActivities(newClubInfo.Activities)
+	update.SetActivitiesDescription(strings.TrimSpace(newClubInfo.ActivitiesDescription))
 	update.SetGenders(newClubInfo.Genders)
 	update.SetEthnicities(newClubInfo.Ethnicities)
 	update.SetReligions(newClubInfo.Religions)
 	update.SetStrictGenders(newClubInfo.StrictGenders)
 	update.SetDedicatedMajors(newClubInfo.DedicatedMajors)
+	update.SetAssociatedMajors(newClubInfo.AssociatedMajors)
 	update.SetOther(newClubInfo.Other)
 	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)
 	if err != nil {
@@ -843,6 +840,10 @@ func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, pat
 		update.SetActivities(*patch.Activities)
 		hasUpdate = true
 	}
+	if patch.ActivitiesDescription != nil {
+		update.SetActivitiesDescription(strings.TrimSpace(*patch.ActivitiesDescription))
+		hasUpdate = true
+	}
 	if patch.Genders != nil {
 		update.SetGenders(*patch.Genders)
 		hasUpdate = true
@@ -861,6 +862,10 @@ func (db *DatabaseClient) PatchClubFromJSON(ctx context.Context, clubID int, pat
 	}
 	if patch.DedicatedMajors != nil {
 		update.SetDedicatedMajors(*patch.DedicatedMajors)
+		hasUpdate = true
+	}
+	if patch.AssociatedMajors != nil {
+		update.SetAssociatedMajors(*patch.AssociatedMajors)
 		hasUpdate = true
 	}
 	if patch.Other != nil {
@@ -933,11 +938,13 @@ func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *O
 		SetIncludeOfficerEmails(newClubInfo.IncludeOfficerEmails).
 		SetPersonality(newClubInfo.Personality).
 		SetActivities(newClubInfo.Activities).
+		SetActivitiesDescription(strings.TrimSpace(newClubInfo.ActivitiesDescription)).
 		SetGenders(newClubInfo.Genders).
 		SetEthnicities(newClubInfo.Ethnicities).
 		SetReligions(newClubInfo.Religions).
 		SetStrictGenders(newClubInfo.StrictGenders).
 		SetDedicatedMajors(newClubInfo.DedicatedMajors).
+		SetAssociatedMajors(newClubInfo.AssociatedMajors).
 		SetOther(newClubInfo.Other)
 
 	leaders, err := next.resolveUsersByEmail(ctx, newClubInfo.Officers)

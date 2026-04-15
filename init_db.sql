@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS clubs (
     include_officer_emails BOOLEAN DEFAULT FALSE,
     personality JSONB NOT NULL DEFAULT '[]'::jsonb,
     activities JSONB NOT NULL DEFAULT '[]'::jsonb,
+    activities_description TEXT DEFAULT '',
     genders JSONB NOT NULL DEFAULT '[]'::jsonb,
     ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb,
     religions JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -51,6 +52,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS other JSONB NOT NULL DEFAULT '[]'::js
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS meeting_time VARCHAR(255);
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS personality JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS activities JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS activities_description TEXT DEFAULT '';
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS genders JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS ethnicities JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS religions JSONB NOT NULL DEFAULT '[]'::jsonb;

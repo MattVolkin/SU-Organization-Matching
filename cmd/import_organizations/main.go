@@ -32,6 +32,7 @@ type clubImportData struct {
 	Religions        []string
 	DedicatedMajors  []string
 	AssociatedMajors []string
+	StrictGenders    bool
 	Other            []string
 }
 
@@ -108,6 +109,7 @@ func main() {
 					SetReligions(row.Religions).
 					SetDedicatedMajors(row.DedicatedMajors).
 					SetAssociatedMajors(row.AssociatedMajors).
+					SetStrictGenders(row.StrictGenders).
 					SetOther(row.Other)
 			}
 
@@ -137,6 +139,7 @@ func main() {
 				SetReligions(row.Religions).
 				SetDedicatedMajors(row.DedicatedMajors).
 				SetAssociatedMajors(row.AssociatedMajors).
+				SetStrictGenders(row.StrictGenders).
 				SetOther(row.Other)
 		}
 
@@ -287,12 +290,11 @@ func parseLegacyMatrix(records [][]string) ([]clubImportData, error) {
 		row := records[rowIdx]
 		header := normalizeHeader(cell(row, 0))
 		if header != "" {
-			if _, ok := knownSections()[header]; ok {
-				currentSection = header
-			}
 			if header == "organizations" {
 				continue
 			}
+
+			currentSection = canonicalSection(header)
 		}
 
 		if currentSection == "" {
@@ -313,16 +315,20 @@ func parseLegacyMatrix(records [][]string) ([]clubImportData, error) {
 				clubs[col-1].Activities = append(clubs[col-1].Activities, value)
 			case "personality":
 				clubs[col-1].Personality = append(clubs[col-1].Personality, value)
-			case "gender":
+			case "genders":
 				clubs[col-1].Genders = append(clubs[col-1].Genders, value)
-			case "raceethnicity":
+			case "ethnicities":
 				clubs[col-1].Ethnicities = append(clubs[col-1].Ethnicities, value)
-			case "religion":
+			case "religions":
 				clubs[col-1].Religions = append(clubs[col-1].Religions, value)
-			case "dedicatedmajor":
+			case "dedicatedmajors":
 				clubs[col-1].DedicatedMajors = append(clubs[col-1].DedicatedMajors, value)
 			case "associatedmajors":
 				clubs[col-1].AssociatedMajors = append(clubs[col-1].AssociatedMajors, value)
+			case "strictgenders":
+				if parseTruthy(value) {
+					clubs[col-1].StrictGenders = true
+				}
 			case "other":
 				clubs[col-1].Other = append(clubs[col-1].Other, value)
 			}
@@ -404,16 +410,38 @@ func combineMeetingTimeAndLocation(meetingTime string, meetingLocation string) s
 	}
 }
 
-func knownSections() map[string]struct{} {
-	return map[string]struct{}{
-		"activities":       {},
-		"personality":      {},
-		"gender":           {},
-		"raceethnicity":    {},
-		"religion":         {},
-		"dedicatedmajor":   {},
-		"associatedmajors": {},
-		"other":            {},
+func canonicalSection(header string) string {
+	switch header {
+	case "activities", "activity":
+		return "activities"
+	case "personality":
+		return "personality"
+	case "gender", "genders":
+		return "genders"
+	case "raceethnicity", "raceethnicities", "ethnicity", "ethnicities":
+		return "ethnicities"
+	case "religion", "religions":
+		return "religions"
+	case "dedicatedmajor", "dedicatedmajors":
+		return "dedicatedmajors"
+	case "associatedmajor", "associatedmajors":
+		return "associatedmajors"
+	case "strictgender", "strictgenders":
+		return "strictgenders"
+	case "other":
+		return "other"
+	default:
+		return ""
+	}
+}
+
+func parseTruthy(raw string) bool {
+	normalized := normalizeHeader(raw)
+	switch normalized {
+	case "1", "true", "yes", "y":
+		return true
+	default:
+		return false
 	}
 }
 

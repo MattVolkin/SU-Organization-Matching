@@ -23,6 +23,7 @@ func (Club) Fields() []ent.Field {
 		field.Bool("include_officer_emails").Default(false),
 		field.JSON("personality", []string{}).Default([]string{}),
 		field.JSON("activities", []string{}).Default([]string{}),
+		field.String("activities_description").Default(""),
 		field.JSON("genders", []string{}).Default([]string{}),
 		field.JSON("ethnicities", []string{}).Default([]string{}),
 		field.JSON("religions", []string{}).Default([]string{}),

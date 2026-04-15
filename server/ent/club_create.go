@@ -123,6 +123,20 @@ func (_c *ClubCreate) SetActivities(v []string) *ClubCreate {
 	return _c
 }
 
+// SetActivitiesDescription sets the "activities_description" field.
+func (_c *ClubCreate) SetActivitiesDescription(v string) *ClubCreate {
+	_c.mutation.SetActivitiesDescription(v)
+	return _c
+}
+
+// SetNillableActivitiesDescription sets the "activities_description" field if the given value is not nil.
+func (_c *ClubCreate) SetNillableActivitiesDescription(v *string) *ClubCreate {
+	if v != nil {
+		_c.SetActivitiesDescription(*v)
+	}
+	return _c
+}
+
 // SetGenders sets the "genders" field.
 func (_c *ClubCreate) SetGenders(v []string) *ClubCreate {
 	_c.mutation.SetGenders(v)
@@ -249,6 +263,10 @@ func (_c *ClubCreate) defaults() {
 		v := club.DefaultActivities
 		_c.mutation.SetActivities(v)
 	}
+	if _, ok := _c.mutation.ActivitiesDescription(); !ok {
+		v := club.DefaultActivitiesDescription
+		_c.mutation.SetActivitiesDescription(v)
+	}
 	if _, ok := _c.mutation.Genders(); !ok {
 		v := club.DefaultGenders
 		_c.mutation.SetGenders(v)
@@ -296,6 +314,9 @@ func (_c *ClubCreate) check() error {
 	}
 	if _, ok := _c.mutation.Activities(); !ok {
 		return &ValidationError{Name: "activities", err: errors.New(`ent: missing required field "Club.activities"`)}
+	}
+	if _, ok := _c.mutation.ActivitiesDescription(); !ok {
+		return &ValidationError{Name: "activities_description", err: errors.New(`ent: missing required field "Club.activities_description"`)}
 	}
 	if _, ok := _c.mutation.Genders(); !ok {
 		return &ValidationError{Name: "genders", err: errors.New(`ent: missing required field "Club.genders"`)}
@@ -382,6 +403,10 @@ func (_c *ClubCreate) createSpec() (*Club, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Activities(); ok {
 		_spec.SetField(club.FieldActivities, field.TypeJSON, value)
 		_node.Activities = value
+	}
+	if value, ok := _c.mutation.ActivitiesDescription(); ok {
+		_spec.SetField(club.FieldActivitiesDescription, field.TypeString, value)
+		_node.ActivitiesDescription = value
 	}
 	if value, ok := _c.mutation.Genders(); ok {
 		_spec.SetField(club.FieldGenders, field.TypeJSON, value)
