@@ -48,6 +48,13 @@ type MatchResult struct {
 	NormalizedScore float32
 }
 
+// Section to define weights for each type of question
+const personalityWeight float32 = 1.5
+const activityWeight float32 = 2.25
+const demographicWeight float32 = 1.25
+const academicWeight float32 = 1.5
+const otherWeight float32 = 2
+
 // UserFromAnswers maps stored survey answers to algorithm input fields.
 func UserFromAnswers(answers []Answer) UserInfo {
 	user := UserInfo{}
@@ -121,6 +128,7 @@ func Sort(user UserInfo, organizations []Organization) []MatchResult {
 	return results
 }
 
+// Calculates the overall matching score for a user and an organization
 func compareUserToOrg(user UserInfo, org Organization) float32 {
 	personalityScore := personalityScoring(user, org)
 	activityScore := activityScoring(user, org)
@@ -135,30 +143,35 @@ func compareUserToOrg(user UserInfo, org Organization) float32 {
 	return finalScore
 }
 
+// Calculates the matching score for personality between a user and an organization
 func personalityScoring(user UserInfo, org Organization) float32 {
-	if len(org.Personality) == 0 {
+	if len(org.Personality) == 0 { // check to avoid division by 0
 		return 0
 	}
 	score := overlapCount(user.Personality, org.Personality)
-	return 1.5 * float32(score) / float32(len(org.Personality))
+	var overfit float32 = 1 - 0.01*(float32(len(user.Personality))-float32(score))
+	return personalityWeight * float32(score) / float32(len(org.Personality)) * overfit
 }
 
+// Calculates the matching score for activity interest between a user and an organization
 func activityScoring(user UserInfo, org Organization) float32 {
-	if len(org.Activities) == 0 {
+	if len(org.Activities) == 0 { // check to avoid division by 0
 		return 0
 	}
 	score := overlapCount(user.Activities, org.Activities)
-	return 2.25 * float32(score) / float32(len(org.Activities))
+	var overfit float32 = 1 - 0.01*(float32(len(user.Activities))-float32(score))
+	return activityWeight * float32(score) / float32(len(org.Activities)) * overfit
 }
 
+// Calculates the matching score for demographics between a user and an organization
 func demographicScoring(user UserInfo, org Organization) float32 {
 	totalDemographics := min(1, len(org.Genders)) + len(org.Ethnicities) + min(1, len(org.Religions))
-	if totalDemographics == 0 {
+	if totalDemographics == 0 { // check to avoid division by 0
 		return 0
 	}
 
 	genderMatches := overlapCount(user.Genders, org.Genders)
-	if genderMatches == 0 && org.StrictGenders {
+	if genderMatches == 0 && org.StrictGenders { // some orgs, such as Greek Life have strict gender requirements
 		return 0
 	}
 
@@ -166,39 +179,42 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 	score += overlapCount(user.Ethnicities, org.Ethnicities)
 	score += overlapCount(user.Religions, org.Religions)
 
-	return 1.25 * float32(score) / float32(totalDemographics)
+	return demographicWeight * float32(score) / float32(totalDemographics)
 }
 
+// Calculates the matching score for academic interests between a user and an organization
 func academicScoring(user UserInfo, org Organization) float32 {
 	for _, major := range user.DedicatedMajors {
 		if containsFold(org.DedicatedMajors, major) {
-			return 1.5
+			return academicWeight
 		}
 	}
 
 	for _, major := range user.DedicatedMajors {
 		if containsFold(org.AssociatedMajors, major) {
-			return 0.75
+			return academicWeight / 2
 		}
 	}
 
-	for _, major := range user.AssociatedMajors {
+	for _, major := range user.AssociatedMajors { // used only when calculating the max score of an organization
 		if containsFold(org.AssociatedMajors, major) {
-			return 0.75
+			return academicWeight / 2
 		}
 	}
 
 	return 0
 }
 
+// Calculates the matching score for miscellaneous questions between a user and an organization
 func otherScoring(user UserInfo, org Organization) float32 {
 	if len(org.Other) == 0 {
 		return 0
 	}
 	score := overlapCount(user.Other, org.Other)
-	return 2 * float32(score) / float32(len(org.Other))
+	return otherWeight * float32(score) / float32(len(org.Other))
 }
 
+// Calculates how many values in two string arrays are equal
 func overlapCount(left []string, right []string) int {
 	count := 0
 	for _, a := range left {
