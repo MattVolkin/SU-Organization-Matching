@@ -204,6 +204,13 @@
 		else if (event.key === 'ArrowRight') {
 			swipeRight();
 		}
+		else if (event.ctrlKey && event.key === 'z') { // TODO add ctrl-z functionality to go back to previous card
+			rewind();
+		}
+		else {
+			console.log(event.key);
+		}
+
 	}
 
 	function moveHandler(event: GestureCustomEvent) { // get the x y value of mouse
@@ -221,11 +228,12 @@
 <!-- For cardObject.getTag?.(), the '?' indicates that the method might not exist on the object, so we can safely call it without throwing an error and move to the false case-->
 	
 	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1> 
-	<h1>Swipe left if you don't like the {(cardObject.getTag?.() === 'personality') ? 'personality trait' : 'activity'}!</h1>
+	<h1>Swipe left if you don't!</h1>
+	<p>(Arrow Keys can also work)</p>
 
 
 
-	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+	<Bar maxLimit = {cardObject.getListLength?.() ?? 0} bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
 
 
 
@@ -237,6 +245,7 @@
 	class="box"
 >
 		<button onclick={() => rewind()}>Undo</button> <!-- Button to go back to the previous card -->
+		<!-- TODO add ctrl-z -->
 
 
 	<div class="content">
@@ -290,6 +299,13 @@
 		font-size: clamp(1.35rem, 2.3vw, 2.5rem);
 		color: var(--text-color);
 		line-height: 1.12;
+	}
+
+	p {
+		font-size: clamp(0.875rem, 1.3vw, 2rem);
+		margin: 0;
+		text-align: center;
+		color: var(--text-color);
 	}
 
 	button {
