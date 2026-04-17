@@ -150,7 +150,7 @@ func personalityScoring(user UserInfo, org Organization) float32 {
 	}
 	score := overlapCount(user.Personality, org.Personality)
 	var overfit float32 = 1 - 0.01*(float32(len(user.Personality))-float32(score))
-	return personalityWeight * float32(score) / float32(len(org.Personality)) * overfit
+	return overfit * personalityWeight * float32(score) / float32(len(org.Personality))
 }
 
 // Calculates the matching score for activity interest between a user and an organization
@@ -160,7 +160,7 @@ func activityScoring(user UserInfo, org Organization) float32 {
 	}
 	score := overlapCount(user.Activities, org.Activities)
 	var overfit float32 = 1 - 0.01*(float32(len(user.Activities))-float32(score))
-	return activityWeight * float32(score) / float32(len(org.Activities)) * overfit
+	return overfit * activityWeight * float32(score) / float32(len(org.Activities))
 }
 
 // Calculates the matching score for demographics between a user and an organization
