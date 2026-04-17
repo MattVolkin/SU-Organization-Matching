@@ -149,7 +149,10 @@ func personalityScoring(user UserInfo, org Organization) float32 {
 		return 0
 	}
 	score := overlapCount(user.Personality, org.Personality)
-	var overfit float32 = 1 - 0.01*(float32(len(user.Personality))-float32(score))
+	var overfit float32 = 1
+	if len(user.Personality) > score {
+		overfit = 1 - 0.01*(float32(len(user.Personality))-float32(score))
+	}
 	return overfit * personalityWeight * float32(score) / float32(len(org.Personality))
 }
 
@@ -159,7 +162,10 @@ func activityScoring(user UserInfo, org Organization) float32 {
 		return 0
 	}
 	score := overlapCount(user.Activities, org.Activities)
-	var overfit float32 = 1 - 0.01*(float32(len(user.Activities))-float32(score))
+	var overfit float32 = 1
+	if len(user.Activities) > score {
+		overfit = 1 - 0.01*(float32(len(user.Activities))-float32(score))
+	}
 	return overfit * activityWeight * float32(score) / float32(len(org.Activities))
 }
 

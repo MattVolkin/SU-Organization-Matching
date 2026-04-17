@@ -35,8 +35,8 @@ func main() {
 
 	userInfo := matching.UserInfo{
 		Name:            "Example User",
-		Personality:     []string{"Welcoming", "Hard Working", "Caring", "Creative", "Nerdy", "Fun"},
-		Activities:      []string{"Board Games", "Video Games", "Giving Presentations"},
+		Personality:     []string{"Welcoming", "Hard Working", "Caring", "Creative", "Nerdy", "Fun", "Enthusiastic", "Curious"},
+		Activities:      []string{"Board Games", "Video Games", "Giving Presentations", "a", "b", "c", "d", "e", "f"},
 		Genders:         []string{"Man"},
 		Ethnicities:     []string{"White"},
 		Religions:       []string{"No Religion"},
