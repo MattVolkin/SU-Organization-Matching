@@ -971,6 +971,58 @@ func (db *DatabaseClient) CreateClubFromJSON(ctx context.Context, newClubInfo *O
 	return next, createdClub, nil
 }
 
+func (db *DatabaseClient) DeleteUserDataByEmail(ctx context.Context, email string) (*DatabaseClient, error) {
+	next := db.clone()
+	if next.lastErr != nil {
+		return next, next.lastErr
+	}
+	if next.client == nil {
+		next.lastErr = fmt.Errorf("database not initialized")
+		return next, next.lastErr
+	}
+
+	lookupEmail := strings.TrimSpace(email)
+	if lookupEmail == "" {
+		next.lastErr = fmt.Errorf("email is required")
+		return next, next.lastErr
+	}
+
+	tx, err := next.client.Tx(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+	defer func() {
+		if next.lastErr != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	userToDelete, err := tx.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if _, err := tx.Answer.Delete().Where(answer.HasUserWith(user.IDEQ(userToDelete.ID))).Exec(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if err := tx.User.DeleteOneID(userToDelete.ID).Exec(ctx); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		next.lastErr = err
+		return next, err
+	}
+
+	next.lastErr = nil
+	return next, nil
+}
+
 func (db *DatabaseClient) DeleteClubByID(ctx context.Context, clubID int) (*DatabaseClient, error) {
 	next := db.clone()
 	if next.lastErr != nil {

@@ -498,6 +498,46 @@ Possible errors:
 }
 ```
 
+### `POST /api/delete`
+
+Deletes the authenticated user's account data.
+
+Authentication:
+
+- Required.
+
+Headers:
+
+- `Content-Type: application/json` (optional; no request body required)
+
+Request body:
+
+- None
+
+Success response:
+
+```json
+{
+  "message": "User data deleted successfully"
+}
+```
+
+Possible errors:
+
+- `401 Unauthorized` JSON: missing/invalid/expired session or missing authenticated user email
+- `500 Internal Server Error` JSON:
+
+```json
+{
+  "error": "<database error message>"
+}
+```
+
+Frontend note:
+
+- This endpoint deletes the authenticated user's stored profile and responses.
+- The endpoint uses session identity (`X-User-Email` is set by auth middleware), so the client should not send a target email in the body.
+
 ### `GET /api/officer/orgs`
 
 Returns the organizations managed by the authenticated officer.
@@ -720,4 +760,5 @@ Possible errors:
   - `PATCH /api/admin/orgs`
 - Use `POST /api/admin/orgs` to create clubs.
 - Use `DELETE /api/admin/orgs` to delete clubs.
+- Use `POST /api/delete` from the delete-account page to delete the authenticated user's data.
 - Expect both JSON and plain-text `401` responses depending on the endpoint.

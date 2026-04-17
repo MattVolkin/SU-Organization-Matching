@@ -260,6 +260,8 @@ func main() {
 
 	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
+	apiRouter.HandleFunc("/delete", handleDeleteUserDataRequest).Methods(http.MethodPost)
+
 	// Officer-only endpoints are nested under /api/officer/ and use additional role-checking middleware.
 	officerRouter := apiRouter.PathPrefix("/officer/").Subrouter()
 
@@ -285,10 +287,36 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, router))
 }
 
+func handleDeleteUserDataRequest(w http.ResponseWriter, r *http.Request) {
+	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if email == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: missing authenticated user email"})
+		return
+	}
+	if _, err := dbClient.Query().DeleteUserDataByEmail(r.Context(), email); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "User data deleted successfully"})
+}
+
 func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
-	email := r.Header.Get("X-User-Email")
+	email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if email == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: missing authenticated user email"})
+		return
+	}
 	_, answers, err := dbClient.Query().FetchUserAnswersByUserEmail(r.Context(), email)
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "No user answers found"})
 		return
@@ -296,6 +324,7 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, userProfile, err := dbClient.Query().FetchUserByEmail(r.Context(), email)
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to fetch user demographics"})
 		return
