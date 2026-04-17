@@ -175,16 +175,24 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 	if totalDemographics == 0 { // check to avoid division by 0
 		return 0
 	}
-
-	genderMatches := overlapCount(user.Genders, org.Genders)
-	if genderMatches == 0 && org.StrictGenders { // some orgs, such as Greek Life have strict gender requirements
-		return 0
+	genderMatches := 0
+	for _, gender := range user.Genders {
+		if containsFold(org.Genders, gender) {
+			genderMatches = 1
+		}
 	}
-
 	score := genderMatches
 	score += overlapCount(user.Ethnicities, org.Ethnicities)
-	score += overlapCount(user.Religions, org.Religions)
-
+	religionMatches := 0
+	for _, religion := range user.Religions {
+		if containsFold(org.Religions, religion) {
+			religionMatches = 1
+		}
+	}
+	score += religionMatches
+	if genderMatches == 0 && org.StrictGenders {
+		score = 0
+	}
 	return demographicWeight * float32(score) / float32(totalDemographics)
 }
 

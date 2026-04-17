@@ -26,22 +26,32 @@ func main() {
 			ID:            3,
 			Name:          "Pirates for Pride",
 			Personality:   []string{"Welcoming", "Caring", "Outgoing", "Open Minded", "Enthusiastic", "Social"},
-			Activities:    []string{"Social Justice", "Arts & Crafts", "Discussion"},
+			Activities:    []string{"Social Justice", "Arts & Crafts", "Discussion", "Giving Presentations"},
 			Genders:       []string{"Non Binary", "Other"},
 			Other:         []string{"LGBTQ"},
 			StrictGenders: false,
+		},
+		{
+			ID:            4,
+			Name:          "Kappa Alpha",
+			Personality:   []string{"Hard Working", "Leader", "Social"},
+			Activities:    []string{"Fundraising", "Retreats", "Professional Development", "Group Meals"},
+			Genders:       []string{"Man"},
+			Religions:     []string{"Protestantism", "Catholocism"},
+			Other:         []string{"Greek Life"},
+			StrictGenders: true,
 		},
 	}
 
 	userInfo := matching.UserInfo{
 		Name:            "Example User",
-		Personality:     []string{"Welcoming", "Hard Working", "Caring", "Creative", "Nerdy", "Fun", "Enthusiastic", "Curious"},
-		Activities:      []string{"Board Games", "Video Games", "Giving Presentations", "a", "b", "c", "d", "e", "f"},
+		Personality:     []string{"Hard Working", "Leader", "Social"},
+		Activities:      []string{"Fundraising", "Retreats", "Professional Development", "Group Meals"},
 		Genders:         []string{"Man"},
 		Ethnicities:     []string{"White"},
-		Religions:       []string{"No Religion"},
+		Religions:       []string{"Catholocism"},
 		DedicatedMajors: []string{"Computer Science"},
-		Other:           []string{"LGBTQ"},
+		Other:           []string{"LGBTQ", "Greek Life"},
 	}
 
 	results := matching.Sort(userInfo, clubs)
