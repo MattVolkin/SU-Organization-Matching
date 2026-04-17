@@ -21,6 +21,10 @@
     officers?: string[];
     personalityTraits?: string[];
     activities?: string[];
+    activitiesDescreption?: string;
+    activitiesDescription?: string;
+    ActivitiesDescreption?: string;
+    ActivitiesDescription?: string;
     genders?: string[];
     ethnicities?: string[];
     religions?: string[];
@@ -168,6 +172,26 @@
       return [];
     }
     return Array.isArray(club.activities) ? club.activities : [];
+  }
+
+  function getClubActivitiesText(club: ClubValue) {
+    if (typeof club === 'string') {
+      return '';
+    }
+
+    const description = String(
+      club.activitiesDescreption ??
+      club.activitiesDescription ??
+      club.ActivitiesDescreption ??
+      club.ActivitiesDescription ??
+      ''
+    ).trim();
+
+    if (description) {
+      return description;
+    }
+
+    return listToCSV(getClubActivities(club));
   }
 
   function getClubPersonalityTraits(club: ClubValue) {
@@ -632,7 +656,8 @@
       resultDescription = requestedClubInfo && typeof requestedClubInfo !== 'string'
         ? String(requestedClubInfo.description ?? requestedClubInfo.Description ?? '').trim()
         : '';
-      resultActivitiesText = listToCSV(getClubActivities(requestedClubInfo || ''));
+        if(APICreater)
+      resultActivitiesText = getClubActivitiesText(requestedClubInfo || '');
 
       if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
         trendsGender = listToCSV(requestedClubInfo.genders);
@@ -671,6 +696,41 @@
     }
     void initializeSettingsPage();
   }
+  async function saveTrends(    genders: string[], ethnicities: string[],    religions: string[],    dedicatedMajors: string[], other: string[],    strictGenders: boolean  ) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === selectedClubFromUrl);
+    const clubID = clubInfo ? getClubID(clubInfo) : 0;
+    if (clubID <= 0) {
+      return Promise.reject(new Error('Missing valid club ID for trends update'));
+    }
+
+    return APICreater('PATCH', getOrgApiPath(), {
+      id: clubID,
+      genders: genders,
+      ethnicities: ethnicities,
+      religions: religions,
+      dedicated_majors: dedicatedMajors,
+      other: other,
+      strict_genders: strictGenders
+    });
+
+  }
+  async function saveResultsPageInfo(description: string, activities: string, meetingTime: string, socialMedia: string, contactInfo: string, includeOfficerEmails: boolean) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === selectedClubFromUrl);
+    const clubID = clubInfo ? getClubID(clubInfo) : 0;
+    if (clubID <= 0) {
+      return Promise.reject(new Error('Missing valid club ID for results page update'));
+    }
+
+    return APICreater('PATCH', getOrgApiPath(), {
+      id: clubID,
+      description: description.trim(),
+      meetingTime: meetingTime.trim(),
+      externalLink: socialMedia.trim(),
+      contactInfo: buildContactInfoForSave(clubInfo || ''),
+      includeOfficerEmails: includeOfficerEmails,
+      activitiesDescription: activities,
+    });
+  }
 
   onMount(() => {
     window.addEventListener('auth-login', handleAuthLogin);
@@ -708,7 +768,7 @@
         </label>
 
         <label>
-          Activities (comma-separated)
+          Activities Description
           <textarea rows="3" bind:value={resultActivitiesText}></textarea>
         </label>
 
@@ -750,6 +810,21 @@
           {/if}
         </div>
       </div>
+
+      <button
+        class="save-button action-button"
+        type="button"
+        onclick={() => saveResultsPageInfo(
+          resultDescription,
+          resultActivitiesText,
+          generalMeetingTime,
+          generalSocialMedia,
+          resultContactInfo,
+          includeOfficerEmailsInResults
+        )}
+      >
+        Save Results Page Content
+      </button>
 
       <h3>Personality + activities trait select</h3>
       <div class="adjective-row">
@@ -797,6 +872,21 @@
           Strict genders matching
         </label>
       </div>
+
+      <button
+        class="save-button action-button"
+        type="button"
+        onclick={() => saveTrends(
+          csvToList(trendsGender),
+          csvToList(trendsEthnicities),
+          csvToList(trendsReligions),
+          csvToList(trendsDedicatedMajors),
+          csvToList(trendsOther),
+          trendsStrictGenders
+        )}
+      >
+        Save Trends
+      </button>
 
       <h3>Add new officer</h3>
       <div class="officer-row">

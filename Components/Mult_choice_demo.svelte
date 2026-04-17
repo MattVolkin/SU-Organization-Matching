@@ -123,7 +123,7 @@ import { APICreater } from './APIHandler.svelte';
 
       <form onsubmit={submit}>
         <fieldset>
-          <legend>Identity</legend>
+          <legend>Gender Identity</legend>
           <div class="option-stack">
             {#each genderOptions as option}
               <label>
@@ -159,7 +159,7 @@ import { APICreater } from './APIHandler.svelte';
           </div>
         </fieldset>
         <fieldset>
-        <legend>LGBTQ+ Identity</legend>
+        <legend> Do you Identify as LGBTQ+?</legend>
         <div class="option-grid compact">
           {#each yes_no_options as option}
             <label>
@@ -171,7 +171,7 @@ import { APICreater } from './APIHandler.svelte';
         </fieldset>
     
         <fieldset>
-        <legend>Disability Status</legend>
+        <legend>Do you have any Disabilities?</legend>
         <div class="option-grid compact">
           {#each yes_no_options as option}
             <label>
