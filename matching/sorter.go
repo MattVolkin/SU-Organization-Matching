@@ -182,15 +182,7 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 		}
 	}
 	score := genderMatches
-
-	ethnicityMatches := 0
-	for _, ethnicity := range user.Ethnicities {
-		if containsFold(org.Ethnicities, ethnicity) {
-			ethnicityMatches = 1
-		}
-	}
-	score += ethnicityMatches
-
+	score += overlapCount(user.Ethnicities, org.Ethnicities)
 	religionMatches := 0
 	for _, religion := range user.Religions {
 		if containsFold(org.Religions, religion) {
@@ -198,7 +190,6 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 		}
 	}
 	score += religionMatches
-
 	if genderMatches == 0 && org.StrictGenders {
 		score = 0
 	}

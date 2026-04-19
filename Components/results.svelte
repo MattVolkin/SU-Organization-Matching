@@ -39,7 +39,7 @@
   let isAuthenticated = $state(false)
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
-  let threshold = 50
+  let threshold =0
 
   function scrollToResultsTop() {
     if (resultsPageElement) {

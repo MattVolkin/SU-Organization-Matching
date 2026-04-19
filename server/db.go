@@ -542,31 +542,14 @@ func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, a
 		}
 	}()
 
-	if _, err := tx.Question.Delete().Where(question.QuestionTypeIn("activities", "personality_traits")).Exec(ctx); err != nil {
+	if err := upsertSwipeQuestionsByType(ctx, tx, "activities", normalizedActivities); err != nil {
 		next.lastErr = err
 		return next, err
 	}
 
-	for _, item := range normalizedActivities {
-		if _, err := tx.Question.Create().
-			SetQuestionType("activities").
-			SetTranslations(item.Translations).
-			SetIsActive(true).
-			Save(ctx); err != nil {
-			next.lastErr = err
-			return next, err
-		}
-	}
-
-	for _, item := range normalizedPersonalityTraits {
-		if _, err := tx.Question.Create().
-			SetQuestionType("personality_traits").
-			SetTranslations(item.Translations).
-			SetIsActive(true).
-			Save(ctx); err != nil {
-			next.lastErr = err
-			return next, err
-		}
+	if err := upsertSwipeQuestionsByType(ctx, tx, "personality_traits", normalizedPersonalityTraits); err != nil {
+		next.lastErr = err
+		return next, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -576,6 +559,60 @@ func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, a
 
 	next.lastErr = nil
 	return next, nil
+}
+
+func upsertSwipeQuestionsByType(ctx context.Context, tx *ent.Tx, questionType string, items []SwipeQuestionInput) error {
+	existingQuestions, err := tx.Question.Query().Where(question.QuestionTypeEQ(questionType)).All(ctx)
+	if err != nil {
+		return err
+	}
+
+	existingByTerm := make(map[string]*ent.Question, len(existingQuestions))
+	for _, q := range existingQuestions {
+		if q == nil {
+			continue
+		}
+
+		term := pickEnglishTermFromTranslations(q.Translations)
+		if term == "" {
+			return fmt.Errorf("%s includes existing question id %d without english term", questionType, q.ID)
+		}
+
+		termKey := strings.ToLower(strings.TrimSpace(term))
+		if _, exists := existingByTerm[termKey]; exists {
+			return fmt.Errorf("%s includes duplicate existing term %q", questionType, term)
+		}
+		existingByTerm[termKey] = q
+	}
+
+	for _, item := range items {
+		termKey := strings.ToLower(strings.TrimSpace(pickEnglishTermFromTranslations(item.Translations)))
+		if termKey == "" {
+			return fmt.Errorf("%s question is missing english term", questionType)
+		}
+
+		if existingQuestion, ok := existingByTerm[termKey]; ok {
+			if err := tx.Question.UpdateOneID(existingQuestion.ID).
+				SetTranslations(item.Translations).
+				SetIsActive(true).
+				Exec(ctx); err != nil {
+				return err
+			}
+			delete(existingByTerm, termKey)
+			continue
+		}
+
+		return fmt.Errorf("%s question with english term %q was not found; patch only supports updating existing questions", questionType, pickEnglishTermFromTranslations(item.Translations))
+	}
+
+	return nil
+}
+
+func pickEnglishTermFromTranslations(translations map[string][]string) string {
+	if en, ok := translations["en"]; ok && len(en) > 0 {
+		return strings.TrimSpace(en[0])
+	}
+	return ""
 }
 
 func normalizeSwipeQuestionInputs(items []SwipeQuestionInput, fieldName string) ([]SwipeQuestionInput, error) {

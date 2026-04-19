@@ -60,6 +60,7 @@
   let clubImageLibrary = $state<Record<string, string[]>>({});
   let selectedImageByClub = $state<Record<string, string>>({});
   let pendingOfficerEmailByClub = $state<Record<string, string>>({});
+  let selectedOfficerEmailsByClub = $state<Record<string, string[]>>({});
   let officerStatusByClub = $state<Record<string, string>>({});
   let loading = $state(true);
   let isTestMode = $state(false);
@@ -165,6 +166,22 @@
       return [];
     }
     return Array.isArray(club.officers) ? club.officers : [];
+  }
+
+  function getOfficersForClub(clubName: string) {
+    const club = officerClubs.find((entry) => getClubName(entry) === clubName);
+    return getExistingClubOfficers(club || '');
+  }
+
+  function getSelectedOfficerEmails(clubName: string) {
+    return selectedOfficerEmailsByClub[clubName] || [];
+  }
+
+  function setSelectedOfficerEmails(clubName: string, emails: string[]) {
+    selectedOfficerEmailsByClub = {
+      ...selectedOfficerEmailsByClub,
+      [clubName]: emails,
+    };
   }
 
   function getClubActivities(club: ClubValue) {
@@ -489,6 +506,66 @@
     }
   }
 
+  async function deleteSelectedOfficers(club: string) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
+    const clubID = clubInfo ? getClubID(clubInfo) : 0;
+    if (clubID <= 0) {
+      setOfficerStatus(club, 'Missing valid club ID for officer deletion.');
+      return;
+    }
+
+    const selectedEmails = getSelectedOfficerEmails(club)
+      .map((email) => String(email || '').trim())
+      .filter((email) => email.length > 0);
+
+    if (selectedEmails.length === 0) {
+      setOfficerStatus(club, 'Select at least one officer to delete.');
+      return;
+    }
+
+    const selectedLookup = new Set(selectedEmails.map((email) => email.toLowerCase()));
+    const remainingOfficers = getExistingClubOfficers(clubInfo || '')
+      .map((email) => String(email || '').trim())
+      .filter((email) => email.length > 0)
+      .filter((email) => !selectedLookup.has(email.toLowerCase()));
+
+    const confirmation = confirm(
+      selectedEmails.length === 1
+        ? ' Do you really want to delete this officer? This action cannot be undone.'
+        : ' Do you really want to delete these officers? This action cannot be undone.'
+    );
+
+    if (!confirmation) {
+      return;
+    }
+
+    try {
+      if (!isTestMode) {
+        await APICreater('PATCH', getOrgApiPath(), {
+          id: clubID,
+          officers: remainingOfficers,
+        });
+      }
+
+      officerClubs = officerClubs.map((entry) => {
+        if (getClubName(entry) !== club || typeof entry === 'string') {
+          return entry;
+        }
+
+        return {
+          ...entry,
+          officers: remainingOfficers,
+        };
+      });
+
+      setSelectedOfficerEmails(club, []);
+      setOfficerStatus(club, selectedEmails.length === 1 ? 'Deleted 1 officer.' : `Deleted ${selectedEmails.length} officers.`);
+    } catch (error) {
+      console.error('Unable to delete officers', error);
+      setOfficerStatus(club, 'Unable to delete officers right now.');
+    }
+  }
+
 
   function loadSavedClubMedia() {
     try {
@@ -658,6 +735,7 @@
         : '';
         if(APICreater)
       resultActivitiesText = getClubActivitiesText(requestedClubInfo || '');
+      setSelectedOfficerEmails(requestedClub, []);
 
       if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
         trendsGender = listToCSV(requestedClubInfo.genders);
@@ -888,6 +966,46 @@
         Save Trends
       </button>
 
+      <h3>Current officers</h3>
+      <div class="officers-box">
+        {#if getOfficersForClub(selectedClubFromUrl).length > 0}
+          <div class="officer-list">
+            {#each getOfficersForClub(selectedClubFromUrl) as officerEmail}
+              <label class="officer-item">
+                <input
+                  type="checkbox"
+                  checked={getSelectedOfficerEmails(selectedClubFromUrl).some((selectedEmail) => selectedEmail.toLowerCase() === String(officerEmail).trim().toLowerCase())}
+                  onchange={(event) => {
+                    const currentEmail = String(officerEmail).trim();
+                    const isChecked = (event.currentTarget as HTMLInputElement).checked;
+                    const currentSelection = getSelectedOfficerEmails(selectedClubFromUrl);
+
+                    if (isChecked) {
+                      if (!currentSelection.some((selectedEmail) => selectedEmail.toLowerCase() === currentEmail.toLowerCase())) {
+                        setSelectedOfficerEmails(selectedClubFromUrl, [...currentSelection, currentEmail]);
+                      }
+                      return;
+                    }
+
+                    setSelectedOfficerEmails(
+                      selectedClubFromUrl,
+                      currentSelection.filter((selectedEmail) => selectedEmail.toLowerCase() !== currentEmail.toLowerCase())
+                    );
+                  }}
+                />
+                <span>{officerEmail}</span>
+              </label>
+            {/each}
+          </div>
+
+          <button type="button" class="delete-button action-button" onclick={() => deleteSelectedOfficers(selectedClubFromUrl)}>
+            Delete selected officers
+          </button>
+        {:else}
+          <p class="officer-empty">No officers have been added yet.</p>
+        {/if}
+      </div>
+
       <h3>Add new officer</h3>
       <div class="officer-row">
         <input
@@ -1092,6 +1210,48 @@
     flex-wrap: wrap;
     gap: 0.6rem;
     align-items: center;
+  }
+
+  .officers-box {
+    margin: 0.75rem 0 0.5rem 0;
+    padding: 0.9rem;
+    border: 1px solid #c9d6e5;
+    border-radius: 0.75rem;
+    background: #f7fbff;
+  }
+
+  .officer-list {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .officer-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #132c45;
+    font-weight: 600;
+  }
+
+  .officer-item input[type='checkbox'] {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    accent-color: #0f6d8c;
+    flex: 0 0 auto;
+  }
+
+  .officer-empty {
+    margin: 0;
+    color: #4d6276;
+  }
+
+  .delete-button {
+    background: #b42318;
+  }
+
+  .delete-button:hover {
+    background: #922018;
   }
 
   .officer-row button {

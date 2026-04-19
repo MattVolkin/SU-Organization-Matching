@@ -54,7 +54,7 @@
 
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
 			
-		if (cardObject.getTag !== "Other") {
+		if (cardObject.getID() !== -1) { // if the card is not the halfway point card, record the user's response to the card, otherwise don't record a response because it is not a real question and we don't want to send that information to the backend
 		recordCurrentCardResponse(true);
 		}
 		

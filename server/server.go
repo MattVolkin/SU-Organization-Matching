@@ -353,6 +353,7 @@ func getClubsFromAnswers(answers []DBAnswer, userProfile *ent.User, clubs []*ent
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionID:   a.QuestionID,
 			QuestionType: a.QuestionType,
 			AnswerText:   a.AnswerText,
 			Translations: a.Translations,
@@ -399,6 +400,7 @@ func getScoredClubsFromAnswers(answers []DBAnswer, userProfile *ent.User, clubs 
 	matchAnswers := make([]matching.Answer, 0, len(answers))
 	for _, a := range answers {
 		matchAnswers = append(matchAnswers, matching.Answer{
+			QuestionID:   a.QuestionID,
 			QuestionType: a.QuestionType,
 			AnswerText:   a.AnswerText,
 			Translations: a.Translations,
@@ -768,6 +770,13 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("question at index %d has unsupported question_type", i)})
+			return
+		}
+
+		if term := pickEnglishTermFromTranslations(item.Translations); term == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("question at index %d must include translations.en[0] for matching", i)})
 			return
 		}
 

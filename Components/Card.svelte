@@ -106,7 +106,7 @@
 		console.log("inserting card items into the list of items used by the swiping app, current items: ")
 		console.table(items);
 
-		const NewItem = {id: 250, question_type: "Other", en: {term: "Halfway there!!!", def: "The next couple of questions will be about personality traits that apply to you", type: "Other"}}; // insert card (into the array to work with the current code structure)
+		const NewItem = {id: -1, question_type: "Other", en: {term: "Halfway there!!!", def: "The next couple of questions will be about personality traits that apply to you", type: "Other"}}; // insert card (into the array to work with the current code structure)
 		
 		
 		items.splice(findSeperationIndex(), 0, NewItem); // insert the new items into the current list of items at the separation point between personality and activity questions
