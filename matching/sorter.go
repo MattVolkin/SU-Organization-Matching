@@ -171,7 +171,7 @@ func activityScoring(user UserInfo, org Organization) float32 {
 
 // Calculates the matching score for demographics between a user and an organization
 func demographicScoring(user UserInfo, org Organization) float32 {
-	totalDemographics := min(1, len(org.Genders)) + len(org.Ethnicities) + min(1, len(org.Religions))
+	totalDemographics := min(1, len(org.Genders)) + min(1, len(org.Ethnicities)) + min(1, len(org.Religions))
 	if totalDemographics == 0 { // check to avoid division by 0
 		return 0
 	}
@@ -182,7 +182,15 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 		}
 	}
 	score := genderMatches
-	score += overlapCount(user.Ethnicities, org.Ethnicities)
+
+	ethnicityMatches := 0
+	for _, ethnicity := range user.Ethnicities {
+		if containsFold(org.Ethnicities, ethnicity) {
+			ethnicityMatches = 1
+		}
+	}
+	score += ethnicityMatches
+
 	religionMatches := 0
 	for _, religion := range user.Religions {
 		if containsFold(org.Religions, religion) {
@@ -190,6 +198,7 @@ func demographicScoring(user UserInfo, org Organization) float32 {
 		}
 	}
 	score += religionMatches
+
 	if genderMatches == 0 && org.StrictGenders {
 		score = 0
 	}
