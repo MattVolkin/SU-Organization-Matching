@@ -53,7 +53,10 @@
 	}
 
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
-			recordCurrentCardResponse(true);
+			
+		if (cardObject.getTag !== "Other") {
+		recordCurrentCardResponse(true);
+		}
 		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
@@ -114,6 +117,8 @@
 
 		surveyResponses = [...surveyResponses, { questionId: currentId, answer: answerValue }];
 	}
+
+
 
 	function deleteGivenCardFromUserArray(string: GivenItem) { // remove last term in array if it is the card we rewinded to
 	let GivenItem = cardObject.getTerm();
