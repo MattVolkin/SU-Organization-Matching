@@ -591,6 +591,7 @@ func upsertSwipeQuestionsByType(ctx context.Context, tx *ent.Tx, questionType st
 			return fmt.Errorf("%s question is missing english term", questionType)
 		}
 
+		// If a question with the same english term already exists, update its translations and reactivate it if needed.
 		if existingQuestion, ok := existingByTerm[termKey]; ok {
 			if err := tx.Question.UpdateOneID(existingQuestion.ID).
 				SetTranslations(item.Translations).
@@ -602,7 +603,14 @@ func upsertSwipeQuestionsByType(ctx context.Context, tx *ent.Tx, questionType st
 			continue
 		}
 
-		return fmt.Errorf("%s question with english term %q was not found; patch only supports updating existing questions", questionType, pickEnglishTermFromTranslations(item.Translations))
+		// No existing question with this term, create a new one.
+		if _, err := tx.Question.Create().
+			SetTranslations(item.Translations).
+			SetIsActive(true).
+			Exec(ctx); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
