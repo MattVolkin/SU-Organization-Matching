@@ -31,7 +31,7 @@ onMount(() => {
 	loadUserType();
 });
 </script>
-<Header userType={userType} />
-<LoginPopup/>
+<!-- <Header userType={userType} /> -->
+<!-- <LoginPopup/> -->
 <AdminHome />
-<Footer/>
+<!-- <Footer/> -->
