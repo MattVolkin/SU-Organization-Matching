@@ -67,6 +67,14 @@
   let loading = $state(true);
   let isTestMode = $state(false);
   let previewUrl = $state('');
+  let saveStateResults = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  let saveStateAdjectives = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  let saveStateTrends = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  let saveStateResetTimers = {
+    results: 0,
+    adjectives: 0,
+    trends: 0,
+  };
 
   function getOrgApiPath() {
     return userType === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs';
@@ -205,18 +213,27 @@
     return parseClubImageApiResponse(response);
   }
 
-  async function removeClubImageFile(club: ClubValue) {
-    const response = await fetch(buildClubImageApiPath(club), {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: getAuthHeaders(),
-    });
+  function extractUploadedImagePath(payload: unknown) {
+    if (!payload || typeof payload !== 'object') {
+      return '';
+    }
 
-    return parseClubImageApiResponse(response);
-  }
+    const record = payload as Record<string, unknown>;
+    const topLevelPath = typeof record.imagePath === 'string' ? record.imagePath.trim() : '';
+    if (topLevelPath) {
+      return topLevelPath;
+    }
 
-  async function replaceClubImageFile(club: ClubValue, imageFile: File) {
-    return uploadClubImageFile(club, imageFile);
+    const club = record.club;
+    if (club && typeof club === 'object') {
+      const clubRecord = club as Record<string, unknown>;
+      const nestedPath = typeof clubRecord.imagePath === 'string' ? clubRecord.imagePath.trim() : '';
+      if (nestedPath) {
+        return nestedPath;
+      }
+    }
+
+    return '';
   }
 
   function getExistingClubOfficers(club: ClubValue) {
@@ -660,20 +677,78 @@
       return;
     }
 
+    if (!isTestMode) {
+      const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
+      if (!clubInfo) {
+        input.value = '';
+        return;
+      }
+
+      try {
+        const uploadedPaths: string[] = [];
+        for (const file of Array.from(input.files)) {
+          const responsePayload = await uploadClubImageFile(clubInfo, file);
+          const uploadedPath = extractUploadedImagePath(responsePayload);
+          if (uploadedPath) {
+            uploadedPaths.push(uploadedPath);
+          }
+        }
+
+        if (uploadedPaths.length === 0) {
+          throw new Error('Upload completed without a returned image path.');
+        }
+
+        const latestImage = uploadedPaths[uploadedPaths.length - 1];
+
+        clubImageLibrary = {
+          ...clubImageLibrary,
+          [club]: [latestImage],
+        };
+
+        selectedImageByClub = {
+          ...selectedImageByClub,
+          [club]: latestImage,
+        };
+
+        officerClubs = officerClubs.map((entry) => {
+          if (typeof entry === 'string' || getClubName(entry) !== club) {
+            return entry;
+          }
+
+          return {
+            ...entry,
+            imagePath: latestImage,
+            ImagePath: latestImage,
+          };
+        });
+
+        saveClubMedia();
+        input.value = '';
+        return;
+      } catch (error) {
+        console.error('Unable to upload club image', error);
+        input.value = '';
+        return;
+      }
+    }
+
     const encodedImages = await Promise.all(Array.from(input.files).map(toDataUrl));
-    const existingImages = clubImageLibrary[club] || [];
+    const latestImage = encodedImages[encodedImages.length - 1];
+
+    if (!latestImage) {
+      input.value = '';
+      return;
+    }
 
     clubImageLibrary = {
       ...clubImageLibrary,
-      [club]: [...existingImages, ...encodedImages],
+      [club]: [latestImage],
     };
 
-    if (!selectedImageByClub[club] && encodedImages.length > 0) {
-      selectedImageByClub = {
-        ...selectedImageByClub,
-        [club]: encodedImages[0],
-      };
-    }
+    selectedImageByClub = {
+      ...selectedImageByClub,
+      [club]: latestImage,
+    };
 
     saveClubMedia();
     input.value = '';
@@ -685,6 +760,99 @@
       [club]: imageUrl,
     };
     saveClubMedia();
+  }
+
+  function clearSaveStateResetTimer(section: 'results' | 'adjectives' | 'trends') {
+    const activeTimer = saveStateResetTimers[section];
+    if (activeTimer) {
+      window.clearTimeout(activeTimer);
+      saveStateResetTimers[section] = 0;
+    }
+  }
+
+  function scheduleSaveStateReset(section: 'results' | 'adjectives' | 'trends') {
+    clearSaveStateResetTimer(section);
+    saveStateResetTimers[section] = window.setTimeout(() => {
+      if (section === 'results') {
+        saveStateResults = 'idle';
+      }
+      if (section === 'adjectives') {
+        saveStateAdjectives = 'idle';
+      }
+      if (section === 'trends') {
+        saveStateTrends = 'idle';
+      }
+      saveStateResetTimers[section] = 0;
+    }, 2200);
+  }
+
+  function getSaveIndicatorLabel(state: 'idle' | 'saving' | 'saved' | 'error') {
+    if (state === 'saving') {
+      return 'Saving...';
+    }
+    if (state === 'saved') {
+      return 'Saved';
+    }
+    if (state === 'error') {
+      return 'Unable to save. Try again.';
+    }
+    return '';
+  }
+
+  async function handleSaveResultsPageContent() {
+    saveStateResults = 'saving';
+    clearSaveStateResetTimer('results');
+
+    try {
+      await saveResultsPageInfo(
+        resultDescription,
+        resultActivitiesText,
+        generalMeetingTime,
+        generalSocialMedia,
+        resultContactInfo,
+        includeOfficerEmailsInResults
+      );
+      saveStateResults = 'saved';
+      scheduleSaveStateReset('results');
+    } catch (error) {
+      console.error('Unable to save results page content', error);
+      saveStateResults = 'error';
+    }
+  }
+
+  async function handleSaveAdjectives() {
+    saveStateAdjectives = 'saving';
+    clearSaveStateResetTimer('adjectives');
+
+    try {
+      await saveClubAdjectives(selectedClubFromUrl, selectedAdjectives);
+      saveStateAdjectives = 'saved';
+      scheduleSaveStateReset('adjectives');
+    } catch (error) {
+      console.error('Unable to save traits', error);
+      saveStateAdjectives = 'error';
+    }
+  }
+
+  async function handleSaveTrends() {
+    saveStateTrends = 'saving';
+    clearSaveStateResetTimer('trends');
+
+    try {
+      await saveTrends(
+        csvToList(trendsGender),
+        csvToList(trendsEthnicities),
+        csvToList(trendsReligions),
+        csvToList(trendsDedicatedMajors),
+        csvToList(trendsOther),
+        trendsStrictGenders
+      );
+      saveStateTrends = 'saved';
+      scheduleSaveStateReset('trends');
+    } catch (error) {
+      console.error('Unable to save trends', error);
+      saveStateTrends = 'error';
+    }
   }
 
   function saveClubAdjectives(club: string, adjectives: string[]) {
@@ -802,6 +970,21 @@
         trendsDedicatedMajors = listToCSV(requestedClubInfo.dedicated_majors);
         trendsOther = listToCSV(requestedClubInfo.other);
         trendsStrictGenders = Boolean(requestedClubInfo.strict_genders);
+
+        const existingImagePath = String(requestedClubInfo.imagePath ?? requestedClubInfo.ImagePath ?? '').trim();
+        if (existingImagePath) {
+          clubImageLibrary = {
+            ...clubImageLibrary,
+            [requestedClub]: [existingImagePath],
+          };
+
+          selectedImageByClub = {
+            ...selectedImageByClub,
+            [requestedClub]: existingImagePath,
+          };
+
+          saveClubMedia();
+        }
       }
 
       pageNotice = '';
@@ -877,6 +1060,9 @@
   onDestroy(() => {
     window.removeEventListener('auth-login', handleAuthLogin);
     window.removeEventListener('auth-logout', handleAuthLogout);
+    clearSaveStateResetTimer('results');
+    clearSaveStateResetTimer('adjectives');
+    clearSaveStateResetTimer('trends');
   });
 </script>
 
@@ -927,7 +1113,7 @@
 
         <div>
           <h3>Upload club images for results page</h3>
-          <input type="file" accept="image/*" multiple onchange={(event) => handleImageUpload(selectedClubFromUrl, event)} />
+          <input type="file" accept="image/*" onchange={(event) => handleImageUpload(selectedClubFromUrl, event)} />
 
           {#if (clubImageLibrary[selectedClubFromUrl] || []).length > 0}
             <p>Select one image to use on the results page:</p>
@@ -950,17 +1136,14 @@
       <button
         class="save-button action-button"
         type="button"
-        onclick={() => saveResultsPageInfo(
-          resultDescription,
-          resultActivitiesText,
-          generalMeetingTime,
-          generalSocialMedia,
-          resultContactInfo,
-          includeOfficerEmailsInResults
-        )}
+        onclick={() => handleSaveResultsPageContent()}
+        disabled={saveStateResults === 'saving'}
       >
         Save Results Page Content
       </button>
+      {#if saveStateResults !== 'idle'}
+        <p class={`save-status ${saveStateResults}`} aria-live="polite">{getSaveIndicatorLabel(saveStateResults)}</p>
+      {/if}
 
       <h3>Personality + activities trait select</h3>
       <div class="adjective-row">
@@ -974,7 +1157,10 @@
         </div>
       </div>
 
-      <button class="save-button action-button" type="button" onclick={() => saveClubAdjectives(selectedClubFromUrl, selectedAdjectives)}>Save Adjectives</button>
+      <button class="save-button action-button" type="button" onclick={() => handleSaveAdjectives()} disabled={saveStateAdjectives === 'saving'}>Save Traits</button>
+      {#if saveStateAdjectives !== 'idle'}
+        <p class={`save-status ${saveStateAdjectives}`} aria-live="polite">{getSaveIndicatorLabel(saveStateAdjectives)}</p>
+      {/if}
 
       <h3>Trends</h3>
       <div class="trends-grid">
@@ -1012,17 +1198,14 @@
       <button
         class="save-button action-button"
         type="button"
-        onclick={() => saveTrends(
-          csvToList(trendsGender),
-          csvToList(trendsEthnicities),
-          csvToList(trendsReligions),
-          csvToList(trendsDedicatedMajors),
-          csvToList(trendsOther),
-          trendsStrictGenders
-        )}
+        onclick={() => handleSaveTrends()}
+        disabled={saveStateTrends === 'saving'}
       >
         Save Trends
       </button>
+      {#if saveStateTrends !== 'idle'}
+        <p class={`save-status ${saveStateTrends}`} aria-live="polite">{getSaveIndicatorLabel(saveStateTrends)}</p>
+      {/if}
 
       <h3>Current officers</h3>
       <div class="officers-box">
@@ -1332,6 +1515,29 @@
 
   .save-button:hover {
     background: #0b5a74;
+  }
+
+  .save-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .save-status {
+    margin: 0.25rem 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .save-status.saving {
+    color: #1f4c66;
+  }
+
+  .save-status.saved {
+    color: #0f5132;
+  }
+
+  .save-status.error {
+    color: #922018;
   }
 
   @media (max-width: 860px) {

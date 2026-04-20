@@ -20,8 +20,11 @@
  * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
  * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
  */
-  let { userType = "user", previewAs = '' } = $props();
-  const getNavUserType = () => (previewAs || resolvedUserType || userType);
+  let { userType = "user", previewAs = '', onPreviewChange = undefined } = $props();
+  let internalPreviewAs = $state('');
+  const hasControlledPreview = () => typeof onPreviewChange === 'function';
+  const getPreviewAs = () => (hasControlledPreview() ? previewAs : internalPreviewAs);
+  const getNavUserType = () => (getPreviewAs() || resolvedUserType || userType);
   let isMenuOpen = $state(false);
   let isManageClubOpen = $state(false);
   let userEmail = $state('');
@@ -35,6 +38,10 @@
     return resolvedUserType === 'admin' || resolvedUserType === 'officer'
       ? resolvedUserType
       : userType;
+  }
+
+  function canShowAdminPreviewBar() {
+    return resolvedUserType === 'admin' || userType === 'admin';
   }
 
   function getOrgApiPath() {
@@ -237,10 +244,19 @@
     return getNavUserType() === 'admin' ? '/admin-home.html' : '/index.html';
   }
 
+  function setPreviewAs(nextView) {
+    if (hasControlledPreview()) {
+      onPreviewChange(nextView);
+      return;
+    }
+
+    internalPreviewAs = nextView;
+  }
+
 </script>
 <LoginPopup autoOpen={!isAuthChecking && !userEmail}/>
-{#if getNavUserType() === 'admin'} 
-  <AdminSwitch enabled={true} value={previewAs} onChange={(nextView) => previewAs = nextView} />
+{#if canShowAdminPreviewBar()} 
+  <AdminSwitch enabled={canShowAdminPreviewBar()} value={getPreviewAs()} onChange={setPreviewAs} />
 {/if}
 <header class="header">
   <div class="header-content">
@@ -281,6 +297,7 @@
       {@const managedClubs = getManageClubs()}
       <div class={`nav-item manage-club-menu ${isManageClubOpen ? 'open' : ''}`}>
         <a
+          class="manage-club-trigger"
           href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/settings.html'}
           onclick={handleManageClubClick}
           aria-expanded={isManageClubOpen}
@@ -446,27 +463,53 @@
     display: block;
   }
 
+  .manage-club-menu {
+    display: block;
+  }
+
+  .manage-club-trigger {
+    width: 100%;
+    display: block;
+    padding: 0.5rem;
+    line-height: normal;
+  }
+
+  .manage-club-menu::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 0.35rem;
+  }
+
   .club-dropdown {
     display: none;
     position: absolute;
-    left: 50%;
-    top: calc(100% + 0.3rem);
-    transform: translateX(-50%);
-    min-width: 13rem;
-    max-width: 18rem;
+    right: 0;
+    top: calc(100% + 0.30rem);
+    left: auto;
+    transform: none;
+    width: min(52rem, calc(100vw - 1rem));
+    max-width: calc(100vw - 1rem);
+    max-height: min(70vh, 30rem);
     background-color: #1f2f3d;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     z-index: 10;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    gap: 0;
   }
 
   .manage-club-menu:hover .club-dropdown,
   .manage-club-menu.open .club-dropdown,
   .manage-club-menu:focus-within .club-dropdown {
-    display: flex;
+    display: grid;
   }
 
   .club-dropdown a,
@@ -592,17 +635,20 @@
       display: none;
       position: static;
       transform: none;
-      min-width: 0;
+      width: 100%;
       max-width: none;
       border: none;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 0;
       box-shadow: none;
       background-color: rgba(255, 255, 255, 0.04);
+      grid-template-columns: 1fr;
+      grid-auto-flow: row;
+      grid-template-rows: auto;
     }
 
     .manage-club-menu.open .club-dropdown {
-      display: flex;
+      display: grid;
     }
 
     .club-dropdown a,

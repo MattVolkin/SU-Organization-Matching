@@ -16,11 +16,11 @@
  * @function editClub - Placeholder function to handle editing a club, should be replaced with actual implementation to edit club details
  * @function deleteClub - Placeholder function to handle deleting a club, should be replaced with actual implementation to delete the club from the database and update the UI
  */
-    import { onMount } from 'svelte'
-    import AdminSwitch from './AdminSwitch.svelte'
+    import { onMount, onDestroy } from 'svelte'
     import Header from './header.svelte'
     import Footer from './footer.svelte'
     import { APICreater } from './APIHandler.svelte'
+    import HomePage from './pages/HomePage.svelte'
 
     let adminPreviewType = $state('admin')
     let maxClubsPerPage = $state(8)
@@ -32,8 +32,26 @@
     const startIndex = $derived((pageNum - 1) * maxClubsPerPage)
     const paginatedClubs = $derived(clubs.slice(startIndex, startIndex + maxClubsPerPage))
 
+    function handleAuthLogin() {
+        if (adminPreviewType === 'admin') {
+            void loadClubs()
+        }
+    }
+
+    function handleAuthLogout() {
+        clubs = []
+        loadError = ''
+    }
+
     onMount(() => {
+        window.addEventListener('auth-login', handleAuthLogin)
+        window.addEventListener('auth-logout', handleAuthLogout)
         void loadClubs()
+    })
+
+    onDestroy(() => {
+        window.removeEventListener('auth-login', handleAuthLogin)
+        window.removeEventListener('auth-logout', handleAuthLogout)
     })
 
     //Todo: add API to fetch all clubs and store in state
@@ -72,6 +90,10 @@
         window.location.href = `/settings.html?club=${encodeURIComponent(getClubName(club))}`
     }
 
+    function goToQuiz() {
+        window.location.href = '/demographic-quiz.html'
+    }
+
     async function deleteClub(club) {
        if (!club?.id) {
             return
@@ -85,55 +107,64 @@
 
 </script>
 <div class="admin-home">
-    <AdminSwitch enabled={true} value={adminPreviewType} onChange={(nextView) => adminPreviewType = nextView} />
-    <Header userType="admin" previewAs={adminPreviewType} />    
-    <h1>Admin Home</h1>
-    <div class="club-management">
-        <p>Welcome to the Admin Home! Here you can manage clubs and what they post on the website.</p>
-        <!-- Create the club management table  EX CS Club        Edit    Delete-->
-        <table>
-            <colgroup>
-                <col class="col-name" />
-                <col class="col-actions" />
-            </colgroup>
-            <thead>
-                <tr>
-                    <th>Club Name</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#if isLoading}
+    <Header userType="admin" previewAs={adminPreviewType} onPreviewChange={(nextView) => adminPreviewType = nextView} />    
+    {#if adminPreviewType === 'admin'}
+        <h1>Admin Home</h1>
+        <div class="club-management">
+            <p>Welcome to the Admin Home! Here you can manage clubs and what they post on the website.</p>
+            <!-- Create the club management table  EX CS Club        Edit    Delete-->
+            <table>
+                <colgroup>
+                    <col class="col-name" />
+                    <col class="col-actions" />
+                </colgroup>
+                <thead>
                     <tr>
-                        <td colspan="2">Loading clubs...</td>
+                        <th>Club Name</th>
+                        <th>Actions</th>
                     </tr>
-                {:else if loadError}
-                    <tr>
-                        <td colspan="2">{loadError}</td>
-                    </tr>
-                {:else if paginatedClubs.length === 0}
-                    <tr>
-                        <td colspan="2">No clubs found.</td>
-                    </tr>
-                {:else}
-                    {#each paginatedClubs as club}
+                </thead>
+                <tbody>
+                    {#if isLoading}
                         <tr>
-                            <td>{getClubName(club)}</td>
-                            <td>
-                                <button onclick={() => editClub(club)}>Edit</button>
-                                <button onclick={() => deleteClub(club)}>Delete</button>
-                           </td>
+                            <td colspan="2">Loading clubs...</td>
                         </tr>
-                    {/each}
-                {/if}
-            </tbody>
-        </table>
-        <div class="pager">
-            <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
-            <span>Page {pageNum}</span>
-            <button onclick={nextPage} disabled={pageNum === totalPages}>Next</button>
+                    {:else if loadError}
+                        <tr>
+                            <td colspan="2">{loadError}</td>
+                        </tr>
+                    {:else if paginatedClubs.length === 0}
+                        <tr>
+                            <td colspan="2">No clubs found.</td>
+                        </tr>
+                    {:else}
+                        {#each paginatedClubs as club}
+                            <tr>
+                                <td>{getClubName(club)}</td>
+                                <td>
+                                    <button onclick={() => editClub(club)}>Edit</button>
+                                    <button onclick={() => deleteClub(club)}>Delete</button>
+                               </td>
+                            </tr>
+                        {/each}
+                    {/if}
+                </tbody>
+            </table>
+            <div class="pager">
+                <button onclick={prevPage} disabled={pageNum === 1}>Previous</button>
+                <span>Page {pageNum}</span>
+                <button onclick={nextPage} disabled={pageNum === totalPages}>Next</button>
+            </div>
         </div>
-    </div>
+    {:else}
+        <HomePage previewAs={adminPreviewType} showChrome={false} />
+    {/if}
+    <section class="quiz-quick-action" aria-label="Admin quiz shortcut">
+        <div>
+            <h2>Want to Take the Quiz?</h2>
+        </div>
+        <button class="quiz-action" type="button" onclick={goToQuiz}>Take The Quiz</button>
+    </section>
 </div>
 <Footer />
 
@@ -177,6 +208,38 @@
         margin: 0 0 0.8rem 0;
         color: var(--muted);
         line-height: 1.45;
+    }
+
+    .quiz-quick-action {
+        width: min(100%, 1040px);
+        margin: 0 auto 1rem auto;
+        padding: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgba(15, 109, 140, 0.08), rgba(47, 74, 102, 0.08));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.9rem;
+    }
+
+    .quiz-quick-action h2 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--text);
+    }
+
+    .quiz-quick-action p {
+        margin: 0.3rem 0 0;
+        color: var(--muted);
+        line-height: 1.35;
+        font-size: 0.95rem;
+    }
+
+    .quiz-action {
+        min-width: 10.5rem;
+        padding: 0.62rem 1.05rem;
+        border-radius: 0.6rem;
     }
 
     table {
@@ -270,7 +333,8 @@
 
     @media (max-width: 760px) {
         .admin-home h1,
-        .club-management {
+        .club-management,
+        .quiz-quick-action {
             width: calc(100% - 1rem);
         }
 
@@ -313,6 +377,15 @@
         }
 
         .pager button {
+            width: 100%;
+        }
+
+        .quiz-quick-action {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .quiz-action {
             width: 100%;
         }
     }

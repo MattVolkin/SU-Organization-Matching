@@ -4,9 +4,21 @@ import Header from '../header.svelte';
 import Footer from '../footer.svelte';
 import LoginPopup from '../login_popup.svelte';
 
+export let previewAs = '';
+export let showChrome = true;
+
 let userType = 'user';
 
+function getActiveUserType() {
+    return previewAs || userType;
+}
+
 async function loadUserType() {
+    if (previewAs) {
+        userType = previewAs;
+        return;
+    }
+
     const tokenFromStorage = localStorage.getItem('authToken') || '';
     const headers = tokenFromStorage
         ? { Authorization: `Bearer ${tokenFromStorage}` }
@@ -46,8 +58,10 @@ function goToDeleteAccount() {
 
 </script>
 
-<Header userType={userType} />
-<LoginPopup />
+{#if showChrome}
+    <Header userType={getActiveUserType()} previewAs={previewAs} />
+    <LoginPopup />
+{/if}
 
 <div class="page-shell">
     <main class="home-page">
@@ -74,9 +88,11 @@ function goToDeleteAccount() {
         </div>
     </main>
 
-    <button type="button" onclick={goToDeleteAccount}>Delete Account Information</button>
+    {#if showChrome}
+        <button type="button" onclick={goToDeleteAccount}>Delete Account Information</button>
 
-    <Footer />
+        <Footer />
+    {/if}
 </div>
 
 <style>
