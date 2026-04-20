@@ -604,7 +604,7 @@ func upsertSwipeQuestionsByType(ctx context.Context, tx *ent.Tx, questionType st
 		}
 
 		// No existing question with this term, create a new one.
-		if _, err := tx.Question.Create().
+		if err := tx.Question.Create().
 			SetTranslations(item.Translations).
 			SetIsActive(true).
 			Exec(ctx); err != nil {

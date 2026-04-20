@@ -105,7 +105,7 @@ Used by:
   "clubName": "CS Club",
   "description": "Club description",
   "meetingTime": "Thursdays at 6:30 PM",
-  "imagePath": "/images/cs-club.png",
+  "imagePath": "/api/images/cs-club-12-1712536000000000000.png",
   "externalLink": "https://example.com",
   "contactInfo": "club@example.edu",
   "includeOfficerEmails": false,
@@ -145,7 +145,7 @@ Only include fields that should change:
   "clubName": "Updated Club Name",
   "description": "Updated description",
   "meetingTime": "Fridays at 5:00 PM",
-  "imagePath": "/images/new-image.png",
+  "imagePath": "/api/images/new-image.png",
   "externalLink": "https://example.com",
   "contactInfo": "updated@example.edu",
   "includeOfficerEmails": true,
@@ -270,6 +270,138 @@ Possible errors:
 
 - `401 Unauthorized` plain text: missing token
 - `401 Unauthorized` plain text: invalid or expired token
+
+### `GET /api/images/{filename}`
+
+Fetches a club image stored in `Components/OrgPhotos`.
+
+Authentication:
+
+- Not required.
+
+Path params:
+
+- `filename: string` exact stored file name
+
+Success behavior:
+
+- Returns the image bytes with the detected file content type.
+
+Possible errors:
+
+- `400 Bad Request` JSON: invalid filename
+- `404 Not Found` JSON: image not found
+- `500 Internal Server Error` JSON: image could not be accessed
+
+### `POST /api/officer/orgs/{id}/image`
+
+Uploads or replaces the image for an officer-managed club.
+
+Authentication:
+
+- Required.
+- Officer role required.
+- Officers may only upload images for clubs they lead.
+
+Path params:
+
+- `id: number` club id
+
+Request content type:
+
+- `multipart/form-data`
+
+Required form field:
+
+- `image` file upload
+
+Rules:
+
+- Images are stored in `Components/OrgPhotos`.
+- Successful uploads update the club `imagePath` field to `/api/images/{filename}`.
+- Supported file types: JPEG, PNG, GIF, WebP.
+- Max upload size: 10 MB.
+
+Success response example:
+
+```json
+{
+  "message": "Club image uploaded successfully",
+  "filename": "cs-club-12-1712536000000000000.png",
+  "imagePath": "/api/images/cs-club-12-1712536000000000000.png",
+  "contentType": "image/png",
+  "club": {
+    "id": 12,
+    "clubName": "CS Club"
+  }
+}
+```
+
+Possible errors:
+
+- `400 Bad Request` JSON: invalid club id, missing file, unsupported type, malformed multipart body
+- `401 Unauthorized` JSON: missing authenticated user
+- `403 Forbidden` JSON: officer is not allowed to manage this club
+- `404 Not Found` JSON: club not found
+- `413 Request Entity Too Large` JSON: upload exceeds 10 MB
+- `500 Internal Server Error` JSON: file storage failure
+
+### `DELETE /api/officer/orgs/{id}/image`
+
+Deletes the current image for an officer-managed club and clears the club `imagePath` field.
+
+Authentication:
+
+- Required.
+- Officer role required.
+- Officers may only delete images for clubs they lead.
+
+Path params:
+
+- `id: number` club id
+
+Success response example:
+
+```json
+{
+  "message": "Club image deleted successfully",
+  "club": {
+    "id": 12,
+    "clubName": "CS Club",
+    "imagePath": ""
+  }
+}
+```
+
+Possible errors:
+
+- `400 Bad Request` JSON: invalid club id
+- `401 Unauthorized` JSON: missing authenticated user
+- `403 Forbidden` JSON: officer is not allowed to manage this club
+- `404 Not Found` JSON: club not found or image not set
+- `500 Internal Server Error` JSON: file storage failure
+
+### `POST /api/admin/orgs/{id}/image`
+
+Uploads or replaces the image for any club.
+
+Authentication:
+
+- Required.
+- Admin role required.
+
+Behavior and response shape are the same as `POST /api/officer/orgs/{id}/image`.
+
+### `DELETE /api/admin/orgs/{id}/image`
+
+Deletes the current image for any club.
+
+Authentication:
+
+- Required.
+- Admin role required.
+
+Behavior and response shape are the same as `DELETE /api/officer/orgs/{id}/image`.
 
 ### `POST /logout`
 

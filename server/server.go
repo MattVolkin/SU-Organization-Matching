@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -162,7 +164,12 @@ type Organization struct {
 
 var dbClient *DatabaseClient
 
+var repoRootDir string
+var orgPhotosDir string
+
 const testOfficerClubName = "Computer Science Club"
+const maxImageUploadSize = 10 << 20
+const imageURLPrefix = "/api/images/"
 
 var testRoleSwitchAllowlist = map[string]struct{}{
 	"mckallipb@southwestern.edu": {},
@@ -176,6 +183,17 @@ var testRoleSwitchAllowlist = map[string]struct{}{
 func main() {
 	// Initialize in-memory session storage used by auth middleware.
 	authSessionStore = NewAuthSessionStore()
+
+	serverWorkingDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to determine server working directory: %v", err)
+	}
+	repoRootDir = filepath.Clean(filepath.Join(serverWorkingDir, ".."))
+	orgPhotosDir = filepath.Join(repoRootDir, "Components", "OrgPhotos")
+	if err := os.MkdirAll(orgPhotosDir, 0o755); err != nil {
+		log.Fatalf("failed to ensure image directory exists: %v", err)
+	}
+	staticDir := filepath.Join(repoRootDir, "Webpages", "dist")
 
 	// Read OAuth settings from the environment and apply safe defaults.
 	googleClientID := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
@@ -216,7 +234,6 @@ func main() {
 
 	// Open the Postgres connection used by Ent queries and mutations.
 	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
-	var err error
 	dbClient, err = NewDatabaseClient("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
@@ -228,7 +245,7 @@ func main() {
 	log.Printf("Submit auth required: %t", submitRequiresAuth)
 
 	// Serve static files from the built Svelte distribution directory.
-	if err := os.Chdir("../Webpages/dist"); err != nil {
+	if err := os.Chdir(staticDir); err != nil {
 		log.Printf("warning: failed to switch static directory: %v", err)
 	}
 
@@ -239,6 +256,7 @@ func main() {
 	router.HandleFunc("/auth/callback", makeOAuthCallbackHandler(oauthCfg)).Methods(http.MethodGet)
 	router.HandleFunc("/api/user", makeCurrentUserHandler()).Methods(http.MethodGet)
 	router.HandleFunc("/logout", makeLogoutHandler()).Methods(http.MethodPost)
+	router.HandleFunc("/api/images/{filename}", handleClubImageFetchRequest).Methods(http.MethodGet)
 
 	router.Handle("/response", requireAuthenticatedSession(http.HandlerFunc(handleSurveyResponseSubmission))).Methods(http.MethodPost)
 
@@ -269,6 +287,8 @@ func main() {
 
 	officerRouter.HandleFunc("/orgs", handleOfficerOrgsRequest).Methods(http.MethodGet)
 	officerRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
+	officerRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageUploadRequest).Methods(http.MethodPost)
+	officerRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageDeleteRequest).Methods(http.MethodDelete)
 
 	// Admin-only endpoints are nested under /api/admin/ and use additional role-checking middleware.
 	adminRouter := apiRouter.PathPrefix("/admin/").Subrouter()
@@ -278,6 +298,8 @@ func main() {
 	adminRouter.HandleFunc("/orgs", handleAdminCreateOrgRequest).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/orgs", handlePatchOrgRequest).Methods(http.MethodPatch)
 	adminRouter.HandleFunc("/orgs", handleAdminDeleteOrgRequest).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageUploadRequest).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageDeleteRequest).Methods(http.MethodDelete)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -604,6 +626,268 @@ func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jsonClubs)
+}
+
+func handleClubImageUploadRequest(w http.ResponseWriter, r *http.Request) {
+	clubID, ok := parseClubIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
+	userEmail := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	clubRecord, ok := fetchWritableClubForUser(w, r, clubID, userEmail)
+	if !ok {
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxImageUploadSize+1024)
+	if err := r.ParseMultipartForm(maxImageUploadSize); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "request must be multipart/form-data with an image field")
+		return
+	}
+
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "missing image file in form field 'image'")
+		return
+	}
+	defer file.Close()
+
+	imageBytes, err := io.ReadAll(io.LimitReader(file, maxImageUploadSize+1))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "failed to read uploaded image")
+		return
+	}
+	if len(imageBytes) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "uploaded image is empty")
+		return
+	}
+	if len(imageBytes) > maxImageUploadSize {
+		writeJSONError(w, http.StatusRequestEntityTooLarge, "uploaded image exceeds 10 MB limit")
+		return
+	}
+
+	extension, contentType, ok := detectAllowedImageType(imageBytes)
+	if !ok {
+		writeJSONError(w, http.StatusBadRequest, "unsupported image type; allowed types are jpeg, png, gif, and webp")
+		return
+	}
+
+	filename := buildStoredClubImageFilename(clubRecord.ClubName, clubRecord.ID, extension)
+	imagePath := filepath.Join(orgPhotosDir, filename)
+	tempPath := imagePath + ".tmp"
+	if err := os.WriteFile(tempPath, imageBytes, 0o644); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "failed to save uploaded image")
+		return
+	}
+	if err := os.Rename(tempPath, imagePath); err != nil {
+		_ = os.Remove(tempPath)
+		writeJSONError(w, http.StatusInternalServerError, "failed to finalize uploaded image")
+		return
+	}
+
+	imageURL := imageURLPrefix + filename
+	patch := OrgUpdatePayload{ImagePath: &imageURL}
+	_, updatedClub, err := dbClient.Query().PatchClubFromJSON(r.Context(), clubRecord.ID, &patch)
+	if err != nil {
+		_ = os.Remove(imagePath)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if oldFilename, managed := managedImageFilename(clubRecord.ImagePath); managed && oldFilename != filename {
+		_ = os.Remove(filepath.Join(orgPhotosDir, oldFilename))
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":     "Club image uploaded successfully",
+		"filename":    filename,
+		"imagePath":   imageURL,
+		"contentType": contentType,
+		"club":        orgJSONFromEntClub(updatedClub),
+	})
+}
+
+func handleClubImageDeleteRequest(w http.ResponseWriter, r *http.Request) {
+	clubID, ok := parseClubIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
+	userEmail := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	clubRecord, ok := fetchWritableClubForUser(w, r, clubID, userEmail)
+	if !ok {
+		return
+	}
+
+	currentImagePath := strings.TrimSpace(clubRecord.ImagePath)
+	if currentImagePath == "" {
+		writeJSONError(w, http.StatusNotFound, "club does not have an image to delete")
+		return
+	}
+
+	var previousImageBytes []byte
+	oldFilename, managed := managedImageFilename(currentImagePath)
+	if managed {
+		oldFilePath := filepath.Join(orgPhotosDir, oldFilename)
+		if imageBytes, err := os.ReadFile(oldFilePath); err == nil {
+			previousImageBytes = imageBytes
+		}
+		if err := os.Remove(oldFilePath); err != nil && !os.IsNotExist(err) {
+			writeJSONError(w, http.StatusInternalServerError, "failed to delete image from storage")
+			return
+		}
+	}
+
+	emptyImagePath := ""
+	patch := OrgUpdatePayload{ImagePath: &emptyImagePath}
+	_, updatedClub, err := dbClient.Query().PatchClubFromJSON(r.Context(), clubRecord.ID, &patch)
+	if err != nil {
+		if managed && len(previousImageBytes) > 0 {
+			_ = os.WriteFile(filepath.Join(orgPhotosDir, oldFilename), previousImageBytes, 0o644)
+		}
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message": "Club image deleted successfully",
+		"club":    orgJSONFromEntClub(updatedClub),
+	})
+}
+
+func handleClubImageFetchRequest(w http.ResponseWriter, r *http.Request) {
+	filename := strings.TrimSpace(mux.Vars(r)["filename"])
+	if filename == "" || filename != filepath.Base(filename) || filename == "." {
+		writeJSONError(w, http.StatusBadRequest, "invalid image filename")
+		return
+	}
+
+	imagePath := filepath.Join(orgPhotosDir, filename)
+	if _, err := os.Stat(imagePath); err != nil {
+		if os.IsNotExist(err) {
+			writeJSONError(w, http.StatusNotFound, "image not found")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "failed to access image")
+		return
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	http.ServeFile(w, r, imagePath)
+}
+
+func parseClubIDFromRequest(w http.ResponseWriter, r *http.Request) (int, bool) {
+	clubID := 0
+	if _, err := fmt.Sscanf(mux.Vars(r)["id"], "%d", &clubID); err != nil || clubID <= 0 {
+		writeJSONError(w, http.StatusBadRequest, "club id must be a positive integer")
+		return 0, false
+	}
+	return clubID, true
+}
+
+func fetchWritableClubForUser(w http.ResponseWriter, r *http.Request, clubID int, userEmail string) (*ent.Club, bool) {
+	if userEmail == "" {
+		writeJSONError(w, http.StatusUnauthorized, "Unauthorized: missing authenticated user email")
+		return nil, false
+	}
+
+	role := dbClient.Query().getUserRole(r.Context(), userEmail)
+	switch role {
+	case Admin:
+		_, clubRecord, err := dbClient.Query().FetchClubByID(r.Context(), clubID)
+		if err != nil {
+			writeJSONError(w, http.StatusNotFound, "club not found")
+			return nil, false
+		}
+		return clubRecord, true
+	case Officer:
+		_, clubs, err := dbClient.Query().FetchOfficerClubsByUserEmail(r.Context(), userEmail)
+		if err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "failed to load officer clubs")
+			return nil, false
+		}
+		for _, clubRecord := range clubs {
+			if clubRecord != nil && clubRecord.ID == clubID {
+				return clubRecord, true
+			}
+		}
+		writeJSONError(w, http.StatusForbidden, "Forbidden: officers can only manage images for their own clubs")
+		return nil, false
+	default:
+		writeJSONError(w, http.StatusForbidden, "Forbidden")
+		return nil, false
+	}
+}
+
+func detectAllowedImageType(imageBytes []byte) (string, string, bool) {
+	contentType := http.DetectContentType(imageBytes)
+	switch contentType {
+	case "image/jpeg":
+		return ".jpg", contentType, true
+	case "image/png":
+		return ".png", contentType, true
+	case "image/gif":
+		return ".gif", contentType, true
+	case "image/webp":
+		return ".webp", contentType, true
+	default:
+		return "", contentType, false
+	}
+}
+
+func buildStoredClubImageFilename(clubName string, clubID int, extension string) string {
+	slug := slugifyClubFilename(clubName)
+	if slug == "" {
+		slug = "club"
+	}
+	return fmt.Sprintf("%s-%d-%d%s", slug, clubID, time.Now().UnixNano(), extension)
+}
+
+func slugifyClubFilename(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return ""
+	}
+
+	var builder strings.Builder
+	lastWasDash := false
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			builder.WriteRune(r)
+			lastWasDash = false
+			continue
+		}
+		if lastWasDash {
+			continue
+		}
+		builder.WriteByte('-')
+		lastWasDash = true
+	}
+
+	return strings.Trim(builder.String(), "-")
+}
+
+func managedImageFilename(imagePath string) (string, bool) {
+	trimmed := strings.TrimSpace(imagePath)
+	if !strings.HasPrefix(trimmed, imageURLPrefix) {
+		return "", false
+	}
+	filename := strings.TrimPrefix(trimmed, imageURLPrefix)
+	if filename == "" || filename != filepath.Base(filename) || filename == "." {
+		return "", false
+	}
+	return filename, true
+}
+
+func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
 // orgStructToJSON converts Ent club models into the shared JSON wire format.

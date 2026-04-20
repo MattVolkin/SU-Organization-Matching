@@ -1,15 +1,50 @@
+<script>
+import { onMount } from 'svelte';
+	import Header from '../header.svelte';
+	import Footer from '../footer.svelte';
+	import LoginPopup from '../login_popup.svelte';
+	let userType = 'user';
+		async function loadUserType() {
+		const tokenFromStorage = localStorage.getItem('authToken') || '';
+		const headers = tokenFromStorage
+			? { Authorization: `Bearer ${tokenFromStorage}` }
+			: {};
+
+		const response = await fetch('/api/user', {
+			method: 'GET',
+			credentials: 'include',
+			headers,
+		});
+
+		if (!response.ok) {
+			userType = 'user';
+			return;
+		}
+
+		const data = await response.json().catch(() => ({}));
+		const role = String(data?.role || '').toLowerCase();
+		userType = role === 'admin' || role === 'officer' ? role : 'user';
+	}
+
+	onMount(() => {
+		loadUserType();
+	});
+</script>
+<Header userType={userType} />
+<LoginPopup />
+
+<div class="page-shell">
 <main class="manual-page">
-	<section class="hero">
-		<p class="eyebrow">User Manual</p>
+	<section class="hero-content">
 		<h1>How to use the SU Organization Matching tool</h1>
 		<p class="intro">
-			This tool was made to give suggestions based on the information provided. Please do not take it as the
+			Disclaimer: This tool was made to give suggestions based on the information provided. Please do not take it as the
 			end-all be-all, and do not be afraid to explore clubs that it does not provide.
 		</p>
 	</section>
 
 	<section class="grid">
-		<article class="card">
+		<article>
 			<h2>Users</h2>
 			<h3>Login</h3>
 			<p>
@@ -51,7 +86,7 @@
 			</p>
 		</article>
 
-		<article class="card">
+		<article>
 			<h2>Officers</h2>
 			<h3>Editing a club's information</h3>
 			<p>
@@ -82,7 +117,7 @@
 			</ul>
 		</article>
 
-		<article class="card">
+		<article>
 			<h2>Admins</h2>
 			<h3>Editing clubs</h3>
 			<p>
@@ -117,95 +152,110 @@
 		</article>
 	</section>
 </main>
+<Footer/>
+</div>
 
 <style>
+	:global(html),
 	:global(body) {
 		margin: 0;
-		background:
-			radial-gradient(circle at top left, rgba(20, 184, 166, 0.14), transparent 28%),
-			radial-gradient(circle at top right, rgba(244, 177, 66, 0.14), transparent 24%),
-			linear-gradient(180deg, #f8fbfd 0%, #eef5f7 100%);
-		color: #173042;
-		font-family: Georgia, 'Times New Roman', serif;
+		padding: 0;
+		min-height: 100%;
+		background: #0b1220;
+	}
+
+	:global(body) {
+		overflow-x: hidden;
+	}
+
+	.page-shell {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		background: #0b1220;
 	}
 
 	.manual-page {
-		width: min(100%, 1100px);
+		--page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+		--text-main: #10243a;
+		--text-subtle: #31506e;
+		--action: #1f6f8b;
+		--action-hover: #195d76;
+
+		flex: 1;
+		min-height: 0;
+		background: var(--page-bg);
+		color: var(--text-main);
+		padding: 2rem 1rem 2.25rem;
+		font-size: 16px;
+	}
+
+	.hero-content {
+		width: min(100%, 760px);
 		margin: 0 auto;
-		padding: 2rem 1rem 3rem;
-	}
-
-	.hero {
-		padding: 1.75rem 1.5rem 1.25rem;
-		border-radius: 1.4rem;
-		background: rgba(255, 255, 255, 0.8);
-		border: 1px solid rgba(23, 48, 66, 0.1);
-		box-shadow: 0 18px 40px rgba(21, 44, 58, 0.08);
-		backdrop-filter: blur(8px);
-		margin-bottom: 1.25rem;
-	}
-
-	.eyebrow {
-		margin: 0 0 0.5rem;
-		color: #0f6d8c;
-		font-size: 0.9rem;
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-weight: 700;
+		padding: 1.25rem 1rem 0.65rem;
+		text-align: left;
 	}
 
 	h1 {
-		margin: 0;
-		font-size: clamp(2rem, 3vw + 1rem, 3.8rem);
-		line-height: 1.05;
-		max-width: 12ch;
+		margin: 0.35rem 0 0.8rem;
+		font-size: clamp(1.9rem, 2.7vw + 1rem, 3rem);
+		line-height: 1.12;
+		max-width: 22ch;
 	}
 
 	.intro {
-		max-width: 70ch;
-		margin: 0.9rem 0 0;
-		font-size: 1.06rem;
+		max-width: 68ch;
+		margin: 0;
+		font-size: 1.08rem;
 		line-height: 1.65;
-		color: #355063;
+		color: var(--text-subtle);
 	}
 
 	.grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
+		width: min(100%, 760px);
+		margin: 0.45rem auto 0;
+		display: block;
+		padding: 0 1rem;
 	}
 
-	.card {
-		background: rgba(255, 255, 255, 0.9);
-		border: 1px solid rgba(23, 48, 66, 0.1);
-		border-radius: 1.15rem;
-		padding: 1.15rem 1.2rem;
-		box-shadow: 0 12px 30px rgba(21, 44, 58, 0.06);
+	.grid article {
+		padding: 0.55rem 0;
 	}
 
-	.card h2 {
-		margin: 0 0 0.6rem;
+	.grid article + article {
+		border-top: 1px solid #dbe7f3;
+		margin-top: 0.3rem;
+		padding-top: 1.2rem;
+	}
+
+	.grid h2 {
+		margin: 0 0 0.75rem;
 		font-size: 1.25rem;
-		color: #123145;
+		color: var(--text-main);
 	}
 
-	.card h3 {
-		margin: 1rem 0 0.35rem;
+	.grid h3 {
+		margin: 1.05rem 0 0.35rem;
 		font-size: 1rem;
-		color: #173042;
+		color: #1b4f73;
 	}
 
-	.card p {
+	.grid p {
 		margin: 0.3rem 0 0;
-		line-height: 1.7;
-		color: #2e4657;
+		line-height: 1.62;
+		color: var(--text-subtle);
 	}
 
 	ul {
 		margin: 0;
 		padding-left: 1.2rem;
-		line-height: 1.7;
-		color: #2e4657;
+		line-height: 1.62;
+		color: var(--text-subtle);
+	}
+
+	li::marker {
+		color: var(--action);
 	}
 
 	li + li {
@@ -213,16 +263,50 @@
 	}
 
 	strong {
-		color: #123145;
+		color: var(--text-main);
 	}
 
 	@media (max-width: 820px) {
 		.grid {
-			grid-template-columns: 1fr;
+			padding: 0 0.6rem;
+		}
+
+		.grid article + article {
+			padding-top: 1rem;
 		}
 
 		.manual-page {
-			padding-top: 1rem;
+			padding: 1rem 0.85rem 1.7rem;
+		}
+
+		.hero-content {
+			padding: 1rem 0.6rem 0.6rem;
+		}
+
+		h1 {
+			font-size: clamp(1.65rem, 7vw, 2.2rem);
+		}
+
+		.intro {
+			font-size: 1rem;
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.manual-page {
+			--page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+			--text-main: #e5edf8;
+			--text-subtle: #b6c7df;
+			--action: #2b8fb5;
+			--action-hover: #3aa3cb;
+		}
+
+		.grid article + article {
+			border-top-color: #273449;
+		}
+
+		.grid h3 {
+			color: #7dc4e0;
 		}
 	}
 </style>
