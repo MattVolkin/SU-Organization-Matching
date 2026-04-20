@@ -81,6 +81,8 @@
 			isLoadingQuestions = false;
 		}
 
+		randomizeCardItems(); // randomize the order of the card items to make sure that the order of the questions is different for each user, making it more likely that they will get a variety of questions rather than just the same ones at the beginning of the list
+
 
 		insertCardItems(); // insert the card items into the list of items after loading the questions, this is used to separate the personality and activity questions in the swiping app, so that the personality questions are swiped first and then the activity questions are swiped after
 	}
@@ -101,12 +103,12 @@
 
 	}
 
-	function insertCardItems() { // insert new card items into the current list of items, used for the swiping feature
+	function insertCardItems() { // insert new card items into the current list of items that are for user comfort rather than used for matching, used for the swiping feature
 
 		console.log("inserting card items into the list of items used by the swiping app, current items: ")
 		console.table(items);
 
-		const NewItem = {id: -1, question_type: "Other", en: {term: "Halfway there!!!", def: "The next couple of questions will be about personality traits that apply to you", type: "Other"}}; // insert card (into the array to work with the current code structure)
+		const NewItem = {id: -1, question_type: "Other", en: {term: "Halfway There!!!", def: "The next couple of questions will be about personality traits that apply to you. \n\n\n (Swipe any direction to continue)", type: "Other"}}; // insert card (into the array to work with the current code structure)
 		
 		
 		items.splice(findSeperationIndex(), 0, NewItem); // insert the new items into the current list of items at the separation point between personality and activity questions
@@ -115,7 +117,21 @@
 		console.table(items);
 	}
 
-	
+	function randomizeCardItems() { // randomize the order of the card items, this is used to make sure that the order of the questions is different for each user, making it more likely that they will get a variety of questions rather than just the same ones at the beginning of the list
+		for (let i = 0; i < findSeperationIndex(); i++) { // only shuffle the activity traits
+			const j = Math.floor(Math.random() * (findSeperationIndex())); // generate a random index from 0 to last activity question index
+			[items[i], items[j]] = [items[j], items[i]]; // swap the current item with the item at the random index
+			// this suffles the cards up while keeping the integrity of the list
+		}
+
+		for (let i = findSeperationIndex(); i < items.length; i++) { // only shuffle the personality traits
+			const j = Math.floor(Math.random() * (items.length - findSeperationIndex()) + findSeperationIndex()); // generate a random index from 0 to last personality question index (also last entry)
+			[items[i], items[j]] = [items[j], items[i]]; // swap the current item with the item at the random index
+			// this suffles the cards up while keeping the integrity of the list
+		}
+
+
+	}
 
 
 
@@ -264,6 +280,8 @@
 		font-size: clamp(1.2rem, 2.3vw, 2.2rem);
 				margin: 10px;
 						color: var(--text--color);
+	white-space: pre-line;
+
 
 	}
 
