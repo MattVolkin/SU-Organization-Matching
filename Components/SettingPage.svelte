@@ -7,6 +7,8 @@
     ID?: number;
     clubName?: string;
     ClubName?: string;
+    imagePath?: string;
+    ImagePath?: string;
     description?: string;
     Description?: string;
     meetingTime?: string;
@@ -159,6 +161,62 @@
     }
     const rawID = (club as { ID?: number; id?: number }).ID ?? (club as { ID?: number; id?: number }).id;
     return typeof rawID === 'number' ? rawID : 0;
+  }
+
+  function getAuthHeaders() {
+    const tokenFromStorage = localStorage.getItem('authToken') || '';
+    return tokenFromStorage
+      ? { Authorization: `Bearer ${tokenFromStorage}` }
+      : {};
+  }
+
+  function buildClubImageApiPath(club: ClubValue) {
+    const clubID = getClubID(club);
+    if (clubID <= 0) {
+      throw new Error('Missing valid club ID for club image request');
+    }
+
+    return `${getOrgApiPath()}/${clubID}/image`;
+  }
+
+  async function parseClubImageApiResponse(response: Response) {
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = typeof payload?.error === 'string' && payload.error.trim()
+        ? payload.error.trim()
+        : 'Club image request failed';
+      throw new Error(message);
+    }
+
+    return payload;
+  }
+
+  async function uploadClubImageFile(club: ClubValue, imageFile: File) {
+    const requestBody = new FormData();
+    requestBody.set('image', imageFile);
+
+    const response = await fetch(buildClubImageApiPath(club), {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: requestBody,
+    });
+
+    return parseClubImageApiResponse(response);
+  }
+
+  async function removeClubImageFile(club: ClubValue) {
+    const response = await fetch(buildClubImageApiPath(club), {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+    });
+
+    return parseClubImageApiResponse(response);
+  }
+
+  async function replaceClubImageFile(club: ClubValue, imageFile: File) {
+    return uploadClubImageFile(club, imageFile);
   }
 
   function getExistingClubOfficers(club: ClubValue) {
