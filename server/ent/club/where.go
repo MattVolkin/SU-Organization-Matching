@@ -90,6 +90,11 @@ func IncludeOfficerEmails(v bool) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldIncludeOfficerEmails, v))
 }
 
+// ActivitiesDescription applies equality check predicate on the "activities_description" field. It's identical to ActivitiesDescriptionEQ.
+func ActivitiesDescription(v string) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldActivitiesDescription, v))
+}
+
 // StrictGenders applies equality check predicate on the "strict_genders" field. It's identical to StrictGendersEQ.
 func StrictGenders(v bool) predicate.Club {
 	return predicate.Club(sql.FieldEQ(FieldStrictGenders, v))
@@ -548,6 +553,71 @@ func IncludeOfficerEmailsEQ(v bool) predicate.Club {
 // IncludeOfficerEmailsNEQ applies the NEQ predicate on the "include_officer_emails" field.
 func IncludeOfficerEmailsNEQ(v bool) predicate.Club {
 	return predicate.Club(sql.FieldNEQ(FieldIncludeOfficerEmails, v))
+}
+
+// ActivitiesDescriptionEQ applies the EQ predicate on the "activities_description" field.
+func ActivitiesDescriptionEQ(v string) predicate.Club {
+	return predicate.Club(sql.FieldEQ(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionNEQ applies the NEQ predicate on the "activities_description" field.
+func ActivitiesDescriptionNEQ(v string) predicate.Club {
+	return predicate.Club(sql.FieldNEQ(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionIn applies the In predicate on the "activities_description" field.
+func ActivitiesDescriptionIn(vs ...string) predicate.Club {
+	return predicate.Club(sql.FieldIn(FieldActivitiesDescription, vs...))
+}
+
+// ActivitiesDescriptionNotIn applies the NotIn predicate on the "activities_description" field.
+func ActivitiesDescriptionNotIn(vs ...string) predicate.Club {
+	return predicate.Club(sql.FieldNotIn(FieldActivitiesDescription, vs...))
+}
+
+// ActivitiesDescriptionGT applies the GT predicate on the "activities_description" field.
+func ActivitiesDescriptionGT(v string) predicate.Club {
+	return predicate.Club(sql.FieldGT(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionGTE applies the GTE predicate on the "activities_description" field.
+func ActivitiesDescriptionGTE(v string) predicate.Club {
+	return predicate.Club(sql.FieldGTE(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionLT applies the LT predicate on the "activities_description" field.
+func ActivitiesDescriptionLT(v string) predicate.Club {
+	return predicate.Club(sql.FieldLT(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionLTE applies the LTE predicate on the "activities_description" field.
+func ActivitiesDescriptionLTE(v string) predicate.Club {
+	return predicate.Club(sql.FieldLTE(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionContains applies the Contains predicate on the "activities_description" field.
+func ActivitiesDescriptionContains(v string) predicate.Club {
+	return predicate.Club(sql.FieldContains(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionHasPrefix applies the HasPrefix predicate on the "activities_description" field.
+func ActivitiesDescriptionHasPrefix(v string) predicate.Club {
+	return predicate.Club(sql.FieldHasPrefix(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionHasSuffix applies the HasSuffix predicate on the "activities_description" field.
+func ActivitiesDescriptionHasSuffix(v string) predicate.Club {
+	return predicate.Club(sql.FieldHasSuffix(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionEqualFold applies the EqualFold predicate on the "activities_description" field.
+func ActivitiesDescriptionEqualFold(v string) predicate.Club {
+	return predicate.Club(sql.FieldEqualFold(FieldActivitiesDescription, v))
+}
+
+// ActivitiesDescriptionContainsFold applies the ContainsFold predicate on the "activities_description" field.
+func ActivitiesDescriptionContainsFold(v string) predicate.Club {
+	return predicate.Club(sql.FieldContainsFold(FieldActivitiesDescription, v))
 }
 
 // StrictGendersEQ applies the EQ predicate on the "strict_genders" field.

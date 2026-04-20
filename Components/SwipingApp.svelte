@@ -53,7 +53,10 @@
 	}
 
 	function swipeRight() {// method to swipe right, this is broken out into a function so that it can be called by both the swipe gesture and arrow keys
-			recordCurrentCardResponse(true);
+			
+		if (cardObject.getID() !== -1) { // if the card is not the halfway point card, record the user's response to the card, otherwise don't record a response because it is not a real question and we don't want to send that information to the backend
+		recordCurrentCardResponse(true);
+		}
 		
 			if(cardObject.getTag() === 'activities') { // if the card that was swiped right is an activity, add it to the activities list, otherwise add it to the personality list
 				activities = [...activities, { "term": cardObject.getTerm(), "id": cardObject.getID(), "tag": cardObject.getTag()}];
@@ -114,6 +117,8 @@
 
 		surveyResponses = [...surveyResponses, { questionId: currentId, answer: answerValue }];
 	}
+
+
 
 	function deleteGivenCardFromUserArray(string: GivenItem) { // remove last term in array if it is the card we rewinded to
 	let GivenItem = cardObject.getTerm();
@@ -204,6 +209,11 @@
 		else if (event.key === 'ArrowRight') {
 			swipeRight();
 		}
+		else if (event.ctrlKey && event.key === 'z') { // ctrl-z functionality to go back to previous card
+			rewind();
+		}
+
+
 	}
 
 	function moveHandler(event: GestureCustomEvent) { // get the x y value of mouse
@@ -220,12 +230,13 @@
 <div class="swipedContainer">
 <!-- For cardObject.getTag?.(), the '?' indicates that the method might not exist on the object, so we can safely call it without throwing an error and move to the false case-->
 	
-	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you like the personality trait' : 'Swipe right if you like the activity'}!</h1> 
-	<h1>Swipe left if you don't like the {(cardObject.getTag?.() === 'personality') ? 'personality trait' : 'activity'}!</h1>
+	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you align with the personality trait' : 'Swipe right if you like the activity'}!</h1> 
+	<h1>Swipe left if you don't!</h1>
+	<p>(Arrow Keys also work)</p>
 
 
 
-	<Bar maxLimit = 37 bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
+	<Bar maxLimit = {cardObject.getListLength?.() ?? 0} bind:this={barObject} class="bar"/> <!-- create the progress bar and bind it to the barObject so that we can call methods from the progress bar file -->
 
 
 
@@ -237,6 +248,7 @@
 	class="box"
 >
 		<button onclick={() => rewind()}>Undo</button> <!-- Button to go back to the previous card -->
+		<!-- TODO add ctrl-z -->
 
 
 	<div class="content">
@@ -290,6 +302,13 @@
 		font-size: clamp(1.35rem, 2.3vw, 2.5rem);
 		color: var(--text-color);
 		line-height: 1.12;
+	}
+
+	p {
+		font-size: clamp(0.875rem, 1.3vw, 2rem);
+		margin: 0;
+		text-align: center;
+		color: var(--text-color);
 	}
 
 	button {

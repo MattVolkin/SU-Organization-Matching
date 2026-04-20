@@ -35,6 +35,11 @@ onMount(() => {
 function goToQuiz() {
     window.location.href = '/demographic-quiz.html';
 }
+
+function goToDeleteAccount() {
+    window.location.href = '/delete-account.html';
+}
+
 </script>
 
 <Header userType={userType} />
@@ -64,6 +69,8 @@ function goToQuiz() {
             <a href="/results.html">View Results</a>
         </div>
     </main>
+
+    <button type="button" onclick={goToDeleteAccount}>Delete Account Information</button>
 
     <Footer />
 </div>

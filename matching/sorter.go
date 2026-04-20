@@ -36,6 +36,7 @@ type UserInfo struct {
 
 // Answer captures the minimal answer payload needed to reconstruct UserInfo.
 type Answer struct {
+	QuestionID   int
 	QuestionType string
 	AnswerText   string
 	Translations map[string][]string

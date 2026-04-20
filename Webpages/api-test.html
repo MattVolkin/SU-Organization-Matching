@@ -243,6 +243,40 @@
     </div>
   </div>
 
+  <div class="section" id="sec-test-questions">
+    <div class="section-header" onclick="toggleSection('sec-test-questions')">
+      <span class="method-badge PATCH">PATCH</span>
+      <h2>/api/test/questions — Replace activity + personality question lists</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Restricted to approved test users. Payload format matches <code>/api/adjectives</code>: an array of objects with <code>question_type</code> and <code>translations</code>.</p>
+      <div class="field-group">
+        <label for="test-questions-body">Request body (JSON)</label>
+        <textarea id="test-questions-body">[
+  {
+    "question_type": "activities",
+    "translations": {
+      "en": ["Board Games", "Enjoys tabletop strategy and social games"],
+      "es": ["Juegos de mesa", "Disfruta juegos de estrategia y sociales"]
+    }
+  },
+  {
+    "question_type": "personality_traits",
+    "translations": {
+      "en": ["Welcoming", "Open and friendly with new people"],
+      "es": ["Acogedor", "Abierto y amable con gente nueva"]
+    }
+  }
+]</textarea>
+      </div>
+      <div class="controls">
+        <button class="btn-secondary" onclick="runLoadTestQuestionsEditor()">Load Current</button>
+        <button class="btn-primary" onclick="runTestQuestionsPatch()">Run</button>
+      </div>
+      <div class="result" id="res-test-questions"></div>
+    </div>
+  </div>
+
   <div class="section" id="sec-response">
     <div class="section-header" onclick="toggleSection('sec-response')">
       <span class="method-badge POST">POST</span>
@@ -284,7 +318,9 @@
   "gender": "Woman",
   "race": ["Asian"],
   "religion": "None",
-  "major": ["Computer Science"]
+        "major": ["Computer Science"],
+        "lgbtq": "Prefer not to say",
+        "disability": "Prefer not to say"
 }</textarea>
       </div>
       <div class="controls">
@@ -592,6 +628,8 @@
       race: ['White'],
       religion: 'No Religion',
       major: ['Computer Science'],
+      lgbtq: 'Prefer not to say',
+      disability: 'Prefer not to say',
     },
   };
 
@@ -646,6 +684,191 @@
     return lines.join('\n');
   }
 
+  function extractQuestionDefinition(question) {
+    const translations = question && question.translations ? question.translations : {};
+    const english = Array.isArray(translations.en) ? translations.en : [];
+    if (english.length > 1 && String(english[1]).trim() !== '') {
+      return String(english[1]).trim();
+    }
+    const term = Array.isArray(translations.term) ? translations.term : [];
+    if (term.length > 1 && String(term[1]).trim() !== '') {
+      return String(term[1]).trim();
+    }
+    return '';
+  }
+
+  function normalizeQuestionTypeForPatch(rawType) {
+    const normalized = normalizeTerm(rawType).replaceAll('_', '').replaceAll('-', '').replaceAll(' ', '');
+    if (normalized === 'activity' || normalized === 'activities' || normalized === 'adjective') {
+      return 'activities';
+    }
+    if (normalized === 'personality' || normalized === 'personalitytrait' || normalized === 'personalitytraits') {
+      return 'personality_traits';
+    }
+    return '';
+  }
+
+  function normalizeTranslationsForPatch(translations) {
+    const source = translations && typeof translations === 'object' ? translations : {};
+    const normalized = {};
+    Object.keys(source).forEach((key) => {
+      const lang = String(key || '').trim();
+      if (!lang) return;
+      const values = Array.isArray(source[key]) ? source[key] : [];
+      const cleaned = values
+        .map((value) => String(value || '').trim())
+        .filter((value) => value !== '');
+      if (cleaned.length > 0) {
+        normalized[lang] = cleaned;
+      }
+    });
+    return normalized;
+  }
+
+  function buildPatchPayloadFromExistingQuestions(questions) {
+    const payload = [];
+
+    for (const question of questions) {
+      const questionType = normalizeQuestionTypeForPatch(question?.question_type);
+      if (!questionType) continue;
+
+      const translations = normalizeTranslationsForPatch(question?.translations);
+      if (Object.keys(translations).length === 0) continue;
+
+      payload.push({
+        question_type: questionType,
+        translations,
+      });
+    }
+
+    payload.sort((a, b) => {
+      if (a.question_type !== b.question_type) {
+        return a.question_type.localeCompare(b.question_type);
+      }
+      const aTerm = Array.isArray(a?.translations?.en) ? String(a.translations.en[0] || '') : '';
+      const bTerm = Array.isArray(b?.translations?.en) ? String(b.translations.en[0] || '') : '';
+      return aTerm.localeCompare(bTerm);
+    });
+
+    return payload;
+  }
+
+  function validateTranslationsObject(translations, path, errors) {
+    if (translations === undefined || translations === null) {
+      return;
+    }
+
+    if (typeof translations !== 'object' || Array.isArray(translations)) {
+      errors.push(`${path}.translations must be an object like { "en": ["term", "definition"] }`);
+      return;
+    }
+
+    Object.keys(translations).forEach((langKey) => {
+      const lang = String(langKey || '').trim();
+      if (!lang) {
+        errors.push(`${path}.translations has an empty language key`);
+        return;
+      }
+
+      const values = translations[langKey];
+      if (!Array.isArray(values)) {
+        errors.push(`${path}.translations.${lang} must be an array of strings`);
+        return;
+      }
+      if (values.length === 0) {
+        errors.push(`${path}.translations.${lang} must include at least one string (the term)`);
+        return;
+      }
+
+      values.forEach((value, index) => {
+        if (typeof value !== 'string') {
+          errors.push(`${path}.translations.${lang}[${index}] must be a string`);
+          return;
+        }
+        if (value.trim() === '') {
+          errors.push(`${path}.translations.${lang}[${index}] cannot be empty`);
+        }
+      });
+    });
+  }
+
+  function validateQuestionItem(item, index, errors, typeCounts) {
+    const path = `[${index}]`;
+
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+
+    const normalizedType = normalizeQuestionTypeForPatch(item.question_type);
+    if (!normalizedType) {
+      errors.push(`${path}.question_type must be one of: activities, personality_traits`);
+    } else {
+      typeCounts[normalizedType] = (typeCounts[normalizedType] || 0) + 1;
+    }
+
+    validateTranslationsObject(item.translations, path, errors);
+  }
+
+  function validateTestQuestionsPatchPayload(payload) {
+    const errors = [];
+
+    if (!Array.isArray(payload)) {
+      return { ok: false, errors: ['Request body must be a JSON array'] };
+    }
+    if (payload.length === 0) {
+      return { ok: false, errors: ['Request body must include at least one question'] };
+    }
+
+    const typeCounts = { activities: 0, personality_traits: 0 };
+    payload.forEach((item, index) => validateQuestionItem(item, index, errors, typeCounts));
+
+    if (typeCounts.activities === 0 || typeCounts.personality_traits === 0) {
+      errors.push('Request must include both activities and personality_traits questions');
+    }
+
+    return {
+      ok: errors.length === 0,
+      errors,
+    };
+  }
+
+  async function runLoadTestQuestionsEditor() {
+    const editor = document.getElementById('test-questions-body');
+    try {
+      const response = await api('GET', '/api/adjectives');
+      if (!response.ok || !Array.isArray(response.data)) {
+        showResult('res-test-questions', {
+          status: response.status,
+          ok: false,
+          data: {
+            error: 'Failed to load existing adjectives/questions for editor',
+            response: response.data,
+          },
+        });
+        return;
+      }
+
+      const payload = buildPatchPayloadFromExistingQuestions(response.data);
+      editor.value = JSON.stringify(payload, null, 2);
+
+      const activityCount = payload.filter((q) => q.question_type === 'activities').length;
+      const personalityCount = payload.filter((q) => q.question_type === 'personality_traits').length;
+
+      showResult('res-test-questions', {
+        status: 200,
+        ok: true,
+        data: {
+          message: 'Loaded current questions into editor',
+          activitiesCount: activityCount,
+          personalityTraitsCount: personalityCount,
+        },
+      });
+    } catch (e) {
+      showResult('res-test-questions', e);
+    }
+  }
+
   async function runUser() {
     try { showResult('res-user', await api('GET', '/api/user')); }
     catch (e) { showResult('res-user', e); }
@@ -667,6 +890,38 @@
   async function runAdjectives() {
     try { showResult('res-adjectives', await api('GET', '/api/adjectives')); }
     catch (e) { showResult('res-adjectives', e); }
+  }
+
+  async function runTestQuestionsPatch() {
+    const parsed = parseBodyField('test-questions-body');
+    if (!parsed.ok) {
+      showResult('res-test-questions', { status: 0, data: parsed.error, ok: false });
+      return;
+    }
+
+    const validation = validateTestQuestionsPatchPayload(parsed.value);
+    if (!validation.ok) {
+      showResult('res-test-questions', {
+        status: 0,
+        ok: false,
+        data: {
+          error: 'Client-side validation failed',
+          issues: validation.errors,
+        },
+      });
+      return;
+    }
+
+    try {
+      const response = await api('PATCH', '/api/test/questions', parsed.value);
+      showResult('res-test-questions', response);
+      if (response.ok && Array.isArray(response?.data)) {
+        const payload = buildPatchPayloadFromExistingQuestions(response.data);
+        document.getElementById('test-questions-body').value = JSON.stringify(payload, null, 2);
+      }
+    } catch (e) {
+      showResult('res-test-questions', e);
+    }
   }
 
   async function runResponse() {

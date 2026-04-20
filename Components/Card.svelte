@@ -15,8 +15,8 @@
 	let showServerErrorPopup = $state(false);
 	let isLoadingQuestions = $state(true);
 
-	function normalizeApiCardItems(payload) {
-		if (!Array.isArray(payload)) {
+	function normalizeApiCardItems(payload) { // normalize json data into array type data that can be used more easily
+		if (!Array.isArray(payload)) { // if the payload is not an array, return an empty array to avoid errors
 			return [];
 		}
 
@@ -30,12 +30,15 @@
 					? 'personality'
 					: (item.question_type || 'activities');
 				const englishTranslation = item.translations?.en;
-				const englishTerm = Array.isArray(englishTranslation)
+
+				const englishTerm = Array.isArray(englishTranslation) // extract the term
 					? (englishTranslation[0] || '')
 					: (typeof item.en === 'string' ? item.en : (item.en?.term || ''));
-				const englishDef = Array.isArray(englishTranslation)
+
+				const englishDef = Array.isArray(englishTranslation) // extract the definition
 					? (englishTranslation[1] || '')
 					: (typeof item.en?.def === 'string' ? item.en.def : '');
+
 
 				if (!englishTerm) {
 					return null;
@@ -47,6 +50,7 @@
 					en: {
 						term: englishTerm,
 						def: englishDef,
+						type: questionType, // this is not essential but allows for the rest of the code to know 1. where the transition is and 2. if other types  (like "other" are added later that do not need to leave the contents of the card/swiping app, they wont get messed up by the code expecting only "personality" and "activity" types)
 					},
 				};
 			})
@@ -60,10 +64,10 @@
 		showServerErrorPopup = false;
 
 		try {
-			const adjectivesList = await APICreater('GET', '/api/adjectives', null);
-			const normalizedItems = normalizeApiCardItems(adjectivesList);
+			const adjectivesList = await APICreater('GET', '/api/adjectives', null); // get the list of adjectives and personality traits from the backend, this is the endpoint that is used to populate the cards, it returns a list of objects with the following format: {id: number, question_type: string, en: {term: string, def: string}, translations: {en: [term, def], ...}}
+			const normalizedItems = normalizeApiCardItems(adjectivesList); // normalize the list of items to the format expected by the component, which is an array
 
-			if (normalizedItems.length === 0) {
+			if (normalizedItems.length === 0) { // if the normalized list is empty, throw an error to show the server error popup
 				throw new Error('No questions were returned by the server');
 			}
 
@@ -76,7 +80,44 @@
 		} finally {
 			isLoadingQuestions = false;
 		}
+
+
+		insertCardItems(); // insert the card items into the list of items after loading the questions, this is used to separate the personality and activity questions in the swiping app, so that the personality questions are swiped first and then the activity questions are swiped after
 	}
+
+
+	function findSeperationIndex() { // find the index of the first different type question, this is used to separate the personality and activity questions in the swiping app, so that the personality questions are swiped first and then the activity questions are swiped after
+		let splitIndex = items.length; // default to the end of the list if no activities are found
+
+
+		for (let i = 0; i < splitIndex; i++) {
+			if (items[i].question_type === 'personality') { // if the question type is personality, continue searching for the separation point, break because we want to insert at the first personality trait position
+				splitIndex = i; // update the split index to the first activity question
+				break; // exit the loop since we found the separation point
+			}
+		}
+
+		return splitIndex;
+
+	}
+
+	function insertCardItems() { // insert new card items into the current list of items, used for the swiping feature
+
+		console.log("inserting card items into the list of items used by the swiping app, current items: ")
+		console.table(items);
+
+		const NewItem = {id: -1, question_type: "Other", en: {term: "Halfway there!!!", def: "The next couple of questions will be about personality traits that apply to you", type: "Other"}}; // insert card (into the array to work with the current code structure)
+		
+		
+		items.splice(findSeperationIndex(), 0, NewItem); // insert the new items into the current list of items at the separation point between personality and activity questions
+		
+		console.log("finished inserting card items into the list of items used by the swiping app, current items: ")
+		console.table(items);
+	}
+
+	
+
+
 
 
 	export async function sendSwipeInformation(responses) { // send all swipe responses at once using the array payload expected by /response
@@ -115,6 +156,9 @@
 		term = items[counter][lang].term;
 		def = items[counter][lang].def;
 		console.log("tried to advance card to" + counter + ":" + term + ":" + def);
+
+		console.log("current card information: ") 
+		console.table(items[counter][lang]);
 		
 	}
 

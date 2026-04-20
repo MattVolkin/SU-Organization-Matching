@@ -32,6 +32,8 @@ const (
 	FieldPersonality = "personality"
 	// FieldActivities holds the string denoting the activities field in the database.
 	FieldActivities = "activities"
+	// FieldActivitiesDescription holds the string denoting the activities_description field in the database.
+	FieldActivitiesDescription = "activities_description"
 	// FieldGenders holds the string denoting the genders field in the database.
 	FieldGenders = "genders"
 	// FieldEthnicities holds the string denoting the ethnicities field in the database.
@@ -71,6 +73,7 @@ var Columns = []string{
 	FieldIncludeOfficerEmails,
 	FieldPersonality,
 	FieldActivities,
+	FieldActivitiesDescription,
 	FieldGenders,
 	FieldEthnicities,
 	FieldReligions,
@@ -104,6 +107,8 @@ var (
 	DefaultPersonality []string
 	// DefaultActivities holds the default value on creation for the "activities" field.
 	DefaultActivities []string
+	// DefaultActivitiesDescription holds the default value on creation for the "activities_description" field.
+	DefaultActivitiesDescription string
 	// DefaultGenders holds the default value on creation for the "genders" field.
 	DefaultGenders []string
 	// DefaultEthnicities holds the default value on creation for the "ethnicities" field.
@@ -165,6 +170,11 @@ func ByContactInfo(opts ...sql.OrderTermOption) OrderOption {
 // ByIncludeOfficerEmails orders the results by the include_officer_emails field.
 func ByIncludeOfficerEmails(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIncludeOfficerEmails, opts...).ToFunc()
+}
+
+// ByActivitiesDescription orders the results by the activities_description field.
+func ByActivitiesDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldActivitiesDescription, opts...).ToFunc()
 }
 
 // ByStrictGenders orders the results by the strict_genders field.

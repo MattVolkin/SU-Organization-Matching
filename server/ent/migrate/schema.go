@@ -48,6 +48,7 @@ var (
 		{Name: "include_officer_emails", Type: field.TypeBool, Default: false},
 		{Name: "personality", Type: field.TypeJSON},
 		{Name: "activities", Type: field.TypeJSON},
+		{Name: "activities_description", Type: field.TypeString, Default: ""},
 		{Name: "genders", Type: field.TypeJSON},
 		{Name: "ethnicities", Type: field.TypeJSON},
 		{Name: "religions", Type: field.TypeJSON},

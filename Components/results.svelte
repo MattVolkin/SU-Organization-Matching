@@ -39,7 +39,7 @@
   let isAuthenticated = $state(false)
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
-  let threshold = 30
+  let threshold =0
 
   function scrollToResultsTop() {
     if (resultsPageElement) {
@@ -149,21 +149,35 @@
     return text
   }
 
-  function getVisibleActivities(value) {
-    if (Array.isArray(value)) {
-      return value
-        .map((entry) => String(entry || '').trim())
-        .filter((entry) => entry.length > 0)
+  function getVisibleActivitiesDescription(club) {
+    const description = getTrimmedText(
+      club?.activitiesDescreption ??
+      club?.activitiesDescription ??
+      club?.ActivitiesDescreption ??
+      club?.ActivitiesDescription
+    )
+
+    if (description) {
+      return description
     }
 
-    if (typeof value === 'string') {
-      return value
+    const activities = club?.activities ?? club?.Activities
+    if (Array.isArray(activities)) {
+      return activities
+        .map((entry) => String(entry || '').trim())
+        .filter((entry) => entry.length > 0)
+        .join(', ')
+    }
+
+    if (typeof activities === 'string') {
+      return activities
         .split(',')
         .map((entry) => entry.trim())
         .filter((entry) => entry.length > 0)
+        .join(', ')
     }
 
-    return []
+    return ''
   }
 
   function formatUpdatedAt(updatedAt) {
@@ -268,7 +282,7 @@
         matchPercentage: getClubScore(item),
         description: getClubDescription(mergedClub, item),
         meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
-        activities: getVisibleActivities(mergedClub?.activities ?? mergedClub?.Activities),
+        activitiesDescription: getVisibleActivitiesDescription(mergedClub),
         imagePath: getClubImagePath(mergedClub),
         externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
         contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
@@ -341,9 +355,9 @@
               <p>{club.meetingTime}</p>
             {/if}
 
-            {#if Array.isArray(club.activities) && club.activities.length > 0}
+            {#if club.activitiesDescription}
               <h3>Activities</h3>
-              <p>{club.activities.join(', ')}</p>
+              <p>{club.activitiesDescription}</p>
             {/if}
 
             <div class="club-meta">

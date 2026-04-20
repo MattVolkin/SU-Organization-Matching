@@ -641,6 +641,7 @@ type ClubMutation struct {
 	appendpersonality       []string
 	activities              *[]string
 	appendactivities        []string
+	activities_description  *string
 	genders                 *[]string
 	appendgenders           []string
 	ethnicities             *[]string
@@ -1181,6 +1182,42 @@ func (m *ClubMutation) ResetActivities() {
 	m.appendactivities = nil
 }
 
+// SetActivitiesDescription sets the "activities_description" field.
+func (m *ClubMutation) SetActivitiesDescription(s string) {
+	m.activities_description = &s
+}
+
+// ActivitiesDescription returns the value of the "activities_description" field in the mutation.
+func (m *ClubMutation) ActivitiesDescription() (r string, exists bool) {
+	v := m.activities_description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActivitiesDescription returns the old "activities_description" field's value of the Club entity.
+// If the Club object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ClubMutation) OldActivitiesDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActivitiesDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActivitiesDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActivitiesDescription: %w", err)
+	}
+	return oldValue.ActivitiesDescription, nil
+}
+
+// ResetActivitiesDescription resets all changes to the "activities_description" field.
+func (m *ClubMutation) ResetActivitiesDescription() {
+	m.activities_description = nil
+}
+
 // SetGenders sets the "genders" field.
 func (m *ClubMutation) SetGenders(s []string) {
 	m.genders = &s
@@ -1647,7 +1684,7 @@ func (m *ClubMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ClubMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.club_name != nil {
 		fields = append(fields, club.FieldClubName)
 	}
@@ -1674,6 +1711,9 @@ func (m *ClubMutation) Fields() []string {
 	}
 	if m.activities != nil {
 		fields = append(fields, club.FieldActivities)
+	}
+	if m.activities_description != nil {
+		fields = append(fields, club.FieldActivitiesDescription)
 	}
 	if m.genders != nil {
 		fields = append(fields, club.FieldGenders)
@@ -1725,6 +1765,8 @@ func (m *ClubMutation) Field(name string) (ent.Value, bool) {
 		return m.Personality()
 	case club.FieldActivities:
 		return m.Activities()
+	case club.FieldActivitiesDescription:
+		return m.ActivitiesDescription()
 	case club.FieldGenders:
 		return m.Genders()
 	case club.FieldEthnicities:
@@ -1768,6 +1810,8 @@ func (m *ClubMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPersonality(ctx)
 	case club.FieldActivities:
 		return m.OldActivities(ctx)
+	case club.FieldActivitiesDescription:
+		return m.OldActivitiesDescription(ctx)
 	case club.FieldGenders:
 		return m.OldGenders(ctx)
 	case club.FieldEthnicities:
@@ -1855,6 +1899,13 @@ func (m *ClubMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetActivities(v)
+		return nil
+	case club.FieldActivitiesDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActivitiesDescription(v)
 		return nil
 	case club.FieldGenders:
 		v, ok := value.([]string)
@@ -2020,6 +2071,9 @@ func (m *ClubMutation) ResetField(name string) error {
 		return nil
 	case club.FieldActivities:
 		m.ResetActivities()
+		return nil
+	case club.FieldActivitiesDescription:
+		m.ResetActivitiesDescription()
 		return nil
 	case club.FieldGenders:
 		m.ResetGenders()

@@ -4,7 +4,7 @@
 <div class="footer">
 
   <div class="capstone-info">
-    <p>This tool was made as Computer Science Capstone at Southwestern University<br>By: Aidan Balakrishnan 26’, Tanner Klein 26’, Ben McKallip 26’ and Matthew Volkin 26’</p>
+    <p>This tool was made as Computer Science Capstone at Southwestern University<br>By: Aidan Balakrishnan '26, Tanner Klein '26, Ben McKallip '26 and Matthew Volkin '26</p>
   </div>
 </div>
 
