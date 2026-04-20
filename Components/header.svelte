@@ -233,6 +233,10 @@
     return `/settings.html?${params.toString()}`;
   }
 
+  function getHomeHref() {
+    return getNavUserType() === 'admin' ? '/admin-home.html' : '/index.html';
+  }
+
 </script>
 <LoginPopup autoOpen={!isAuthChecking && !userEmail}/>
 {#if getNavUserType() === 'admin'} 
@@ -266,7 +270,7 @@
   </button>
   <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
-    <a href="/index.html" onclick={closeMenu}>Home</a>
+    <a href={getHomeHref()} onclick={closeMenu}>Home</a>
      <a href="/results.html" onclick={closeMenu}>My Results</a>
     <a href="/about.html" onclick={closeMenu}>About This Project</a>
     <a href="/howto.html" onclick={closeMenu}>How To Use This Tool</a>

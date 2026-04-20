@@ -16,6 +16,7 @@
  * @function editClub - Placeholder function to handle editing a club, should be replaced with actual implementation to edit club details
  * @function deleteClub - Placeholder function to handle deleting a club, should be replaced with actual implementation to delete the club from the database and update the UI
  */
+    import { onMount } from 'svelte'
     import AdminSwitch from './AdminSwitch.svelte'
     import Header from './header.svelte'
     import Footer from './footer.svelte'
@@ -24,11 +25,33 @@
     let adminPreviewType = $state('admin')
     let maxClubsPerPage = $state(8)
     let pageNum = $state(1)
-    let clubs = $state(getAllClubs())//Todo: replace with API call to fetch clubs
+    let clubs = $state([])
+    let isLoading = $state(true)
+    let loadError = $state('')
     const totalPages = $derived(Math.max(1, Math.ceil(clubs.length / maxClubsPerPage)))
+    const startIndex = $derived((pageNum - 1) * maxClubsPerPage)
+    const paginatedClubs = $derived(clubs.slice(startIndex, startIndex + maxClubsPerPage))
+
+    onMount(() => {
+        void loadClubs()
+    })
+
     //Todo: add API to fetch all clubs and store in state
-    function getAllClubs() {
-        return APICreater('GET', '/api/admin/orgs',null)
+    async function loadClubs() {
+        isLoading = true
+        loadError = ''
+        try {
+            const fetchedClubs = await APICreater('GET', '/api/admin/orgs', null)
+            clubs = Array.isArray(fetchedClubs) ? fetchedClubs : []
+            if (pageNum > totalPages) {
+                pageNum = totalPages
+            }
+        } catch (error) {
+            loadError = 'Unable to load clubs. Please refresh and try again.'
+            clubs = []
+        } finally {
+            isLoading = false
+        }
     }
     function nextPage() {
         if (pageNum < totalPages) {
@@ -42,17 +65,22 @@
     }
 
     function getClubName(club) {
-        return typeof club === 'string' ? club : (club?.name || 'Unknown Club')
+        return typeof club === 'string' ? club : (club?.clubName || club?.name || 'Unknown Club')
     }
 
     function editClub(club) {
-        Window.location.href = `/SettingsPage.html?clubId=${club.id}` 
+        window.location.href = `/settings.html?club=${encodeURIComponent(getClubName(club))}`
     }
 
-    function deleteClub(club) {
-       APICreater('DELETE', '/api/admin/orgs/', {"id":club.id})
-
-
+    async function deleteClub(club) {
+       if (!club?.id) {
+            return
+       }
+       await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
+       clubs = clubs.filter((existingClub) => existingClub?.id !== club.id)
+       if (pageNum > totalPages) {
+            pageNum = totalPages
+       }
     }
 
 </script>
@@ -75,15 +103,29 @@
                 </tr>
             </thead>
             <tbody>
-                {#each clubs.slice(0, maxClubsPerPage) as club}
+                {#if isLoading}
                     <tr>
-                        <td>{getClubName(club)}</td>
-                        <td>
-                            <button onclick={() => editClub(club)}>Edit</button>
-                            <button onclick={() => deleteClub(club)}>Delete</button>
-                       </td>
+                        <td colspan="2">Loading clubs...</td>
                     </tr>
-                {/each}
+                {:else if loadError}
+                    <tr>
+                        <td colspan="2">{loadError}</td>
+                    </tr>
+                {:else if paginatedClubs.length === 0}
+                    <tr>
+                        <td colspan="2">No clubs found.</td>
+                    </tr>
+                {:else}
+                    {#each paginatedClubs as club}
+                        <tr>
+                            <td>{getClubName(club)}</td>
+                            <td>
+                                <button onclick={() => editClub(club)}>Edit</button>
+                                <button onclick={() => deleteClub(club)}>Delete</button>
+                           </td>
+                        </tr>
+                    {/each}
+                {/if}
             </tbody>
         </table>
         <div class="pager">

@@ -26,6 +26,10 @@ async function loadUserType() {
     const data = await response.json().catch(() => ({}));
     const role = String(data?.role || '').toLowerCase();
     userType = role === 'admin' || role === 'officer' ? role : 'user';
+
+    if (userType === 'admin') {
+        window.location.replace('/admin-home.html');
+    }
 }
 
 onMount(() => {
