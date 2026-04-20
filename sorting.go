@@ -41,14 +41,21 @@ func main() {
 			Other:         []string{"Greek Life"},
 			StrictGenders: true,
 		},
+		{
+			ID:          5,
+			Name:        "Asian Student Association",
+			Personality: []string{"Welcoming", "Open Minded", "Curious", "Social"},
+			Activities:  []string{"Movies", "Guest Speakers", "Group Meals"},
+			Ethnicities: []string{"Asian", "Native Hawaiian or Pacific Islander"},
+		},
 	}
 
 	userInfo := matching.UserInfo{
 		Name:            "Example User",
-		Personality:     []string{"Hard Working", "Leader", "Social"},
-		Activities:      []string{"Fundraising", "Retreats", "Professional Development", "Group Meals"},
+		Personality:     []string{"Welcoming", "Open Minded", "Curious", "Social"},
+		Activities:      []string{"Movies", "Guest Speakers", "Group Meals"},
 		Genders:         []string{"Man"},
-		Ethnicities:     []string{"White"},
+		Ethnicities:     []string{"Native Hawaiian or Pacific Islander", "Asian"},
 		Religions:       []string{"Catholocism"},
 		DedicatedMajors: []string{"Computer Science"},
 		Other:           []string{"LGBTQ", "Greek Life"},

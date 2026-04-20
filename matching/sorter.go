@@ -51,7 +51,9 @@ type MatchResult struct {
 // Section to define weights for each type of question
 const personalityWeight float32 = 1.5
 const activityWeight float32 = 2.25
-const demographicWeight float32 = 1.25
+const genderWeight float32 = 1
+const ethnicityWeight float32 = 1.75
+const religionWeight float32 = 1.75
 const academicWeight float32 = 1.5
 const otherWeight float32 = 2
 
@@ -132,12 +134,14 @@ func Sort(user UserInfo, organizations []Organization) []MatchResult {
 func compareUserToOrg(user UserInfo, org Organization) float32 {
 	personalityScore := personalityScoring(user, org)
 	activityScore := activityScoring(user, org)
-	demographicScore := demographicScoring(user, org)
+	genderScore := genderScoring(user, org)
+	ethnicityScore := ethnicityScoring(user, org)
+	religionScore := religionScoring(user, org)
 	academicScore := academicScoring(user, org)
 	otherScore := otherScoring(user, org)
 
-	finalScore := personalityScore + activityScore + demographicScore + academicScore + otherScore
-	if demographicScore == 0 && org.StrictGenders {
+	finalScore := personalityScore + activityScore + genderScore + ethnicityScore + religionScore + academicScore + otherScore
+	if genderScore == 0 && org.StrictGenders {
 		return 0
 	}
 	return finalScore
@@ -170,40 +174,64 @@ func activityScoring(user UserInfo, org Organization) float32 {
 }
 
 // Calculates the matching score for demographics between a user and an organization
-func demographicScoring(user UserInfo, org Organization) float32 {
-	totalDemographics := min(1, len(org.Genders)) + min(1, len(org.Ethnicities)) + min(1, len(org.Religions))
-	if totalDemographics == 0 { // check to avoid division by 0
-		return 0
-	}
-	genderMatches := 0
+
+func genderScoring(user UserInfo, org Organization) float32 {
+	var score float32 = 0
 	for _, gender := range user.Genders {
 		if containsFold(org.Genders, gender) {
-			genderMatches = 1
+			score = genderWeight
 		}
 	}
-	score := genderMatches
+	return score
+}
 
-	ethnicityMatches := 0
+func ethnicityScoring(user UserInfo, org Organization) float32 {
+	var score float32 = 0
 	for _, ethnicity := range user.Ethnicities {
 		if containsFold(org.Ethnicities, ethnicity) {
-			ethnicityMatches = 1
+			score = ethnicityWeight
 		}
 	}
-	score += ethnicityMatches
+	return score
+}
 
-	religionMatches := 0
+func religionScoring(user UserInfo, org Organization) float32 {
+	var score float32 = 0
 	for _, religion := range user.Religions {
 		if containsFold(org.Religions, religion) {
-			religionMatches = 1
+			score = religionWeight
 		}
 	}
-	score += religionMatches
-
-	if genderMatches == 0 && org.StrictGenders {
-		score = 0
-	}
-	return demographicWeight * float32(score) / float32(totalDemographics)
+	return score
 }
+
+// func demographicScoring(user UserInfo, org Organization) float32 {
+// 	totalDemographics := min(1, len(org.Genders)) + min(1, len(org.Ethnicities)) + min(1, len(org.Religions))
+// 	if totalDemographics == 0 { // check to avoid division by 0
+// 		return 0
+// 	}
+// 	genderMatches := 0
+// 	for _, gender := range user.Genders {
+// 		if containsFold(org.Genders, gender) {
+// 			genderMatches = 1
+// 		}
+// 	}
+// 	score := genderMatches
+
+// 	ethnicityMatches := 0
+// 	for _, ethnicity := range user.Ethnicities {
+// 		if containsFold(org.Ethnicities, ethnicity) {
+// 			ethnicityMatches = 1
+// 		}
+// 	}
+// 	score += ethnicityMatches
+
+// 	religionMatches := 0
+
+// 	score += religionMatches
+
+// 	return demographicWeight * float32(score) / float32(totalDemographics)
+// }
 
 // Calculates the matching score for academic interests between a user and an organization
 func academicScoring(user UserInfo, org Organization) float32 {
