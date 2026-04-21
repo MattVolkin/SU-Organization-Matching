@@ -100,13 +100,13 @@ import { APICreater } from './APIHandler.svelte';
   async function submit(event) {
     event.preventDefault()
     await APICreater('POST', '/submit', {
-      name,
-      gender,
-      race,
-      religion,
-      major,
-      lgbtq: LGBTQ,
-      Disabilities: disability
+      "name": name,
+      "gender": gender,
+      "race": race,
+      "religion": religion,
+      "major": major,
+      "lgbtq": LGBTQ,
+     "disabilities": disability
     })
      window.location.href = '/swiping.html';
   }
