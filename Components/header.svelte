@@ -44,6 +44,10 @@
     return resolvedUserType === 'admin' || userType === 'admin';
   }
 
+  function isAdminPreviewingOfficer() {
+    return canShowAdminPreviewBar() && getNavUserType() === 'officer';
+  }
+
   function getOrgApiPath() {
     return getApiUserType() === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs';
   }
@@ -295,7 +299,9 @@
       <a href="/admin-home.html" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
       {@const managedClubs = getManageClubs()}
-      <div class={`nav-item manage-club-menu ${isManageClubOpen ? 'open' : ''}`}>
+      <div
+        class={`nav-item manage-club-menu ${isManageClubOpen ? 'open' : ''} ${isAdminPreviewingOfficer() ? 'admin-preview-menu' : 'officer-menu'}`}
+      >
         <a
           class="manage-club-trigger"
           href={managedClubs.length > 0 ? getManageClubHref(managedClubs[0]) : '/settings.html'}
@@ -303,7 +309,10 @@
           aria-expanded={isManageClubOpen}
           aria-haspopup="true"
         >Manage Club</a>
-        <div class="club-dropdown" aria-label="Clubs you can manage">
+        <div
+          class={`club-dropdown ${isAdminPreviewingOfficer() ? 'multi-column' : 'single-column'}`}
+          aria-label="Clubs you can manage"
+        >
           {#if managedClubs.length > 0}
             {#each managedClubs as club}
               {@const clubName = getClubName(club)}
@@ -500,10 +509,32 @@
     overflow-x: hidden;
     overflow-y: auto;
     z-index: 10;
+    gap: 0;
+  }
+
+  .club-dropdown.single-column {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    width: max-content;
+    min-width: 12rem;
+    max-width: min(16rem, calc(100vw - 1rem));
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .club-dropdown.single-column a,
+  .club-dropdown.single-column .empty-clubs {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .club-dropdown.multi-column {
     grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
     grid-auto-flow: row;
     grid-template-rows: none;
-    gap: 0;
   }
 
   .manage-club-menu:hover .club-dropdown,
