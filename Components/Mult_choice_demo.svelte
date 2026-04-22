@@ -2,6 +2,7 @@
 import Header from './header.svelte'
 import Footer from './footer.svelte'
 import { APICreater } from './APIHandler.svelte';
+import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   let name = $state('')
   let club = $state('')
@@ -185,18 +186,7 @@ import { APICreater } from './APIHandler.svelte';
         <fieldset>
 			<legend>Intended Major(s) / Program of Study</legend>
 			<p class="hint">Select all that apply.</p>
-			<div class="option-grid majors">
-				{#each majorOptions as option}
-				  <label>
-				    <!-- {#if option === 'Undecided'}
-				      <input type="radio" name="major" value={option} bind:group={major} required />
-				    {:else} -->
-				      <input type="checkbox" name="major" value={option} bind:group={major} />
-				    <!-- {/if} -->
-				    <span>{option}</span>
-				  </label>
-				{/each}
-			</div>
+			<MultiSelectDropdown id="majors" label="Choose majors" options={majorOptions} bind:value={major} />
 		</fieldset>
 
         <button type="submit">Submit and Continue</button>

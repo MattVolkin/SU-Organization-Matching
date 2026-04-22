@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { APICreater } from './APIHandler.svelte';
+  import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   type ClubValue = string | {
     id?: number;
@@ -52,11 +53,75 @@
   let allAdjectives = $state<string[]>([]);
   let allClubActivities = $state<string[]>([]);
   let combinedTraitOptions = $derived(getTraitSelectOptions());
-  let trendsGender = $state('');
-  let trendsEthnicities = $state('');
-  let trendsReligions = $state('');
-  let trendsDedicatedMajors = $state('');
-  let trendsOther = $state('');
+
+  // Trend options
+  const genderOptions = ['Man', 'Woman', 'Non-binary', 'Other'];
+ const raceOptions = [
+    'American Native/Alaska Native',
+    'Asian',
+    'Black or African American',
+    'Hispanic or Latino',
+    'Middle Eastern or North African',
+    'Native Hawaiian or Pacific Islander',
+    'White']
+  const religionOptions = ['Christianity', 'Protestantism', 'Catholicism', 'Orthodox Christianity', 'Judaism', 'Islam', 'Hinduism', 'Buddhism', 'Sikhism', 'Atheism', 'Agnosticism', 'Other', 'Prefer not to say', 'Any'];
+  const majorOptions = [
+    'Anthropology',
+    'Applied Physics',
+    'Art (Studio)',
+    'Art History',
+    'Biochemistry',
+    'Biology',
+    'Business',
+    'Chemistry',
+    'Classics',
+    'Communication Studies',
+    'Computational Mathematics',
+    'Computer Science',
+    'Pre-Dentistry',
+    'Economics',
+    'Education',
+    'Pre-Engineering',
+    'English',
+    'Environmental Studies',
+    'Feminist Studies',
+    'French',
+    'German',
+    'Greek',
+    'Health Professions',
+    'History',
+    'International Studies',
+    'Kinesiology',
+    'Latin',
+    'Latin American & Border Studies',
+    'Pre-Law',
+    'Mathematics',
+    'Pre-Med',
+    'Pre-Ministry',
+    'Music',
+    'Pre-Nursing',
+    'Pre-Occupational Therapy',
+    'Philosophy',
+    'Physics',
+    'Political Science',
+    'Psychology',
+    'Pre-Physician Assistant',
+    'Pre-Physical Therapy',
+    'Religion',
+    'Sociology',
+    'Spanish',
+    'Theatre',
+    'Undecided',
+  ]
+
+
+  const otherOptions = ['LGBTQ', 'Greek Life', "Disabilities"]
+
+  let trendsGender = $state<string[]>([]);
+  let trendsEthnicities = $state<string[]>([]);
+  let trendsReligions = $state<string[]>([]);
+  let trendsDedicatedMajors = $state<string[]>([]);
+  let trendsOther = $state<string[]>([]);
   let trendsStrictGenders = $state(false);
   let officerClubs = $state<ClubValue[]>([]);
   let clubImageLibrary = $state<Record<string, string[]>>({});
@@ -125,18 +190,22 @@
     accessibleClubs = [requestedTestClub];
     allAdjectives = testAdjectives;
     allClubActivities = csvToList('Board Games, Study Group, Movies, Guest Speakers, Community Service, Leadership');
-    selectedAdjectives = ['Welcoming', 'Community-focused'];
     generalMeetingTime = 'Thursdays at 6:30 PM';
     generalSocialMedia = 'https://instagram.com/yourclub';
     resultContactInfo = '';
     includeOfficerEmailsInResults = false;
     resultDescription = 'Add your club description for the results page here.';
     resultActivitiesText = 'Board Games, Study Group, Movies, Guest Speakers, Community Service';
-    trendsGender = 'Any';
-    trendsEthnicities = 'Any';
-    trendsReligions = 'Any';
-    trendsDedicatedMajors = 'Computer Science';
-    trendsOther = 'No experience required';
+    selectedAdjectives = mergeUniqueStrings(
+      ['Welcoming', 'Community-focused'],
+      csvToList(resultActivitiesText),
+      allClubActivities
+    );
+    trendsGender = ['Any'];
+    trendsEthnicities = ['Any'];
+    trendsReligions = ['Any'];
+    trendsDedicatedMajors = ['Computer Science'];
+    trendsOther = ['No experience required'];
     trendsStrictGenders = false;
 
     if (!(clubImageLibrary[requestedTestClub] || []).length) {
@@ -312,6 +381,24 @@
       .filter((entry) => entry.length > 0);
   }
 
+  function mergeUniqueStrings(...groups: string[][]) {
+    const seen = new Set<string>();
+    const merged: string[] = [];
+
+    for (const group of groups) {
+      for (const item of group) {
+        const normalized = String(item || '').trim();
+        const key = normalized.toLowerCase();
+        if (normalized && !seen.has(key)) {
+          seen.add(key);
+          merged.push(normalized);
+        }
+      }
+    }
+
+    return merged;
+  }
+
   function buildContactInfoForSave(club: ClubValue) {
     const baseContact = resultContactInfo.trim();
     if (!includeOfficerEmailsInResults) {
@@ -340,8 +427,20 @@
     const seen = new Set<string>();
     const merged: string[] = [];
 
+    const selectedClub = officerClubs.find((club) => getClubName(club) === selectedClubFromUrl);
+    const selectedClubActivities = selectedClub ? getClubActivities(selectedClub) : [];
+
     for (const item of allAdjectives) {
       const normalized = String(item || '').trim();
+      const key = normalized.toLowerCase();
+      if (normalized && !seen.has(key)) {
+        seen.add(key);
+        merged.push(normalized);
+      }
+    }
+
+    for (const activity of selectedClubActivities) {
+      const normalized = String(activity || '').trim();
       const key = normalized.toLowerCase();
       if (normalized && !seen.has(key)) {
         seen.add(key);
@@ -840,11 +939,11 @@
 
     try {
       await saveTrends(
-        csvToList(trendsGender),
-        csvToList(trendsEthnicities),
-        csvToList(trendsReligions),
-        csvToList(trendsDedicatedMajors),
-        csvToList(trendsOther),
+        trendsGender,
+        trendsEthnicities,
+        trendsReligions,
+        trendsDedicatedMajors,
+        trendsOther,
         trendsStrictGenders
       );
       saveStateTrends = 'saved';
@@ -871,12 +970,12 @@
       includeOfficerEmails: includeOfficerEmailsInResults,
       personality: adjectives,
       activities: csvToList(resultActivitiesText),
-      genders: csvToList(trendsGender),
-      ethnicities: csvToList(trendsEthnicities),
-      religions: csvToList(trendsReligions),
+      genders: trendsGender,
+      ethnicities: trendsEthnicities,
+      religions: trendsReligions,
       strict_genders: trendsStrictGenders,
-      dedicated_majors: csvToList(trendsDedicatedMajors),
-      other: csvToList(trendsOther),
+      dedicated_majors: trendsDedicatedMajors,
+      other: trendsOther,
     });
   }
 
@@ -943,7 +1042,6 @@
       }
 
       const requestedClubInfo = officerClubs.find((club) => getClubName(club) === requestedClub);
-      selectedAdjectives = getClubPersonalityTraits(requestedClubInfo || '');
       generalMeetingTime = requestedClubInfo && typeof requestedClubInfo !== 'string'
         ? String(requestedClubInfo.meetingTime ?? requestedClubInfo.MeetingTime ?? '').trim()
         : '';
@@ -961,14 +1059,19 @@
         : '';
         if(APICreater)
       resultActivitiesText = getClubActivitiesText(requestedClubInfo || '');
+      selectedAdjectives = mergeUniqueStrings(
+        getClubPersonalityTraits(requestedClubInfo || ''),
+        getClubActivities(requestedClubInfo || ''),
+        csvToList(resultActivitiesText)
+      );
       setSelectedOfficerEmails(requestedClub, []);
 
       if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
-        trendsGender = listToCSV(requestedClubInfo.genders);
-        trendsEthnicities = listToCSV(requestedClubInfo.ethnicities);
-        trendsReligions = listToCSV(requestedClubInfo.religions);
-        trendsDedicatedMajors = listToCSV(requestedClubInfo.dedicated_majors);
-        trendsOther = listToCSV(requestedClubInfo.other);
+        trendsGender = requestedClubInfo.genders || [];
+        trendsEthnicities = requestedClubInfo.ethnicities || [];
+        trendsReligions = requestedClubInfo.religions || [];
+        trendsDedicatedMajors = requestedClubInfo.dedicated_majors || [];
+        trendsOther = requestedClubInfo.other || [];
         trendsStrictGenders = Boolean(requestedClubInfo.strict_genders);
 
         const existingImagePath = String(requestedClubInfo.imagePath ?? requestedClubInfo.ImagePath ?? '').trim();
@@ -1145,16 +1248,9 @@
         <p class={`save-status ${saveStateResults}`} aria-live="polite">{getSaveIndicatorLabel(saveStateResults)}</p>
       {/if}
 
-      <h3>Personality + activities trait select</h3>
+      <h3>Personality & activities trait select</h3>
       <div class="adjective-row">
-        <div class="traits-column">
-          <label for="personality-select"></label>
-          <select id="personality-select" multiple bind:value={selectedAdjectives}>
-            {#each combinedTraitOptions as traitOption}
-              <option value={traitOption}>{traitOption}</option>
-            {/each}
-          </select>
-        </div>
+        <MultiSelectDropdown id="personality-traits" label="Select traits" options={combinedTraitOptions} bind:value={selectedAdjectives} />
       </div>
 
       <button class="save-button action-button" type="button" onclick={() => handleSaveAdjectives()} disabled={saveStateAdjectives === 'saving'}>Save Traits</button>
@@ -1164,30 +1260,13 @@
 
       <h3>Trends</h3>
       <div class="trends-grid">
-        <label>
-          Genders (comma-separated)
-          <input type="text" bind:value={trendsGender} />
-        </label>
-
-        <label>
-          Ethnicities (comma-separated)
-          <input type="text" bind:value={trendsEthnicities} />
-        </label>
-
-        <label>
-          Religions (comma-separated)
-          <input type="text" bind:value={trendsReligions} />
-        </label>
-
-        <label>
-          Dedicated majors (comma-separated)
-          <input type="text" bind:value={trendsDedicatedMajors} />
-        </label>
-
-        <label class="trends-full-row">
-          Other (comma-separated)
-          <input type="text" bind:value={trendsOther} />
-        </label>
+        <MultiSelectDropdown id="trends-genders" label="Genders" options={genderOptions} bind:value={trendsGender} />
+        <MultiSelectDropdown id="trends-ethnicities" label="Ethnicities" options={raceOptions} bind:value={trendsEthnicities} />
+        <MultiSelectDropdown id="trends-religions" label="Religions" options={religionOptions} bind:value={trendsReligions} />
+        <MultiSelectDropdown id="trends-majors" label="Dedicated majors" options={majorOptions} bind:value={trendsDedicatedMajors} />
+        <div class="trends-full-row">
+          <MultiSelectDropdown id="trends-other" label="Other" options={otherOptions} bind:value={trendsOther} />
+        </div>
 
         <label class="checkbox-label trends-full-row">
           <input type="checkbox" bind:checked={trendsStrictGenders} />
@@ -1306,7 +1385,6 @@
     margin: 0.8rem 0;
   }
 
-  select,
   textarea,
   input[type='text'],
   input[type='email'],
@@ -1328,11 +1406,6 @@
 
   textarea {
     resize: vertical;
-  }
-
-  select {
-    min-height: 9rem;
-    padding: 0.5rem;
   }
 
   button {
@@ -1357,20 +1430,6 @@
     gap: 0.6rem;
   }
 
-  .adjective-row select {
-    flex: 1 1 18rem;
-    max-width: 43rem;
-  }
-
-  .traits-column {
-    flex: 1 1 18rem;
-    display: grid;
-    gap: 0.35rem;
-  }
-
-  .traits-column label {
-    font-weight: 700;
-  }
 
   .results-content-grid {
     display: grid;
@@ -1408,24 +1467,7 @@
   .trends-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem;
-  }
-
-  .trends-grid label {
-    display: grid;
-    gap: 0.35rem;
-    font-weight: 700;
-    min-width: 0;
-  }
-
-  .trends-grid input[type='text'] {
-    width: min(75%, 460px);
-    max-width: 460px;
-  }
-
-  .trends-full-row input[type='text'] {
-    width: min(75%, 520px);
-    max-width: 520px;
+    gap: 1.2rem;
   }
 
   .trends-full-row {
@@ -1543,12 +1585,6 @@
   @media (max-width: 860px) {
     .trends-grid {
       grid-template-columns: 1fr;
-    }
-
-    .trends-grid input[type='text'],
-    .trends-full-row input[type='text'] {
-      width: 100%;
-      max-width: none;
     }
   }
 
