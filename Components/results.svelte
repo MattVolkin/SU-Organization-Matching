@@ -30,6 +30,8 @@
   let pageNum = $state(1) // for keeping track of what page of results the user is on.
   let isAuthChecking = $state(true)
   let isAuthenticated = $state(false)
+  let activeRole = $state('user')
+  let resultsErrorMessage = $state('')
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
   let threshold =0
@@ -99,6 +101,44 @@
     return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
   }
 
+  function extractListPayload(payload) {
+    if (Array.isArray(payload)) {
+      return payload
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return []
+    }
+
+    const candidateKeys = ['results', 'data', 'organizations', 'orgs', 'items']
+    for (const key of candidateKeys) {
+      if (Array.isArray(payload[key])) {
+        return payload[key]
+      }
+    }
+
+    return []
+  }
+
+  function extractErrorMessage(payload) {
+    if (!payload || typeof payload !== 'object') {
+      return ''
+    }
+
+    if (typeof payload.error === 'string' && payload.error.trim()) {
+      return payload.error.trim()
+    }
+
+    if (typeof payload.message === 'string' && payload.message.trim()) {
+      const lower = payload.message.trim().toLowerCase()
+      if (lower.includes('error') || lower.includes('unauthorized') || lower.includes('failed')) {
+        return payload.message.trim()
+      }
+    }
+
+    return ''
+  }
+
   function normalizeClubKey(value) {
     return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
   }
@@ -118,8 +158,7 @@
       return configuredPath
     }
 
-    const normalizedName = normalizeClubKey(getClubName(club))
-    return orgPhotoLibrary.get(normalizedName) || ''
+    return ''
   }
 
   function getVisibleContactInfo(value) {
@@ -189,12 +228,13 @@
   }
 
   function getFilteredResults() {
-  let resultsInThers= results.filter((club) => getClubScore(club) >= threshold)
-  if (resultsInThers.length>maxClub)
-    return resultsInThers.splice(maxClub)
-  else if(resultsInThers.length<minClub)
-    return resultsInThers.splice(minClub)
-  return resultsInThers
+    const resultsInThreshold = results.filter((club) => getClubScore(club) >= threshold)
+
+    if (resultsInThreshold.length > maxClub) {
+      return resultsInThreshold.slice(0, maxClub)
+    }
+
+    return resultsInThreshold
 
   }
 
@@ -222,6 +262,10 @@
     });
 
     if (response.ok) {
+      const data = await response.json().catch(() => ({}))
+      const role = String(data?.role || '').toLowerCase()
+      activeRole = role === 'admin' || role === 'officer' ? role : 'user'
+
       isAuthenticated = true;
       isAuthChecking = false;
       await getResults();
@@ -229,6 +273,7 @@
     }
 
     isAuthenticated = false
+    activeRole = 'user'
     isAuthChecking = false
   }
 
@@ -242,59 +287,90 @@
   }
 
   async function getResults() {
-    const [detailPayload, scorePayload] = await Promise.all([
-      APICreater('GET', '/api/results', null),
-      APICreater('GET', '/api/results?includeScores=true', null),
-    ])
+    resultsErrorMessage = ''
 
-    const detailList = Array.isArray(detailPayload) ? detailPayload : []
-    const scoreList = Array.isArray(scorePayload) ? scorePayload : []
+    try {
+      const [detailResult, scoreResult] = await Promise.allSettled([
+        APICreater('GET', '/api/results', null),
+        APICreater('GET', '/api/results?includeScores=true', null),
+      ])
 
-    const detailById = new Map()
-    const detailByName = new Map()
-    for (const item of detailList) {
-      const clubName = getClubName(item)
-      const clubId = getClubID(item)
+      const detailPayload = detailResult.status === 'fulfilled' ? detailResult.value : []
+      const scorePayload = scoreResult.status === 'fulfilled' ? scoreResult.value : []
 
-      if (clubId > 0) {
-        detailById.set(clubId, item)
+      let detailList = extractListPayload(detailPayload)
+      let scoreList = extractListPayload(scorePayload)
+
+      const detailError = extractErrorMessage(detailPayload)
+      const scoreError = extractErrorMessage(scorePayload)
+      const requestErrors = [
+        detailResult.status === 'rejected' ? 'Unable to load /api/results.' : '',
+        scoreResult.status === 'rejected' ? 'Unable to load /api/results?includeScores=true.' : '',
+        detailError,
+        scoreError,
+      ].filter((entry) => entry)
+
+      if (detailList.length === 0 && scoreList.length === 0 && requestErrors.length > 0) {
+        resultsErrorMessage = requestErrors[0]
       }
-      detailByName.set(normalizeClubKey(clubName), item)
+
+      if (detailList.length === 0 && scoreList.length === 0 && !resultsErrorMessage && (activeRole === 'admin' || activeRole === 'officer')) {
+        const fallbackEndpoint = activeRole === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs'
+        const fallbackPayload = await APICreater('GET', fallbackEndpoint, null)
+        detailList = extractListPayload(fallbackPayload)
+        scoreList = []
+      }
+
+      const detailById = new Map()
+      const detailByName = new Map()
+      for (const item of detailList) {
+        const clubName = getClubName(item)
+        const clubId = getClubID(item)
+
+        if (clubId > 0) {
+          detailById.set(clubId, item)
+        }
+        detailByName.set(normalizeClubKey(clubName), item)
+      }
+
+      const sourceList = scoreList.length > 0 ? scoreList : detailList
+
+      results = sourceList.map((item) => {
+        const clubId = getClubID(item)
+        const clubName = getClubName(item)
+        const matchedDetail = clubId > 0
+          ? (detailById.get(clubId) || detailByName.get(normalizeClubKey(clubName)))
+          : detailByName.get(normalizeClubKey(clubName))
+
+        const mergedClub = {
+          ...(item && typeof item === 'object' ? item : {}),
+          ...(matchedDetail && typeof matchedDetail === 'object' ? matchedDetail : {}),
+        }
+        const resolvedId = getClubID(mergedClub) || clubId
+
+        return {
+          id: resolvedId,
+          clubName,
+          matchPercentage: getClubScore(item),
+          description: getClubDescription(mergedClub, item),
+          meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
+          activitiesDescription: getVisibleActivitiesDescription(mergedClub),
+          imagePath: getClubImagePath(mergedClub),
+          externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
+          contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
+          includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails ?? mergedClub?.IncludeOfficerEmails),
+          updatedAt: typeof (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt) === 'string'
+            ? (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt).trim()
+            : '',
+        }
+      })
+
+      pageNum = 1
+    } catch (error) {
+      console.error('Unable to load results', error)
+      results = []
+      resultsErrorMessage = 'Unable to load results right now. Please refresh and try again.'
     }
-
-    const sourceList = scoreList.length > 0 ? scoreList : detailList
-
-    results = sourceList.map((item) => {
-      const clubId = getClubID(item)
-      const clubName = getClubName(item)
-      const matchedDetail = clubId > 0
-        ? (detailById.get(clubId) || detailByName.get(normalizeClubKey(clubName)))
-        : detailByName.get(normalizeClubKey(clubName))
-
-      const mergedClub = {
-        ...(item && typeof item === 'object' ? item : {}),
-        ...(matchedDetail && typeof matchedDetail === 'object' ? matchedDetail : {}),
-      }
-      const resolvedId = getClubID(mergedClub) || clubId
-
-      return {
-        id: resolvedId,
-        clubName,
-        matchPercentage: getClubScore(item),
-        description: getClubDescription(mergedClub, item),
-        meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
-        activitiesDescription: getVisibleActivitiesDescription(mergedClub),
-        imagePath: getClubImagePath(mergedClub),
-        externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
-        contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
-        includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails ?? mergedClub?.IncludeOfficerEmails),
-        updatedAt: typeof (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt) === 'string'
-          ? (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt).trim()
-          : '',
-      }
-    })
-
-    pageNum = 1
   }
 
   async function nextPage() {
@@ -335,7 +411,9 @@
     </section>
   {:else}
     <section class="result-card">
-      {#if getVisibleResults().length === 0}
+      {#if resultsErrorMessage}
+        <p>{resultsErrorMessage}</p>
+      {:else if getVisibleResults().length === 0}
         <p>No clubs meet the current threshold of {threshold}%.</p>
       {:else}
         {#each getVisibleResults() as club, index (club.id || `${club.clubName}-${index}`)}

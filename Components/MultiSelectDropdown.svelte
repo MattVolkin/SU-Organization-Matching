@@ -107,6 +107,13 @@ Only one dropdown can be open at a time across the page.
   function filteredOptions() {
     return options.filter((option) => option.toLowerCase().includes(searchTerm.toLowerCase()));
   }
+
+  function handleSearchKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
 </script>
 
 <div class="multiselect-container" bind:this={dropdownElement}>
@@ -161,7 +168,7 @@ Only one dropdown can be open at a time across the page.
         class="search-input"
         placeholder="Search..."
         bind:value={searchTerm}
-        onmousedown={(e) => e.preventDefault()}
+        onkeydown={handleSearchKeydown}
       />
       <div class="options-list">
         {#each filteredOptions() as option}

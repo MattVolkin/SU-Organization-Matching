@@ -13,6 +13,7 @@ export async function APICreater(method, url, body, debug = false) {
     const requestOptions = {
         method,
         headers: requestHeaders,
+        credentials: 'include',
     };
 
     if (body !== undefined && body !== null && method.toUpperCase() !== 'GET') {

@@ -24,6 +24,7 @@
 	let direction = $state("none yet"); // track direction swiping goes to determine which direction elements move
 	let directionInt = $state(-1); // represent direction as an integer for calculations of speed and position
 	let pointerType: string; // debug information of what type (mouse or touch control)
+	let submissionError = $state('');
 
 	let IsPersonality = $state(false); // track whether the current card is a personality trait or an activity to know which heading to use
 
@@ -176,9 +177,10 @@
 		if(count >= listLength) { // redirect only after the user has answered the final card
 			
 			console.log("finished all cards, sending information to backend");
-
-			await pushAllUserInformationToBackend();
-			window.location.replace("/results.html");
+			const savedSuccessfully = await pushAllUserInformationToBackend();
+			if (savedSuccessfully) {
+				window.location.replace("/results.html");
+			}
 
 
 
@@ -186,16 +188,34 @@
 	}
 
 		async function pushAllUserInformationToBackend() { // send full replacement payload as an array of {questionId, answer}
+			submissionError = '';
 			const payload = surveyResponses.map((entry) => ({
 				questionId: Number(entry.questionId),
 				answer: Boolean(entry.answer),
 			}));
 
+			if (payload.length === 0) {
+				submissionError = 'No answers were recorded from this quiz run. Please retake and try again.';
+				return false;
+			}
+
 			try {
-				await APICreater('POST', '/response', payload);
+				const response = await APICreater('POST', '/response', payload);
+				if (response && typeof response === 'object' && response.error) {
+					throw new Error(String(response.error));
+				}
+
+				const responseCount = Number(response?.responseCount || 0);
+				if (!Number.isFinite(responseCount) || responseCount <= 0) {
+					throw new Error('Server did not confirm saving quiz responses.');
+				}
+
 				console.log('sent response payload to backend', payload.length);
+				return true;
 			} catch (error) {
 				console.error('Unable to send survey responses', error);
+				submissionError = `Unable to save quiz responses: ${error instanceof Error ? error.message : 'please try again.'}`;
+				return false;
 			}
 	}
 
@@ -233,6 +253,9 @@
 	<h1>{(cardObject.getTag?.() === 'personality') ? 'Swipe right if you align with the personality trait' : 'Swipe right if you like the activity'}!</h1> 
 	<h1>Swipe left if you don't!</h1>
 	<p>(Arrow Keys also work)</p>
+	{#if submissionError}
+		<p class="submit-error">{submissionError}</p>
+	{/if}
 
 
 
@@ -309,6 +332,13 @@
 		margin: 0;
 		text-align: center;
 		color: var(--text-color);
+	}
+
+	.submit-error {
+		margin-top: 0.45rem;
+		font-size: clamp(0.85rem, 1.1vw, 1.1rem);
+		font-weight: 700;
+		color: #b42318;
 	}
 
 	button {
