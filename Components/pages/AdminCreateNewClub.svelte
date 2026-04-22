@@ -1,4 +1,3 @@
-<!-- @component Creates the admin page for creating a new club and assigning its first officer. -->
 <script>
 /**
  * @type {state} clubName - Name entered for the new club
@@ -6,10 +5,10 @@
  * @type {state} statusMessage - Confirmation message shown after successful submission
  * @function createClub - Submits the new club to the admin API, then clears the form and shows a status message
  */
-    import AdminSwitch from './AdminSwitch.svelte';
-    import Header from './header.svelte';
-    import Footer from './footer.svelte';
-    import { APICreater } from './APIHandler.svelte';
+    import AdminSwitch from '../AdminSwitch.svelte';
+    import Header from '../header.svelte';
+    import Footer from '../footer.svelte';
+    import { APICreater } from '../APIHandler.svelte';
 
     let clubName = $state('');
     let PresidentEmail = $state('');

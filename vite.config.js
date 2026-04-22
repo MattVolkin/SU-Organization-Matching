@@ -21,6 +21,7 @@ export default defineConfig({
         settings: resolve(webpagesDir, 'settings.html'),
         deleteAccount: resolve(webpagesDir, 'delete-account.html'),
         adminHome: resolve(webpagesDir, 'admin-home.html'),
+        createNewClub: resolve(webpagesDir, 'create-new-club.html'),
       },
     },
   },

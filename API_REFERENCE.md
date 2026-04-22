@@ -883,6 +883,56 @@ Possible errors:
 - `400 Bad Request` JSON: invalid club id
 - `400 Bad Request` JSON: delete failed
 
+### `PATCH /api/admin/users`
+
+Promotes or demotes any user to `admin` or `member` role.
+
+Authentication:
+
+- Required.
+- User must have role `admin`.
+
+Headers:
+
+- `Content-Type: application/json`
+
+Request body:
+
+```json
+{
+  "email": "student@example.edu",
+  "role": "admin"
+}
+```
+
+Rules:
+
+- `email` is required and must be non-empty.
+- `role` must be one of: `admin`, `member`.
+- Admins cannot change their own role via this endpoint.
+- The `officer` role cannot be granted; club leadership is managed via the orgs endpoints.
+
+Success response:
+
+```json
+{
+  "message": "User role updated",
+  "actorEmail": "admin@example.edu",
+  "targetEmail": "student@example.edu",
+  "requestedRole": "admin",
+  "effectiveRole": "admin"
+}
+```
+
+Possible errors:
+
+- `401 Unauthorized` JSON: missing/invalid/expired session
+- `403 Forbidden` JSON: forbidden
+- `400 Bad Request` JSON: invalid JSON
+- `400 Bad Request` JSON: `email is required`
+- `400 Bad Request` JSON: `role must be one of: admin, member`
+- `400 Bad Request` JSON: `admins cannot change their own role via this endpoint`
+
 ## Frontend Checklist
 
 - Use `credentials: 'include'` if relying on the `session_token` cookie.

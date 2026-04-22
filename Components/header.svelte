@@ -296,7 +296,7 @@
     <a href="/howto.html" onclick={closeMenu}>How To Use This Tool</a>
     <!-- Show admin-only and officer-only links based on user type -->
     {#if getNavUserType() === 'admin'}
-      <a href="/admin-home.html" onclick={closeMenu}>Create New Club</a>
+      <a href="/create-new-club.html" onclick={closeMenu}>Create New Club</a>
     {:else if getNavUserType() === 'officer'}
       {@const managedClubs = getManageClubs()}
       <div

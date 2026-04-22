@@ -1,4 +1,4 @@
-import AdminHomeFinal from '../../../Components/pages/AdminHomeFinal.svelte';
+import CreateClub from '../../../Components/pages/AdminCreateNewClub.svelte';
 import { mountPage } from '../mountPage.js';
 
-mountPage(AdminHomeFinal);
+mountPage(CreateClub);
