@@ -1,1 +1,0 @@
-Host capstone\n   HostName capstonessh.benmckallip.com\n   ProxyCommand C:\Program Files (x86)\cloudflared\cloudflared.exe access ssh --hostname %%h

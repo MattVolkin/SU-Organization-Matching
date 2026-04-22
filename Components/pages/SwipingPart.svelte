@@ -1,18 +1,25 @@
 <script>
+    // Shared page chrome + swipe experience component imports.
     import Header from "../header.svelte";
     import Footer from "../footer.svelte";
     import SwipingApp from "../SwipingApp.svelte";
 </script>
 
 <div class="swipe-page">
+    <!-- Top navigation -->
     <Header />
+
+    <!-- Main swiping experience -->
     <main class="swipe-main">
         <SwipingApp />
     </main>
+
+    <!-- Global footer -->
     <Footer />
 </div>
 
 <style>
+    /* Base viewport reset for full-height swipe layout */
     :global(html),
     :global(body) {
         margin: 0;
