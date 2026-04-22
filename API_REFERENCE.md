@@ -940,6 +940,7 @@ Possible errors:
 - Use resource-based admin/officer update routes:
   - `PATCH /api/officer/orgs`
   - `PATCH /api/admin/orgs`
+- Use `PATCH /api/admin/users` to promote or demote user roles.
 - Use `POST /api/admin/orgs` to create clubs.
 - Use `DELETE /api/admin/orgs` to delete clubs.
 - Use `POST /api/delete` from the delete-account page to delete the authenticated user's data.
