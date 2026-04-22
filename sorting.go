@@ -48,14 +48,23 @@ func main() {
 			Activities:  []string{"Movies", "Guest Speakers", "Group Meals"},
 			Ethnicities: []string{"Asian", "Native Hawaiian or Pacific Islander"},
 		},
+		{
+			ID:            6,
+			Name:          "Kappa Sigma",
+			Personality:   []string{"Creative", "Leader", "Social"},
+			Activities:    []string{"Fundraising", "Group Meals"},
+			Genders:       []string{"Man"},
+			Other:         []string{"Greek Life"},
+			StrictGenders: false,
+		},
 	}
 
 	userInfo := matching.UserInfo{
 		Name:            "Example User",
-		Personality:     []string{"Welcoming", "Open Minded", "Curious", "Social"},
-		Activities:      []string{"Movies", "Guest Speakers", "Group Meals"},
-		Genders:         []string{"Man"},
-		Ethnicities:     []string{"Native Hawaiian or Pacific Islander", "Asian"},
+		Personality:     []string{"Creative", "Leader", "Social"},
+		Activities:      []string{"Fundraising", "Group Meals"},
+		Genders:         []string{"Woman"},
+		Ethnicities:     []string{"Asian"},
 		Religions:       []string{"Catholocism"},
 		DedicatedMajors: []string{"Computer Science"},
 		Other:           []string{"LGBTQ", "Greek Life"},
