@@ -1,4 +1,5 @@
 <script>
+	// Auth + role bootstrap for role-aware header behavior.
 	import { onMount } from 'svelte';
 	import Header from '../header.svelte';
 	import Footer from '../footer.svelte';
@@ -34,12 +35,17 @@
 	});
 </script>
 
+<!-- Auth UI entry point -->
 <LoginPopup/>
+<!-- Top navigation -->
 <Header userType={userType} />
+<!-- Main settings content -->
 <SettingPage />
+<!-- Global footer -->
 <Footer />
 
 <style>
+	/* Minimal wrapper-level page reset */
 	:global(body) {
 		margin: 0;
 	}

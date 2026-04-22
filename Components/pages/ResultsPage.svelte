@@ -1,4 +1,5 @@
 <script>
+    // Auth + role bootstrap for role-aware header/results views.
     import { onMount } from 'svelte';
     import Results from '../results.svelte'
     import Header from '../header.svelte'
@@ -33,7 +34,15 @@
         loadUserType();
     });
 </script>
+
+<!-- Auth UI entry point -->
 <LoginPopup/>
+
+<!-- Top navigation -->
 <Header userType={userType} />
+
+<!-- Main results content -->
 <Results userType={userType} />
+
+<!-- Global footer -->
 <Footer />

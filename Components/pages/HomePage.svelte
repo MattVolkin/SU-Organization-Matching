@@ -65,6 +65,7 @@ function goToDeleteAccount() {
 
 <div class="page-shell">
     <main class="home-page">
+        <!-- Hero section -->
         <section class="hero-content">
             <h1>Find The Organization That Fits You</h1>
             <p class="lead">
@@ -73,6 +74,7 @@ function goToDeleteAccount() {
             </p>
         </section>
 
+        <!-- How-it-works section -->
         <section class="info-list" aria-label="How it works">
             <h2>How It Works</h2>
             <ul>
@@ -82,6 +84,7 @@ function goToDeleteAccount() {
             </ul>
         </section>
 
+        <!-- Primary call-to-action section -->
         <div class="cta-row">
             <button type="button" onclick={goToQuiz}>Get Started</button>
             <a href="/results.html">View Results</a>
@@ -89,6 +92,7 @@ function goToDeleteAccount() {
     </main>
 
     {#if showChrome}
+        <!-- Account management + global footer -->
         <button type="button" onclick={goToDeleteAccount}>Delete Account Information</button>
 
         <Footer />

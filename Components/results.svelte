@@ -24,14 +24,7 @@
   import { APICreater } from './APIHandler.svelte';
 
   const defaultResultImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23dbeafe'/><stop offset='100%' stop-color='%23f8fafc'/></linearGradient></defs><rect width='640' height='360' fill='url(%23sky)'/><rect y='235' width='640' height='125' fill='%23d1d5db'/><path d='M0 250L120 190L210 235L330 165L440 235L520 205L640 250V360H0Z' fill='%239ca3af'/><circle cx='110' cy='84' r='34' fill='%23fde68a'/><text x='320' y='330' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' fill='%234b5563'>Organization Image</text></svg>";
-  const orgPhotoLibrary = new Map([
-    ['computerscienceclub', new URL('./OrgPhotos/CSClub.jpg', import.meta.url).href],
-    ['piratesforpride', new URL('./OrgPhotos/P4P.jpg', import.meta.url).href],
-    ['reproductivejusticealliance', new URL('./OrgPhotos/ReproductiveJusticeAlliance.png', import.meta.url).href],
-    ['sutertulias', new URL('./OrgPhotos/SUTertulias.jpeg', import.meta.url).href],
-    ['thegame', new URL('./OrgPhotos/THEGAME.jpeg', import.meta.url).href],
-    ['unitedmethodiststudentfellowship', new URL('./OrgPhotos/UnitedMethodistStudentFellowship.jpeg', import.meta.url).href],
-  ])
+ 
 
   let results = $state([]) // stores matched clubs returned by the results API
   let pageNum = $state(1) // for keeping track of what page of results the user is on.
@@ -40,6 +33,8 @@
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
   let threshold =0
+  let maxClub=20
+  let minClub=5
 
   function scrollToResultsTop() {
     if (resultsPageElement) {
@@ -194,7 +189,13 @@
   }
 
   function getFilteredResults() {
-    return results.filter((club) => getClubScore(club) >= threshold)
+  let resultsInThers= results.filter((club) => getClubScore(club) >= threshold)
+  if (resultsInThers.length>maxClub)
+    return resultsInThers.splice(maxClub)
+  else if(resultsInThers.length<minClub)
+    return resultsInThers.splice(minClub)
+  return resultsInThers
+
   }
 
   function getTotalPages() {

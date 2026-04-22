@@ -225,6 +225,27 @@
     </div>
   </div>
 
+  <div class="section" id="sec-admin-user-role">
+    <div class="section-header" onclick="toggleSection('sec-admin-user-role')">
+      <span class="method-badge PATCH">PATCH</span>
+      <h2>/api/admin/users — Set user role (admin only)</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint">Requires admin role. Promotes or demotes any account to <code>admin</code> or back to <code>member</code>. You cannot change your own role via this endpoint.</p>
+      <div class="user-role-row">
+        <div class="field-group">
+          <label for="admin-user-role-email">Target email</label>
+          <input type="text" id="admin-user-role-email" placeholder="user@southwestern.edu" />
+        </div>
+        <div class="controls">
+          <button class="btn-primary" onclick="runAdminUserRole('admin')">Make Admin</button>
+          <button class="btn-secondary" onclick="runAdminUserRole('member')">Remove Admin</button>
+        </div>
+      </div>
+      <div class="result" id="res-admin-user-role"></div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════════════════
        SURVEY / QUIZ
   ═══════════════════════════════════════════════════════════ -->
@@ -884,6 +905,19 @@
       showResult('res-role-switch', await api('POST', '/api/test/role', { email, role }));
     } catch (e) {
       showResult('res-role-switch', e);
+    }
+  }
+
+  async function runAdminUserRole(role) {
+    const email = document.getElementById('admin-user-role-email').value.trim();
+    if (!email) {
+      showResult('res-admin-user-role', { status: 0, data: 'Please enter a target email address.', ok: false });
+      return;
+    }
+    try {
+      showResult('res-admin-user-role', await api('PATCH', '/api/admin/users', { email, role }));
+    } catch (e) {
+      showResult('res-admin-user-role', e);
     }
   }
 

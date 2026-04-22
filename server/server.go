@@ -64,7 +64,7 @@ type DemographicsPayload struct {
 	Religion   string   `json:"religion"`
 	Major      []string `json:"major"`
 	LGBTQ      string   `json:"lgbtq"`
-	Disability string   `json:"disability"`
+	Disability string   `json:"disabilities"`
 }
 
 // OrgJSON defines the reusable wire format for officer organization data.
@@ -300,6 +300,7 @@ func main() {
 	adminRouter.HandleFunc("/orgs", handleAdminDeleteOrgRequest).Methods(http.MethodDelete)
 	adminRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageUploadRequest).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/orgs/{id:[0-9]+}/image", handleClubImageDeleteRequest).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/users", handleAdminUserRoleUpdateRequest).Methods(http.MethodPatch)
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
@@ -307,6 +308,60 @@ func main() {
 	port := ":8080"
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, router))
+}
+
+// UserRoleUpdatePayload is the request body for PATCH /api/admin/users.
+type UserRoleUpdatePayload struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+// handleAdminUserRoleUpdateRequest lets an admin promote or demote any user to
+// admin or member. It intentionally does not allow granting the officer role
+// through this path; club leadership is managed via the orgs endpoints.
+func handleAdminUserRoleUpdateRequest(w http.ResponseWriter, r *http.Request) {
+	actorEmail := strings.ToLower(strings.TrimSpace(r.Header.Get("X-User-Email")))
+
+	var payload UserRoleUpdatePayload
+	if !decodeJSONBody(w, r, &payload) {
+		return
+	}
+
+	targetEmail := strings.ToLower(strings.TrimSpace(payload.Email))
+	if targetEmail == "" {
+		writeJSONError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	if targetEmail == actorEmail {
+		writeJSONError(w, http.StatusBadRequest, "admins cannot change their own role via this endpoint")
+		return
+	}
+
+	requestedRole := strings.ToLower(strings.TrimSpace(payload.Role))
+	if requestedRole != "admin" && requestedRole != "member" {
+		writeJSONError(w, http.StatusBadRequest, "role must be one of: admin, member")
+		return
+	}
+
+	if _, err := dbClient.Query().SetUserRoleForTesting(r.Context(), targetEmail, requestedRole, ""); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	effectiveRole := dbClient.Query().getUserRole(r.Context(), targetEmail)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message":       "User role updated",
+		"actorEmail":    actorEmail,
+		"targetEmail":   targetEmail,
+		"requestedRole": requestedRole,
+		"effectiveRole": effectiveRole,
+	})
 }
 
 func handleDeleteUserDataRequest(w http.ResponseWriter, r *http.Request) {
@@ -1203,6 +1258,8 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSONBody(w, r, &submission) {
 		return
 	}
+
+	log.Printf("Received demographics submission: %+v", submission)
 
 	lgbtqAnswer := strings.TrimSpace(submission.LGBTQ)
 	disabilityAnswer := strings.TrimSpace(submission.Disability)

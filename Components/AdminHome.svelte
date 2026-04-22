@@ -1,20 +1,16 @@
-<!-- @component
- Creates the admin home page 
- 
- **TODO**:
-  - Replace edit and delete actions with actual API calls -->
+<!-- @component Creates the admin home page and lets admins manage clubs or preview non-admin views. -->
 <script>
 /**
- * @type {statew} adminPreviewType - Allows admin to preview the page as a regular user, officer or admin. Defaults to admin view. FOR TESTING PURPOSES ONLY
+ * @type {state} adminPreviewType - Allows admin to preview the page as a regular user, officer, or admin. Defaults to admin view.
  * @type {state} maxClubsPerPage - Number of clubs to show per page in the club management table
  * @type {state} pageNum - Current page number for club management pagination
- * @type {state} clubs - List of clubs to display in the club management table, should be fetched from the API in a real implementation
- * @function getAllClubs - Placeholder function to fetch all clubs from the API and store in state
+ * @type {state} clubs - List of clubs fetched from the API for the club management table
+ * @function loadClubs - Fetches all clubs from the admin API and updates loading/error state
  * @function nextPage - Increments pageNum to show the next page of clubs, disabled if on the last page 
  * @function prevPage - Decrements pageNum to show the previous page of clubs, disabled if on the first page
  * @function getClubName - Helper function to get the club name from a club object or string, returns 'Unknown Club' if name is not available 
- * @function editClub - Placeholder function to handle editing a club, should be replaced with actual implementation to edit club details
- * @function deleteClub - Placeholder function to handle deleting a club, should be replaced with actual implementation to delete the club from the database and update the UI
+ * @function editClub - Redirects to the club settings page for the selected club
+ * @function deleteClub - Deletes a club from the backend and updates the current table view
  */
     import { onMount, onDestroy } from 'svelte'
     import Header from './header.svelte'
@@ -54,7 +50,7 @@
         window.removeEventListener('auth-logout', handleAuthLogout)
     })
 
-    //Todo: add API to fetch all clubs and store in state
+    // Loads current clubs for admin management mode.
     async function loadClubs() {
         isLoading = true
         loadError = ''
@@ -106,13 +102,16 @@
     }
 
 </script>
+<!-- Admin page shell with role-aware preview mode -->
 <div class="admin-home">
+    <!-- Header supports admin preview switching -->
     <Header userType="admin" previewAs={adminPreviewType} onPreviewChange={(nextView) => adminPreviewType = nextView} />    
+    <!-- Admin management view vs user/officer preview rendering -->
     {#if adminPreviewType === 'admin'}
         <h1>Admin Home</h1>
         <div class="club-management">
             <p>Welcome to the Admin Home! Here you can manage clubs and what they post on the website.</p>
-            <!-- Create the club management table  EX CS Club        Edit    Delete-->
+            <!-- Club management table with loading, error, and empty states -->
             <table>
                 <colgroup>
                     <col class="col-name" />
@@ -157,8 +156,10 @@
             </div>
         </div>
     {:else}
+        <!-- Reuses the standard homepage in preview-only mode -->
         <HomePage previewAs={adminPreviewType} showChrome={false} />
     {/if}
+    <!-- Quick action to jump directly to the quiz flow -->
     <section class="quiz-quick-action" aria-label="Admin quiz shortcut">
         <div>
             <h2>Want to Take the Quiz?</h2>
@@ -166,9 +167,11 @@
         <button class="quiz-action" type="button" onclick={goToQuiz}>Take The Quiz</button>
     </section>
 </div>
+<!-- Global footer -->
 <Footer />
 
 <style>
+    /* Admin page layout, table, and theme styles */
     .admin-home {
         --bg: linear-gradient(180deg, #edf4fb 0%, #f6f9fd 100%);
         --card: #ffffff;
@@ -227,13 +230,6 @@
         margin: 0;
         font-size: 1.05rem;
         color: var(--text);
-    }
-
-    .quiz-quick-action p {
-        margin: 0.3rem 0 0;
-        color: var(--muted);
-        line-height: 1.35;
-        font-size: 0.95rem;
     }
 
     .quiz-action {
