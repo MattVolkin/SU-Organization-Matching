@@ -24,6 +24,9 @@
     let clubs = $state([])
     let isLoading = $state(true)
     let loadError = $state('')
+    let adminEmail = $state('')
+    let adminRoleUpdateState = $state('idle')
+    let adminRoleStatus = $state('')
     const totalPages = $derived(Math.max(1, Math.ceil(clubs.length / maxClubsPerPage)))
     const startIndex = $derived((pageNum - 1) * maxClubsPerPage)
     const paginatedClubs = $derived(clubs.slice(startIndex, startIndex + maxClubsPerPage))
@@ -101,6 +104,37 @@
        }
     }
 
+    async function updateAdminRole(nextRole) {
+        const trimmedEmail = String(adminEmail || '').trim().toLowerCase()
+        if (!trimmedEmail) {
+            adminRoleUpdateState = 'error'
+            adminRoleStatus = 'Enter an email address first.'
+            return
+        }
+
+        adminRoleUpdateState = 'saving'
+        adminRoleStatus = ''
+
+        try {
+            const response = await APICreater('PATCH', '/api/admin/users', {
+                email: trimmedEmail,
+                role: nextRole,
+            })
+
+            if (response && typeof response === 'object' && response.error) {
+                throw new Error(String(response.error))
+            }
+
+            adminRoleUpdateState = 'saved'
+            adminRoleStatus = nextRole === 'admin'
+                ? `${trimmedEmail} is now an admin.`
+                : `${trimmedEmail} is now a member.`
+        } catch (error) {
+            adminRoleUpdateState = 'error'
+            adminRoleStatus = `Unable to update role. ${error instanceof Error ? error.message : 'Please try again.'}`
+        }
+    }
+
 </script>
 <!-- Admin page shell with role-aware preview mode -->
 <div class="admin-home">
@@ -159,6 +193,41 @@
         <!-- Reuses the standard homepage in preview-only mode -->
         <HomePage previewAs={adminPreviewType} showChrome={false} />
     {/if}
+    {#if adminPreviewType === 'admin'}
+        <section class="admin-users" aria-label="Admin user management">
+            <h2>Admin Access</h2>
+            <p>Add or remove admin access by email.</p>
+            <div class="admin-users-controls">
+                <label for="admin-email">User email</label>
+                <input
+                    id="admin-email"
+                    type="email"
+                    placeholder="name@example.edu"
+                    bind:value={adminEmail}
+                />
+                <div class="admin-users-actions">
+                    <button
+                        type="button"
+                        onclick={() => updateAdminRole('admin')}
+                        disabled={adminRoleUpdateState === 'saving'}
+                    >
+                        Add Admin
+                    </button>
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick={() => updateAdminRole('member')}
+                        disabled={adminRoleUpdateState === 'saving'}
+                    >
+                        Remove Admin
+                    </button>
+                </div>
+            </div>
+            {#if adminRoleStatus}
+                <p class={`admin-users-status ${adminRoleUpdateState}`}>{adminRoleStatus}</p>
+            {/if}
+        </section>
+    {/if}
     <!-- Quick action to jump directly to the quiz flow -->
     <section class="quiz-quick-action" aria-label="Admin quiz shortcut">
         <div>
@@ -211,6 +280,71 @@
         margin: 0 0 0.8rem 0;
         color: var(--muted);
         line-height: 1.45;
+    }
+
+    .admin-users {
+        width: min(100%, 1040px);
+        border: 1px solid var(--border);
+        border-radius: 0.8rem;
+        padding: 0.9rem;
+        margin: 0 auto 0.95rem auto;
+        background: #f9fcff;
+    }
+
+    .admin-users h2 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .admin-users p {
+        margin: 0.4rem 0 0.7rem 0;
+        color: var(--muted);
+    }
+
+    .admin-users-controls {
+        display: grid;
+        gap: 0.45rem;
+    }
+
+    .admin-users-controls label {
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .admin-users-controls input {
+        width: min(100%, 28rem);
+        border: 1px solid var(--border);
+        border-radius: 0.55rem;
+        padding: 0.56rem 0.68rem;
+        font-size: 0.94rem;
+    }
+
+    .admin-users-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+
+    .admin-users-actions .secondary {
+        background: #4f6781;
+    }
+
+    .admin-users-actions .secondary:hover {
+        background: #3f556d;
+    }
+
+    .admin-users-status {
+        margin: 0.7rem 0 0 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .admin-users-status.saved {
+        color: #1f6f3f;
+    }
+
+    .admin-users-status.error {
+        color: #9d1f3d;
     }
 
     .quiz-quick-action {
