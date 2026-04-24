@@ -228,13 +228,15 @@
             {/if}
         </section>
     {/if}
-    <!-- Quick action to jump directly to the quiz flow -->
-    <section class="quiz-quick-action" aria-label="Admin quiz shortcut">
-        <div>
-            <h2>Want to Take the Quiz?</h2>
-        </div>
-        <button class="quiz-action" type="button" onclick={goToQuiz}>Take The Quiz</button>
-    </section>
+    {#if adminPreviewType === 'admin'}
+        <!-- Quick action to jump directly to the quiz flow -->
+        <section class="quiz-quick-action" aria-label="Admin quiz shortcut">
+            <div>
+                <h2>Want to Take the Quiz?</h2>
+            </div>
+            <button class="quiz-action" type="button" onclick={goToQuiz}>Take The Quiz</button>
+        </section>
+    {/if}
 </div>
 <!-- Global footer -->
 <Footer />

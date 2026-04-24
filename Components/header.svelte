@@ -207,16 +207,23 @@
 
   function getManageClubs() {
     const clubs = Array.isArray(officerClubs) ? officerClubs : [];
+    const sortByClubName = (left, right) => {
+      const leftName = getClubName(left).trim();
+      const rightName = getClubName(right).trim();
+      return leftName.localeCompare(rightName, undefined, { sensitivity: 'base' });
+    };
+
     if (clubs.length === 0) {
       return isTestMode ? ['Test Club'] : [];
     }
 
     if (!isTestMode) {
-      return clubs;
+      return [...clubs].sort(sortByClubName);
     }
 
     const hasTestClub = clubs.some((club) => getClubName(club).trim().toLowerCase() === 'test club');
-    return hasTestClub ? clubs : ['Test Club', ...clubs];
+    const clubsWithTest = hasTestClub ? [...clubs] : ['Test Club', ...clubs];
+    return clubsWithTest.sort(sortByClubName);
   }
 
   $effect(() => {
