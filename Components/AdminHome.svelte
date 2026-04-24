@@ -29,7 +29,10 @@
     let adminRoleStatus = $state('')
     const totalPages = $derived(Math.max(1, Math.ceil(clubs.length / maxClubsPerPage)))
     const startIndex = $derived((pageNum - 1) * maxClubsPerPage)
-    const paginatedClubs = $derived(clubs.slice(startIndex, startIndex + maxClubsPerPage))
+    const sortedClubs = $derived(
+        [...clubs].sort((a, b) => getClubName(a).localeCompare(getClubName(b), undefined, { sensitivity: 'base' }))
+    )
+    const paginatedClubs = $derived(sortedClubs.slice(startIndex, startIndex + maxClubsPerPage))
 
     function handleAuthLogin() {
         if (adminPreviewType === 'admin') {
