@@ -100,6 +100,13 @@
        if (!club?.id) {
             return
        }
+
+          const clubName = getClubName(club)
+          const confirmed = window.confirm(`Delete "${clubName}"? This action cannot be undone.`)
+          if (!confirmed) {
+              return
+          }
+
        await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
        clubs = clubs.filter((existingClub) => existingClub?.id !== club.id)
        if (pageNum > totalPages) {
