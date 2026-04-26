@@ -61,13 +61,13 @@ func main() {
 
 	userInfo := matching.UserInfo{
 		Name:            "Example User",
-		Personality:     []string{"Creative", "Leader", "Social"},
-		Activities:      []string{"Fundraising", "Group Meals"},
+		Personality:     []string{"Welcoming", "Open Minded", "Enthusiastic", "Fun"},
+		Activities:      []string{"Arts & Crafts"},
 		Genders:         []string{"Woman"},
 		Ethnicities:     []string{"Asian"},
 		Religions:       []string{"Catholocism"},
 		DedicatedMajors: []string{"Computer Science"},
-		Other:           []string{"LGBTQ", "Greek Life"},
+		Other:           []string{"LGBTQ", "Greek Life", "Disabilities"},
 	}
 
 	results := matching.Sort(userInfo, clubs)
