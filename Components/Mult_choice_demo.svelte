@@ -1,14 +1,8 @@
 <script>
-import Header from './header.svelte'
-import Footer from './footer.svelte'
 import { APICreater } from './APIHandler.svelte';
 import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   let name = $state('')
-  let club = $state('')
-  let contact = $state('')
-  let officer = $state('')
-  let email = $state('')
 	let gender = $state('')
   let race = $state([])
 	let religion = $state('')
