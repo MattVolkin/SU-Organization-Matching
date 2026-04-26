@@ -15,6 +15,7 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
   let major = $state([])
   let LGBTQ = $state("")
   let disability = $state("")
+  let majorRequiredProxy = $state(null)
 
   const genderOptions = [
     'Man',
@@ -100,6 +101,19 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   async function submit(event) {
     event.preventDefault()
+
+    if (majorRequiredProxy) {
+      majorRequiredProxy.setCustomValidity('')
+    }
+
+    if (!Array.isArray(major) || major.length === 0) {
+      if (majorRequiredProxy) {
+        majorRequiredProxy.setCustomValidity('Please select one of these options.')
+        majorRequiredProxy.reportValidity()
+      }
+      return
+    }
+
     await APICreater('POST', '/submit', {
       "name": name,
       "gender": gender,
@@ -111,6 +125,12 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
     })
      window.location.href = '/swiping.html';
   }
+
+  $effect(() => {
+    if (majorRequiredProxy && Array.isArray(major) && major.length > 0) {
+      majorRequiredProxy.setCustomValidity('')
+    }
+  })
 </script>
 
 
@@ -186,7 +206,18 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
         <fieldset>
 			<legend>Intended Major(s) / Program of Study</legend>
 			<p class="hint">Select all that apply.</p>
-			<MultiSelectDropdown id="majors" label="Choose majors" options={majorOptions} bind:value={major} />
+      <div class="major-required-wrapper">
+			<MultiSelectDropdown id="majors" label="Choose majors" options={majorOptions} bind:value={major} required />
+        <input
+          class="major-required-proxy"
+          type="text"
+          tabindex="-1"
+          bind:this={majorRequiredProxy}
+          value={major.join(',')}
+          required
+          aria-label="Major"
+        />
+      </div>
 		</fieldset>
 
         <button type="submit">Submit and Continue</button>
@@ -258,6 +289,21 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
     margin: 0.35rem 0 0.75rem;
     color: #31506e;
     font-size: 0.92rem;
+  }
+
+  .major-required-wrapper {
+    position: relative;
+  }
+
+  .major-required-proxy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .option-stack,
