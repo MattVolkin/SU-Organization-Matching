@@ -53,8 +53,8 @@ type MatchResult struct {
 const personalityWeight float32 = 1.5
 const activityWeight float32 = 2.25
 const genderWeight float32 = 1
-const ethnicityWeight float32 = 1.75
-const religionWeight float32 = 1.75
+const ethnicityWeight float32 = 2
+const religionWeight float32 = 2
 const academicWeight float32 = 1.5
 const otherWeight float32 = 2
 
@@ -105,6 +105,10 @@ func UserFromAnswers(answers []Answer) UserInfo {
 
 // Sort ranks organizations by descending normalized match score.
 func Sort(user UserInfo, organizations []Organization) []MatchResult {
+	// if(len(user.Activities) == 0 && len(user.Personality) == 0) || (len(user.Activities) == 21 && len(user.Personality) == 16) {
+
+	// }
+
 	results := make([]MatchResult, 0, len(organizations))
 	for _, org := range organizations {
 		maxScore := compareUserToOrg(toUserInfo(org), org)

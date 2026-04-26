@@ -32,12 +32,12 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
   let yes_no_options = ['Yes', 'No', 'Prefer not to say']
 
   const religionOptions = [
-    'Protestantism',
-    'Catholocism',
-    'Judaism',
-    'Islam',
     'Buddhism',
+    'Catholocism',
     'Hinduism',
+    'Islam',
+    'Judaism',
+    'Protestantism',    
     'No religion',
     'Other',
     'Prefer not to say',
