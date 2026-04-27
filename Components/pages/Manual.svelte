@@ -103,27 +103,28 @@ onMount(() => {
 				of one or more clubs will be able to edit information associated with the club(s).
 			</p>
 			<p>
-				You do this by clicking on the Manage Club tab on the header. If you are an officer of multiple clubs,
+				You can do this by clicking on the Manage Club tab on the header. If you are an officer of multiple clubs,
 				then you can hover over the button to view all of them, then click on the one you want to manage.
 			</p>
 
 			<h3>Editing options</h3>
 			<p>Below are all the settings our website allows officers to change, along with descriptions of what they are and how they affect the sorting algorithm.</p>
 			<ul>
-				<li><strong>Description</strong> - information about the club that is displayed on the results page</li>
-				<li><strong>Activities Description (comma-separated)</strong> - a list of activities displayed the results page</li>
-				<li><strong>Meeting Information</strong> - the organization's meeting time, day, and location displayed on the results page</li>
-				<li><strong>Social media/website</strong> - a link to your organization's website or social media displayed on the results page</li>
-				<li><strong>Image</strong> - you can upload a file to be displayed on the results page</li>
-				<li><strong>Personality Trait & Activity Select</strong> - a list of personality traits and activities that you can select to change how the system sorts users into your club</li>
-				<li><strong>Genders (comma-separated)</strong> - trends that officers see in their club slightly affect sorting</li>
-				<li><strong>Ethnicities (comma-separated)</strong> - trends that officers see in their club slightly affect sorting</li>
-				<li><strong>Religions (comma-separated)</strong> - trends that officers see in their club slightly affect sorting</li>
-				<li><strong>Dedicated Majors (comma-separated)</strong> - a list of majors that are inherently linked to a departmental organization </li>
-			<li><strong>Associated Majors (comma-separated)</strong> - a list of majors that are common in your current members</li>
-				<li><strong>Other (comma-separated)</strong> - trends that officers see in their club slightly affect sorting</li>
-				<li><strong>Strict gender matching</strong> - if checked, makes the Genders section absolute</li>
-				<li><strong>Adding and removing an officer</strong> - how officers edit who can edit their clubs</li>
+				<li><strong>Description</strong> - Information about the club that is displayed on the results page.</li>
+				<li><strong>Activities Description (comma-separated)</strong> - A list of activities displayed on the results page.</li>
+				<li><strong>Meeting Information</strong> - The organization's meeting time, day, and location to be displayed on the results page.</li>
+				<li><strong>Social media/website</strong> - A link to your organization's social media or website to be displayed on the results page.</li>
+				<li><strong>Image</strong> - You can upload an image file to be displayed on the results page to represent your club.</li>
+				<li><strong>Personality Traits & Activities</strong> - A list of personality traits and activities that you can select to change how the system sorts users into your club.</li>
+				<li><strong>Genders</strong> -  Genders that are linked to the purpose of the organization (slightly affects sorting). Please only include this field if it is important to the purpose of your organization.</li>
+				<li><strong>Ethnicities</strong> - Races/Ethicities that are linked to the purpose of the organization (affects sorting). Please only include this field if it is important to the purpose of your organization.</li>
+				<li><strong>Religions</strong> - Religions that are linked to the purpose of the organization (affects sorting). Please only include this field if it is important to the purpose of your organization.</li>
+				<li><strong>Dedicated Majors</strong> - Majors that are linked to the purpose of your organization (affects sorting).</li>
+				<li><strong>Associated Majors</strong> - Trends in majors that officers see in their club. (slightly affects sorting).</li>
+				<li><strong>Other</strong> - Miscellaneous trends that officers see in their club that affect sorting. Please only include items in this field if they are important to the purpose of your organization.</li>
+				<li><strong>Strict Gender Matching</strong> - If checked, makes the Genders selection absolute. Please only include this field if it is important to the purpose of your organization.</li>
+				<li><strong>Current Officers</strong> - A list of current officers in the club. You can remove officers by selecting the check box next to their email address, then clicking the Delete Selected Officers button.</li>
+				<li><strong>Add New Officer</strong> - Type in an officer's email address and click the Add Officer button to add them as a new officer.</li>
 			</ul>
 		</article>
 
@@ -131,33 +132,34 @@ onMount(() => {
 			<h2>Admins</h2>
 			<h3>Editing clubs</h3>
 			<p>
-				As admins, you will be able to edit all clubs on the website and delete a club.
+				As admins, you will be able to edit all clubs on the website as well as create and delete clubs. 
 			</p>
 			<p>
-				You do this by clicking the edit or delete button associated with a club on the home page. The page you
-				will see when you click on the edit club button is the same as the officers for the club, so refer to the
-				Editing Options section above for what each section on the page does.
-			</p>
-
-			<h3>Creating a new club</h3>
-			<p>
-				Creating a new club is really simple: click the create new club button in the header, then enter the club
-				name and the president's email address.
-			</p>
-			<p>
-				Then just send an email to the president. The president of the new club will then have access to edit it
-				on the site. They just need to fill out the settings page so the website knows more about the club.
+				You do this by clicking the edit or delete button associated with a club on the home page. 
+				The page you see when you click on the edit club button is the same as the officer view for the club, 
+				so refer to the Editing Options section above for information on what each part does.
 			</p>
 
-			<h3>Switching account types</h3>
+			<h3>Creating a New Club</h3>
 			<p>
-				As admins, you may want to see what different views of the website look like. To do this for our website,
-				look at the top of the website, where you will see a banner called Switch account types, with the options
-				User, Officer, and Admin to represent the three account types we have.
+				Creating a new club is really simple: click the Create New Club button in the header, 
+				then enter the club name and the president's email address. The system does not send a notification to the new officer, so inform them separately.
 			</p>
 			<p>
-				By default, it should have admin selected, but to change the account type, select the user or officer
-				button, and to go back to an admin account, just reselect the admin button.
+				The president of the new club will then have access to edit it on the site. 
+				They just need to fill out the settings page so the website knows more about the club.
+
+			</p>
+
+			<h3>Switching Account Types</h3>
+			<p>
+				As admins, you may want to see what different views of the website look like. 
+				To do this, look at the top of the website, where you will see a banner labeled Change User Type, 
+				with the options Regular User, Officer, and Admin to represent the three account types we have.
+			</p>
+			<p>
+				By default, it should have Admin selected, but to change the account type, 
+				select the Regular User or Officer button. To go back to an admin account, just reselect the Admin button. 
 			</p>
 		</article>
 	</section>
