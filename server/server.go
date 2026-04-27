@@ -399,6 +399,8 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// printAnswersForDebugging(email, answers)
+
 	_, userProfile, err := dbClient.Query().FetchUserByEmail(r.Context(), email)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -422,6 +424,13 @@ func getUserOrgsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(getClubsFromAnswers(answers, userProfile, clubs))
+}
+
+func printAnswersForDebugging(email string, answers []DBAnswer) {
+	log.Printf("User %s answers:", email)
+	for _, a := range answers {
+		log.Printf("  Question ID: %d, Type: %s, Answer: %s, Term: %v", a.QuestionID, a.QuestionType, a.AnswerText, a.Translations["en"][0])
+	}
 }
 
 // getClubsFromAnswers ranks clubs for a user by converting stored answers into
@@ -534,9 +543,20 @@ func buildMatchUser(answers []matching.Answer, profile *ent.User) matching.UserI
 	user.Ethnicities = mergeUniqueFoldStrings(user.Ethnicities, profile.Ethnicities)
 	user.Religions = mergeUniqueFoldStrings(user.Religions, profile.Religions)
 	user.DedicatedMajors = mergeUniqueFoldStrings(user.DedicatedMajors, profile.DedicatedMajors)
-	user.Other = mergeUniqueFoldStrings(user.Other, profile.Other)
+	user.Other = buildMatchingOtherSignals(user.Other, answers)
 
 	return user
+}
+
+func buildMatchingOtherSignals(current []string, answers []matching.Answer) []string {
+	signals := []string{}
+
+	for _, a := range answers {
+		if strings.EqualFold(a.Translations["en"][0], "Greek Life") && strings.EqualFold(a.AnswerText, "true") {
+			signals = append(signals, "Greek Life")
+		}
+	}
+	return mergeUniqueFoldStrings(current, signals)
 }
 
 func mergeUniqueFoldStrings(base []string, values []string) []string {
@@ -1258,8 +1278,6 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSONBody(w, r, &submission) {
 		return
 	}
-
-	log.Printf("Received demographics submission: %+v", submission)
 
 	lgbtqAnswer := strings.TrimSpace(submission.LGBTQ)
 	disabilityAnswer := strings.TrimSpace(submission.Disability)
