@@ -227,15 +227,28 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
   :global(body) {
     margin: 0;
     padding: 0;
+    background: #ffffff;
   }
 
   main {
+    --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+    --text-main: #000000;
+    --text-subtle: #454545;
+    --card-bg: #ffffff;
+    --card-border: #828282;
+    --accent: #000000;
+    --accent-hover: #828282;
+    --input-bg: #ffffff;
+    --input-border: #828282;
+    --input-accent: #000000;
+    --shadow: rgba(0, 0, 0, 0.1);
+
     width: 100%;
     margin: 0;
     padding: 0;
     font-family: system-ui, sans-serif;
-    background: #ffffff;
-    color: #10243a;
+    background: var(--page-bg);
+    color: var(--text-main);
   }
 
   .settings-page {
@@ -247,17 +260,18 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
   .settings-page h2 {
     margin: 0.75rem 0 0.85rem 0;
     font-size: clamp(1.35rem, 1.5vw + 0.9rem, 2rem);
-    color: #132c45;
+    color: var(--text-main);
   }
 
  
   .club-settings-card {
-    border: 1px solid #d7dee8;
+    border: 1px solid var(--card-border);
     border-radius: 0.85rem;
     padding: 1rem;
     margin-bottom: 1rem;
-    background: #fafcff;
-    box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    background: var(--card-bg);
+    box-shadow: 0 10px 24px var(--shadow);
+    color: var(--text-main);
   }
 
   form {
@@ -267,21 +281,22 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   fieldset {
     margin: 0;
-    border: 1px solid #d7dee8;
+    border: 1px solid var(--card-border);
     border-radius: 1rem;
     padding: 1rem;
-    background: #fafcff;
+    background: var(--card-bg);
+    color: var(--text-main);
   }
 
   legend {
     padding: 0 0.45rem;
     font-weight: 800;
-    color: #132c45;
+    color: var(--text-main);
   }
 
   .hint {
     margin: 0.35rem 0 0.75rem;
-    color: #31506e;
+    color: var(--text-subtle);
     font-size: 0.92rem;
   }
 
@@ -320,17 +335,18 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
     gap: 0.65rem;
     padding: 0.72rem 0.8rem;
     border-radius: 0.85rem;
-    background: #ffffff;
-    border: 1px solid #dbe7f3;
-    box-shadow: 0 8px 16px rgba(16, 36, 58, 0.04);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    box-shadow: 0 8px 16px var(--shadow);
     cursor: pointer;
     transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    color: var(--text-main);
   }
 
   label:hover {
     transform: translateY(-1px);
-    border-color: #bfdde8;
-    box-shadow: 0 12px 22px rgba(16, 36, 58, 0.08);
+    border-color: #ffcd00;
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.15);
   }
 
   label span {
@@ -340,28 +356,28 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
   input[type='radio'],
   input[type='checkbox'] {
     margin-top: 0.2rem;
-    accent-color: #1f6f8b;
+    accent-color: var(--input-accent);
     flex: 0 0 auto;
   }
 
   button {
     width: fit-content;
     margin-top: 0.25rem;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 0.55rem;
     padding: 0.6rem 0.95rem;
     font-weight: 700;
     color: #ffffff;
-    background: #0f6d8c;
-    box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    background: var(--accent);
+    box-shadow: 0 10px 24px var(--shadow);
     cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
   }
 
   button:hover {
     transform: translateY(-1px);
-    background: #0d5f79;
-    box-shadow: 0 12px 24px rgba(13, 37, 62, 0.12);
+    background: var(--accent-hover);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
   }
 
   
@@ -378,6 +394,35 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
     .option-grid,
     .option-grid.compact {
       grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(html),
+    :global(body) {
+      background: #000000;
+    }
+
+    main {
+      --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+      --text-main: #ffffff;
+      --text-subtle: #d5d5d5;
+      --card-bg: #121212;
+      --card-border: #828282;
+      --accent: #ffcd00;
+      --accent-hover: #e5b800;
+      --input-bg: #1e1e1e;
+      --input-border: #828282;
+      --input-accent: #ffcd00;
+      --shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    label {
+      color: var(--text-main);
+    }
+
+    button {
+      color: #000000;
     }
   }
 </style>

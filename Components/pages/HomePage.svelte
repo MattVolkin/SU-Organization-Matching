@@ -86,8 +86,8 @@ function goToDeleteAccount() {
 
         <!-- Primary call-to-action section -->
         <div class="cta-row">
-            <button type="button" onclick={goToQuiz}>Get Started</button>
-            <a href="/results.html">View Results</a>
+            <button type="button" class="cta-primary" onclick={goToQuiz}>Get Started</button>
+            <a class="cta-secondary" href="/results.html">View Results</a>
         </div>
     </main>
 
@@ -100,12 +100,13 @@ function goToDeleteAccount() {
 </div>
 
 <style>
+
     :global(html),
     :global(body) {
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     :global(body) {
@@ -116,16 +117,20 @@ function goToDeleteAccount() {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     .home-page {
-        --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
-        --text-main: #10243a;
-        --text-subtle: #31506e;
-        --action: #1f6f8b;
-        --action-hover: #195d76;
-        --focus-ring: #60a5fa;
+        --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+        --text-main: #000000;
+        --text-subtle: #454545;
+        --action: #000000;
+        --action-hover: #828282;
+        --cta-secondary-bg: #ffcd00;
+        --cta-secondary-hover: #e5b800;
+        --cta-secondary-text: #000000;
+        --cta-secondary-border: #000000;
+        --focus-ring: #828282;
 
         flex: 1;
         min-height: 0;
@@ -191,16 +196,39 @@ function goToDeleteAccount() {
         outline-offset: 2px;
     }
 
-    .cta-row a {
+    .cta-row .cta-primary,
+    .cta-row .cta-secondary {
         display: inline-block;
-        color: #1b4f73;
-        font-weight: 600;
+        border-radius: 0.65rem;
+        padding: 0.72rem 1.2rem;
+        font-weight: 700;
         font-size: 1rem;
+        line-height: 1.2;
         text-decoration: none;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
     }
 
-    .cta-row a:hover {
-        text-decoration: underline;
+    .cta-row .cta-primary {
+        color: #ffffff;
+        background: var(--action);
+        border: 1px solid #000000;
+    }
+
+    .cta-row .cta-primary:hover {
+        background: var(--action-hover);
+        transform: translateY(-1px);
+    }
+
+    .cta-row .cta-secondary {
+        color: var(--cta-secondary-text);
+        background: var(--cta-secondary-bg);
+        border: 1px solid var(--cta-secondary-border);
+    }
+
+    .cta-row .cta-secondary:hover {
+        color: var(--cta-secondary-text);
+        background: var(--cta-secondary-hover);
+        transform: translateY(-1px);
     }
 
     .info-list {
@@ -208,7 +236,7 @@ function goToDeleteAccount() {
         margin: 0.6rem auto 0 auto;
         padding: 1.1rem 1rem 1.4rem;
         text-align: center;
-        border-top: 1px solid #dbe7f3;
+        border-top: 1px solid #828282;
     }
 
     .info-list h2 {
@@ -257,23 +285,35 @@ function goToDeleteAccount() {
             align-items: stretch;
         }
 
-        button {
+        .cta-row .cta-primary,
+        .cta-row .cta-secondary {
             width: 100%;
+            text-align: center;
         }
     }
 
     @media (prefers-color-scheme: dark) {
+        :global(html),
+        :global(body),
+        .page-shell {
+            background: #000000;
+        }
+
         .home-page {
-            --page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
-            --text-main: #e5edf8;
-            --text-subtle: #b6c7df;
-            --action: #2b8fb5;
-            --action-hover: #3aa3cb;
-            --focus-ring: #93c5fd;
+            --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+            --text-main: #ffffff;
+            --text-subtle: #d5d5d5;
+            --action: #ffcd00;
+            --action-hover: #e5b800;
+            --cta-secondary-bg: #ffffff;
+            --cta-secondary-hover: #e6e6e6;
+            --cta-secondary-text: #000000;
+            --cta-secondary-border: #828282;
+            --focus-ring: #ffcd00;
         }
 
         .info-list {
-            border-top-color: #273449;
+            border-top-color: #828282;
         }
     }
 </style>

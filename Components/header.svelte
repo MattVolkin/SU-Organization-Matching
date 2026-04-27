@@ -295,7 +295,6 @@
     <span class="menu-icon" aria-hidden="true"></span>
     Menu
   </button>
-  <!-- TODO: replace hrefs with actual links to pages once they are created -->
   <nav id="primary-nav" class={`nav ${isMenuOpen ? 'open' : ''}`}>
     <a href={getHomeHref()} onclick={closeMenu}>Home</a>
      <a href="/results.html" onclick={closeMenu}>My Results</a>
@@ -338,8 +337,8 @@
 
 
   .header {
-    background-color: #2c3e50;
-    color: white;
+    background-color:#FFCD00;
+    color: black;
     position: relative;
     padding: 1rem 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -386,7 +385,7 @@
   .login-button {
     width: auto;
     padding: 0.35rem 0.75rem;
-    background-color: #3498db;
+    background-color:black;
     color: white;
     border: none;
     border-radius: 4px;
@@ -399,7 +398,7 @@
   }
 
   .login-button:hover {
-    background-color: #2980b9;
+    background-color: #828282;
   }
 
   .logout-btn {
@@ -414,7 +413,7 @@
     padding: 0.65rem 1rem;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background: transparent;
-    color: white;
+    color: black;
     border-radius: 4px;
     margin-bottom: 0.75rem;
     cursor: pointer;
@@ -455,8 +454,11 @@
     gap: 0;
   }
   /* Style the navigation links to be evenly spaced and visually distinct, with a hover effect for better user experience */
-  .nav a {
-    color: white;
+  .nav a,
+  .nav a:link,
+  .nav a:visited,
+  .nav a:active {
+    color: black;
     text-decoration: none;
     font-size: 1rem;
     transition: color 0.3s ease;
@@ -467,7 +469,7 @@
   }
   /* Add a subtle hover effect to nav links to let the user know they are clickable */
   .nav a:hover {
-    color: #3498db;
+    color: #828282;
   }
 
   .nav-item {
@@ -509,7 +511,7 @@
     width: min(52rem, calc(100vw - 1rem));
     max-width: calc(100vw - 1rem);
     max-height: min(70vh, 30rem);
-    background-color: #1f2f3d;
+    background-color: #FFCD00;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
@@ -555,18 +557,18 @@
     display: block;
     text-align: left;
     padding: 0.6rem 0.8rem;
-    color: white;
+    color: black;
     text-decoration: none;
     flex: none;
   }
 
   .club-dropdown a:hover {
-    color: white;
-    background-color: rgba(52, 152, 219, 0.3);
+    color: black;
+    background-color: rgba(130, 130, 130, 0.25);
   }
 
   .empty-clubs {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(0, 0, 0, 0.75);
     cursor: default;
   }
 
@@ -662,7 +664,7 @@
     .nav a {
       transition: background-color 0.3s ease;
       padding: 0.75rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
 
     .nav-item {
@@ -676,10 +678,10 @@
       width: 100%;
       max-width: none;
       border: none;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 0;
       box-shadow: none;
-      background-color: rgba(255, 255, 255, 0.04);
+      background-color: rgba(130, 130, 130, 0.2);
       grid-template-columns: 1fr;
       grid-auto-flow: row;
       grid-template-rows: auto;
@@ -693,12 +695,12 @@
     .empty-clubs {
       text-align: center;
       padding: 0.65rem 0.75rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
 
     .nav a:hover {
-      color: white;
-      background-color: rgba(52, 152, 219, 0.2);
+      color: black;
+      background-color: rgba(130, 130, 130, 0.25);
     }
   }
 </style>

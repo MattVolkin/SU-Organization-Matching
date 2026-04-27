@@ -33,6 +33,7 @@
     religions?: string[];
     strict_genders?: boolean;
     dedicated_majors?: string[];
+    associated_majors?: string[];
     other?: string[];
   };
 
@@ -121,6 +122,7 @@
   let trendsEthnicities = $state<string[]>([]);
   let trendsReligions = $state<string[]>([]);
   let trendsDedicatedMajors = $state<string[]>([]);
+  let trendsAssociatedMajors = $state<string[]>([]);
   let trendsOther = $state<string[]>([]);
   let trendsStrictGenders = $state(false);
   let officerClubs = $state<ClubValue[]>([]);
@@ -205,6 +207,7 @@
     trendsEthnicities = ['Any'];
     trendsReligions = ['Any'];
     trendsDedicatedMajors = ['Computer Science'];
+    trendsAssociatedMajors = ['Computer Science'];
     trendsOther = ['No experience required'];
     trendsStrictGenders = false;
 
@@ -943,6 +946,7 @@
         trendsEthnicities,
         trendsReligions,
         trendsDedicatedMajors,
+        trendsAssociatedMajors,
         trendsOther,
         trendsStrictGenders
       );
@@ -975,6 +979,7 @@
       religions: trendsReligions,
       strict_genders: trendsStrictGenders,
       dedicated_majors: trendsDedicatedMajors,
+      associated_majors: trendsAssociatedMajors,
       other: trendsOther,
     });
   }
@@ -1071,6 +1076,7 @@
         trendsEthnicities = requestedClubInfo.ethnicities || [];
         trendsReligions = requestedClubInfo.religions || [];
         trendsDedicatedMajors = requestedClubInfo.dedicated_majors || [];
+        trendsAssociatedMajors = requestedClubInfo.associated_majors || [];
         trendsOther = requestedClubInfo.other || [];
         trendsStrictGenders = Boolean(requestedClubInfo.strict_genders);
 
@@ -1118,7 +1124,15 @@
     }
     void initializeSettingsPage();
   }
-  async function saveTrends(    genders: string[], ethnicities: string[],    religions: string[],    dedicatedMajors: string[], other: string[],    strictGenders: boolean  ) {
+  async function saveTrends(
+    genders: string[],
+    ethnicities: string[],
+    religions: string[],
+    dedicatedMajors: string[],
+    associatedMajors: string[],
+    other: string[],
+    strictGenders: boolean
+  ) {
     const clubInfo = officerClubs.find((entry) => getClubName(entry) === selectedClubFromUrl);
     const clubID = clubInfo ? getClubID(clubInfo) : 0;
     if (clubID <= 0) {
@@ -1131,6 +1145,7 @@
       ethnicities: ethnicities,
       religions: religions,
       dedicated_majors: dedicatedMajors,
+      associated_majors: associatedMajors,
       other: other,
       strict_genders: strictGenders
     });
@@ -1219,7 +1234,6 @@
           <input type="file" accept="image/*" onchange={(event) => handleImageUpload(selectedClubFromUrl, event)} />
 
           {#if (clubImageLibrary[selectedClubFromUrl] || []).length > 0}
-            <p>Select one image to use on the results page:</p>
             <div class="image-grid">
               {#each clubImageLibrary[selectedClubFromUrl] as imageUrl}
                 <button
@@ -1264,6 +1278,7 @@
         <MultiSelectDropdown id="trends-ethnicities" label="Ethnicities" options={raceOptions} bind:value={trendsEthnicities} />
         <MultiSelectDropdown id="trends-religions" label="Religions" options={religionOptions} bind:value={trendsReligions} />
         <MultiSelectDropdown id="trends-majors" label="Dedicated majors" options={majorOptions} bind:value={trendsDedicatedMajors} />
+        <MultiSelectDropdown id="trends-associated-majors" label="Associated majors" options={majorOptions} bind:value={trendsAssociatedMajors} />
         <div class="trends-full-row">
           <MultiSelectDropdown id="trends-other" label="Other" options={otherOptions} bind:value={trendsOther} />
         </div>
@@ -1345,24 +1360,34 @@
 
 <style>
   .settings-page {
+    --surface: #ffffff;
+    --surface-muted: #f3f3f3;
+    --text-main: #000000;
+    --text-subtle: #4a4a4a;
+    --border: #828282;
+    --action: #000000;
+    --action-hover: #828282;
+    --accent: #ffcd00;
+
     width: min(100%, 1040px);
     margin: 0 auto;
     padding: 1rem;
+    color: var(--text-main);
   }
 
   .settings-page h2 {
     margin: 0.75rem 0 0.85rem 0;
     font-size: clamp(1.35rem, 1.5vw + 0.9rem, 2rem);
-    color: #132c45;
+    color: var(--text-main);
   }
 
   .warning-banner {
     margin: 0 0 1rem 0;
     padding: 0.8rem 0.95rem;
     border-radius: 0.75rem;
-    background: #edf7fb;
-    border: none;
-    color: #24485e;
+    background: var(--accent);
+    border: 1px solid var(--border);
+    color: var(--text-main);
     font-weight: 600;
   }
 
@@ -1377,9 +1402,9 @@
   }
 
   .club-warning {
-    border: 1px solid #f4c27a;
-    background: #fff8ee;
-    color: #7a4d12;
+    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    color: var(--text-main);
     border-radius: 0.65rem;
     padding: 0.75rem 0.9rem;
     margin: 0.8rem 0;
@@ -1397,11 +1422,12 @@
   input[type='email'],
   input[type='text'],
   textarea {
-    border: 1px solid #c9d6e5;
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     padding: 0.55rem 0.65rem;
     font-size: 0.98rem;
-    background: #fff;
+    background: var(--surface);
+    color: var(--text-main);
   }
 
   textarea {
@@ -1410,13 +1436,17 @@
 
   button {
     margin-top: 0.8rem;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 0.55rem;
     padding: 0.6rem 0.95rem;
     font-weight: 700;
     color: #fff;
-    background: #0f6d8c;
+    background: var(--action);
     cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--action-hover);
   }
 
   h3 {
@@ -1484,7 +1514,7 @@
     width: 1.15rem;
     height: 1.15rem;
     margin: 0;
-    accent-color: #0f6d8c;
+    accent-color: var(--action);
     flex: 0 0 auto;
   }
 
@@ -1498,9 +1528,9 @@
   .officers-box {
     margin: 0.75rem 0 0.5rem 0;
     padding: 0.9rem;
-    border: 1px solid #c9d6e5;
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
-    background: #f7fbff;
+    background: var(--surface-muted);
   }
 
   .officer-list {
@@ -1512,7 +1542,7 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    color: #132c45;
+    color: var(--text-main);
     font-weight: 600;
   }
 
@@ -1520,21 +1550,21 @@
     width: 1.15rem;
     height: 1.15rem;
     margin: 0;
-    accent-color: #0f6d8c;
+    accent-color: var(--action);
     flex: 0 0 auto;
   }
 
   .officer-empty {
     margin: 0;
-    color: #4d6276;
+    color: var(--text-subtle);
   }
 
   .delete-button {
-    background: #b42318;
+    background: var(--action);
   }
 
   .delete-button:hover {
-    background: #922018;
+    background: var(--action-hover);
   }
 
   .officer-row button {
@@ -1550,13 +1580,13 @@
   }
 
   .save-button {
-    background: #0f6d8c;
+    background: var(--action);
     color: #fff;
-    border: none;
+    border: 1px solid transparent;
   }
 
   .save-button:hover {
-    background: #0b5a74;
+    background: var(--action-hover);
   }
 
   .save-button:disabled {
@@ -1571,15 +1601,15 @@
   }
 
   .save-status.saving {
-    color: #1f4c66;
+    color: var(--text-subtle);
   }
 
   .save-status.saved {
-    color: #0f5132;
+    color: var(--text-main);
   }
 
   .save-status.error {
-    color: #922018;
+    color: var(--text-main);
   }
 
   @media (max-width: 860px) {
@@ -1590,7 +1620,7 @@
 
   .officer-status {
     margin: 0.5rem 0 0.2rem;
-    color: #0f5132;
+    color: var(--text-main);
     font-weight: 600;
   }
 
@@ -1602,16 +1632,16 @@
   }
 
   .image-choice {
-    border: 2px solid #d1d5db;
+    border: 2px solid var(--border);
     border-radius: 0.6rem;
     padding: 0.2rem;
-    background: #fff;
+    background: var(--surface);
     cursor: pointer;
   }
 
   .image-choice.selected {
-    border-color: #1f6f8b;
-    box-shadow: 0 0 0 2px rgba(31, 111, 139, 0.2);
+    border-color: var(--action);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
   }
 
   .image-choice img {
@@ -1620,6 +1650,29 @@
     object-fit: cover;
     border-radius: 0.4rem;
     display: block;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .settings-page {
+      --surface: #121212;
+      --surface-muted: #1e1e1e;
+      --text-main: #ffffff;
+      --text-subtle: #d5d5d5;
+      --border: #828282;
+      --action: #ffcd00;
+      --action-hover: #e5b800;
+      --accent: #ffcd00;
+    }
+
+    .warning-banner {
+      color: #000000;
+    }
+
+    .save-button,
+    .delete-button,
+    button {
+      color: #000000;
+    }
   }
 
 </style>

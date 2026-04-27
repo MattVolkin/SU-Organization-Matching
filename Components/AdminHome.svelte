@@ -300,7 +300,8 @@
         border-radius: 0.8rem;
         padding: 0.9rem;
         margin: 0 auto 0.95rem auto;
-        background: #f9fcff;
+        background: var(--card);
+        color: var(--text);
     }
 
     .admin-users h2 {
@@ -338,11 +339,12 @@
     }
 
     .admin-users-actions .secondary {
-        background: #4f6781;
+        background: var(--muted);
+        color: #000000;
     }
 
     .admin-users-actions .secondary:hover {
-        background: #3f556d;
+        background: #828282;
     }
 
     .admin-users-status {
@@ -352,11 +354,11 @@
     }
 
     .admin-users-status.saved {
-        color: #1f6f3f;
+        color: var(--text);
     }
 
     .admin-users-status.error {
-        color: #9d1f3d;
+        color: #000000;
     }
 
     .quiz-quick-action {
@@ -365,7 +367,7 @@
         padding: 1rem;
         border: 1px solid var(--border);
         border-radius: 1rem;
-        background: linear-gradient(135deg, rgba(15, 109, 140, 0.08), rgba(47, 74, 102, 0.08));
+        background: var(--card);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -390,14 +392,15 @@
         border: 1px solid var(--border);
         border-radius: 0.8rem;
         overflow: hidden;
-        background: #fff;
+        background: var(--card);
+        color: var(--text);
     }
 
     th,
     td {
         text-align: left;
         padding: 0.85rem 1.1rem;
-        border-bottom: 1px solid #e8eef4;
+        border-bottom: 1px solid var(--border);
     }
 
     .col-name {
@@ -409,11 +412,11 @@
     }
 
     th {
-        background: #f5f9ff;
+        background: var(--accent);
+        color: #000000;
         text-transform: uppercase;
         letter-spacing: 0.03em;
         font-size: 0.8rem;
-        color: #2f4a66;
     }
 
     th:nth-child(2) {
@@ -421,7 +424,7 @@
     }
 
     tbody tr:hover {
-        background: #f9fcff;
+        background: rgba(130, 130, 130, 0.12);
     }
 
     td:nth-child(2) {
@@ -437,7 +440,7 @@
         padding: 0.42rem 0.78rem;
         font-size: 0.84rem;
         font-weight: 700;
-        color: #fff;
+        color: #ffffff;
         background: var(--accent);
         cursor: pointer;
         transition: background-color 0.2s ease;
@@ -534,15 +537,26 @@
 
     @media (prefers-color-scheme: dark) {
         .admin-home {
-            --bg: linear-gradient(180deg, #0c1725 0%, #0a111b 100%);
-            --card: #0f1c2d;
-            --text: #deebfb;
-            --muted: #b2c6df;
-            --border: #2a3b53;
-            --accent: #2b8fb5;
-            --accent-hover: #3ca3cb;
-            --danger: #b84267;
-            --danger-hover: #d05079;
+            --bg: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
+            --card: #121212;
+            --text: #ffffff;
+            --muted: #828282;
+            --border: #828282;
+            --accent: #ffcd00;
+            --accent-hover: #e5b800;
+            --danger: #828282;
+            --danger-hover: #6f6f6f;
+        }
+
+        .admin-users,
+        .club-management,
+        .quiz-quick-action,
+        table {
+            color: var(--text);
+        }
+
+        .admin-users {
+            background: var(--card);
         }
 
         .club-management {
@@ -550,22 +564,34 @@
         }
 
         table {
-            background: #102133;
-            border-color: #2a3b53;
+            background: var(--card);
+            border-color: var(--border);
         }
 
         th {
-            background: #13273e;
-            color: #c9d9ef;
+            background: var(--accent);
+            color: #000000;
         }
 
         td,
         tr {
-            border-bottom-color: #253952;
+            border-bottom-color: var(--border);
         }
 
         tbody tr:hover {
-            background: #14263d;
+            background: rgba(255, 205, 0, 0.12);
+        }
+
+        .admin-users-actions .secondary {
+            color: #000000;
+        }
+
+        .quiz-quick-action {
+            background: var(--card);
+        }
+
+        button {
+            color: #000000;
         }
     }
 </style>

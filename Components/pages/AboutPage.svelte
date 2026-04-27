@@ -69,20 +69,22 @@ onMount(() => {
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     .page-shell {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     .about-page {
-        --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
-        --text-main: #10243a;
-        --text-subtle: #31506e;
+        --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+        --text-main: #000000;
+        --text-subtle: #4a4a4a;
+        --accent: #ffcd00;
+        --divider: #828282;
 
         flex: 1;
         min-height: 0;
@@ -102,7 +104,11 @@ onMount(() => {
 
     .eyebrow {
         margin: 0 0 0.5rem;
-        color: #0f6d8c;
+        color: #000000;
+        background: var(--accent);
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.12em;
@@ -130,7 +136,7 @@ onMount(() => {
     }
 
     .content-section {
-        border-top: 1px solid #dbe7f3;
+        border-top: 1px solid var(--divider);
         padding-top: 1rem;
     }
 
@@ -152,7 +158,7 @@ onMount(() => {
     }
 
     .content-section li::marker {
-        color: #0f6d8c;
+        color: #000000;
     }
 
     @media (max-width: 840px) {
@@ -167,6 +173,22 @@ onMount(() => {
 
         h1 {
             font-size: clamp(1.7rem, 7vw, 2.3rem);
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :global(html),
+        :global(body),
+        .page-shell {
+            background: #000000;
+        }
+
+        .about-page {
+            --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+            --text-main: #ffffff;
+            --text-subtle: #d5d5d5;
+            --accent: #ffcd00;
+            --divider: #828282;
         }
     }
 </style>
