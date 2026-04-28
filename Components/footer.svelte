@@ -15,12 +15,21 @@
     position: relative;
     width: 100%;
     box-sizing: border-box;
-    background-color: #1f2937;
-    color: #fff;
+    background-color: #Ffcd00;
+    color: black;
     padding: 1rem;
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2);
     margin-top: auto;
     text-align: center;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .footer {
+      background-color: #ffcd00;
+      color: #000000;
+      border-top: 2px solid #000000;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2);
+    }
   }
 
   .capstone-info {

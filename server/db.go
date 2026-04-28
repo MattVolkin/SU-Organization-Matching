@@ -760,7 +760,7 @@ func (db *DatabaseClient) FetchClubByID(ctx context.Context, id int) (*DatabaseC
 		return next, nil, next.lastErr
 	}
 
-	c, err := next.client.Club.Query().Where(club.IDEQ(id)).Only(ctx)
+	c, err := next.client.Club.Query().Where(club.IDEQ(id)).WithLeaders().Only(ctx)
 	next.lastErr = err
 	return next, c, err
 }

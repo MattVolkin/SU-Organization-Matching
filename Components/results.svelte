@@ -469,18 +469,18 @@
     margin: 0;
     padding: 0;
     min-height: 100%;
-    background: #eef6ff;
+    background: #ffffff;
   }
 
   .results-page {
-    --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+    --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
     --card-bg: #ffffff;
-    --card-border: #dbe7f3;
-    --text-main: #10243a;
-    --text-subtle: #31506e;
-    --action: #1f6f8b;
-    --action-hover: #195d76;
-    --focus-ring: #60a5fa;
+    --card-border: #828282;
+    --text-main: #000000;
+    --text-subtle: #4a4a4a;
+    --action: #000000;
+    --action-hover: #828282;
+    --focus-ring: #ffcd00;
 
     min-height: calc(100vh - 220px);
     padding: 1rem;
@@ -495,7 +495,7 @@
     background: var(--card-bg);
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 10px 22px rgba(16, 36, 58, 0.1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
     padding: 1rem;
   }
 
@@ -546,7 +546,7 @@
     height: clamp(180px, 28vw, 320px);
     object-fit: contain;
     object-position: center;
-    background: rgba(8, 22, 44, 0.25);
+    background: rgba(130, 130, 130, 0.2);
     border-radius: 0.8rem;
     margin: 0.9rem 0;
     border: none;
@@ -651,15 +651,20 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    :global(html),
+    :global(body) {
+      background: #000000;
+    }
+
     .results-page {
-      --page-bg: linear-gradient(180deg, #0b1220 0%, #111827 100%);
-      --card-bg: #0f172a;
-      --card-border: #273449;
-      --text-main: #e5edf8;
-      --text-subtle: #b6c7df;
-      --action: #2b8fb5;
-      --action-hover: #3aa3cb;
-      --focus-ring: #93c5fd;
+      --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+      --card-bg: #121212;
+      --card-border: #828282;
+      --text-main: #ffffff;
+      --text-subtle: #d5d5d5;
+      --action: #ffcd00;
+      --action-hover: #e5b800;
+      --focus-ring: #ffffff;
     }
 
     .status-card,
@@ -667,10 +672,18 @@
       box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
     }
 
+    .club-meta a {
+      color: #ffcd00;
+    }
+
+    button {
+      color: #000000;
+    }
+
     button:disabled {
       opacity: 0.5;
-      background: #355268;
-      color: #cbd5e1;
+      background: #828282;
+      color: #ffffff;
     }
   }
 </style>

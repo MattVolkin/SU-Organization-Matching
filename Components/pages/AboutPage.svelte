@@ -48,18 +48,7 @@ onMount(() => {
         </section>
 
         <section class="content-grid" aria-label="Project overview and goals">
-            <article class="card">
-                <h2>Project Purpose</h2>
-                <p>
-                    SU Organization Matching helps students discover organizations that align with their interests,
-                    identity, and campus involvement preferences.
-                </p>
-                <p>
-                    The platform also gives officers and admins the tools they need to keep club information accurate and up to date.
-                </p>
-            </article>
-
-            <article class="card">
+            <article class="content-section">
                 <h2>Goals</h2>
                 <ul>
                     <li>Create a short quiz that narrows down choices so students do not need to browse all 75+ organizations manually.</li>
@@ -80,21 +69,22 @@ onMount(() => {
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     .page-shell {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background: #0b1220;
+        background: #ffffff;
     }
 
     .about-page {
-        --page-bg: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
-        --text-main: #10243a;
-        --text-subtle: #31506e;
-        --card-border: #dbe7f3;
+        --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+        --text-main: #000000;
+        --text-subtle: #4a4a4a;
+        --accent: #ffcd00;
+        --divider: #828282;
 
         flex: 1;
         min-height: 0;
@@ -102,18 +92,23 @@ onMount(() => {
         color: var(--text-main);
         padding: 2rem 1rem 3rem;
         font-size: 16px;
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
     }
 
     .hero-section {
         width: min(100%, 980px);
-        margin: 0 auto 1.4rem;
+        margin: 0 auto 1.2rem;
         padding: 0 1rem;
         text-align: center;
     }
 
     .eyebrow {
         margin: 0 0 0.5rem;
-        color: #0f6d8c;
+        color: #000000;
+        background: var(--accent);
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.12em;
@@ -135,47 +130,35 @@ onMount(() => {
     }
 
     .content-grid {
-        width: min(100%, 980px);
+        width: min(100%, 760px);
         margin: 0 auto;
         padding: 0 1rem;
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .card {
-        background: #ffffff;
-        border: 1px solid var(--card-border);
-        border-radius: 0.95rem;
-        padding: 1.05rem;
-        box-shadow: 0 10px 24px rgba(13, 37, 62, 0.08);
+    .content-section {
+        border-top: 1px solid var(--divider);
+        padding-top: 1rem;
     }
 
-    .card h2 {
+    .content-section h2 {
         margin: 0 0 0.55rem;
         font-size: 1.22rem;
         color: var(--text-main);
     }
 
-    .card p {
-        margin: 0.5rem 0 0;
-        line-height: 1.65;
-        color: var(--text-subtle);
-    }
-
-    .card ul {
+    .content-section ul {
         margin: 0;
-        padding-left: 1.2rem;
+        padding-left: 1.15rem;
     }
 
-    .card li {
-        margin: 0.5rem 0;
+    .content-section li {
+        margin: 0.55rem 0;
         color: var(--text-subtle);
-        line-height: 1.55;
+        line-height: 1.6;
     }
 
-    .card li::marker {
-        color: #0f6d8c;
+    .content-section li::marker {
+        color: #000000;
     }
 
     @media (max-width: 840px) {
@@ -188,12 +171,24 @@ onMount(() => {
             padding: 0 0.3rem;
         }
 
-        .content-grid {
-            grid-template-columns: 1fr;
-        }
-
         h1 {
             font-size: clamp(1.7rem, 7vw, 2.3rem);
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :global(html),
+        :global(body),
+        .page-shell {
+            background: #000000;
+        }
+
+        .about-page {
+            --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+            --text-main: #ffffff;
+            --text-subtle: #d5d5d5;
+            --accent: #ffcd00;
+            --divider: #828282;
         }
     }
 </style>

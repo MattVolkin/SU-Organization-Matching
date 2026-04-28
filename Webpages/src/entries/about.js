@@ -1,4 +1,4 @@
-import AdminHomeFinal from '../../../Components/pages/AdminHomeFinal.svelte';
+import AboutPage from '../../../Components/pages/AboutPage.svelte';
 import { mountPage } from '../mountPage.js';
 
-mountPage(AdminHomeFinal);
+mountPage(AboutPage);

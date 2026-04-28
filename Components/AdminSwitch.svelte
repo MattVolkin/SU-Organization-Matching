@@ -23,7 +23,7 @@
 <!-- only if enabled  it creates the admin banner that when clicked calls the set view function to view the page as the selected user type -->
 {#if enabled}
 	<section class="admin-banner" aria-label="Admin view selector"> <!-- aria-label="Admin view selector" is for accessibility -->
-		<p class="label">Admin preview mode</p>
+		<p class="label">Change User Type</p>
 		<div class="options" role="tablist" aria-label="Preview as">
 			<button
 				type="button"

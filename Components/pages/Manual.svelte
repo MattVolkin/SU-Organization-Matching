@@ -39,7 +39,7 @@ onMount(() => {
 <div class="page-shell">
 <main class="manual-page">
 	<section class="hero-section">
-		<p class="eyebrow">User Manual</p>
+	
 		<h1>How to use the SU Organization Matching Tool</h1>
 		<p class="intro">
 			Disclaimer: This tool was made to give suggestions based on the information provided. Please do not take it as the
@@ -111,10 +111,11 @@ onMount(() => {
 			<p>Below are all the settings our website allows officers to change, along with descriptions of what they are and how they affect the sorting algorithm.</p>
 			<ul>
 				<li><strong>Description</strong> - Information about the club that is displayed on the results page.</li>
-				<li><strong>Activities Description (comma-separated)</strong> - A list of activities displayed on the results page.</li>
+				<li><strong>Activities Description </strong> -A discription  of activities displayed on the results page.</li>
 				<li><strong>Meeting Information</strong> - The organization's meeting time, day, and location to be displayed on the results page.</li>
-				<li><strong>Social media/website</strong> - A link to your organization's social media or website to be displayed on the results page.</li>
+				<li><strong>Social Media/Website</strong> - A link to your organization's social media or website to be displayed on the results page.</li>
 				<li><strong>Image</strong> - You can upload an image file to be displayed on the results page to represent your club.</li>
+				<li><strong>Include Officer Emails</strong> - A contact email address to be displayed on the results page for students to reach out to with questions about the club on the Results page if checked</li>
 				<li><strong>Personality Traits & Activities</strong> - A list of personality traits and activities that you can select to change how the system sorts users into your club.</li>
 				<li><strong>Genders</strong> -  Genders that are linked to the purpose of the organization (slightly affects sorting). Please only include this field if it is important to the purpose of your organization.</li>
 				<li><strong>Ethnicities</strong> - Races/Ethicities that are linked to the purpose of the organization (affects sorting). Please only include this field if it is important to the purpose of your organization.</li>
@@ -203,14 +204,6 @@ onMount(() => {
 		text-align: center;
 	}
 
-	.eyebrow {
-		margin: 0 0 0.5rem;
-		color: #0f6d8c;
-		font-size: 0.9rem;
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-weight: 700;
-	}
 
 	h1 {
 		margin: 0.55rem 0 0.9rem;
