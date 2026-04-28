@@ -55,7 +55,7 @@
   let combinedTraitOptions = $derived(getTraitSelectOptions());
 
   // Trend options
-  const genderOptions = ['Man', 'Woman', 'Non-binary', 'Other'];
+  const genderOptions = ['Man', 'Woman', 'Non-Binary', 'Other'];
  const raceOptions = [
     'American Native/Alaska Native',
     'Asian',
@@ -64,7 +64,7 @@
     'Middle Eastern or North African',
     'Native Hawaiian or Pacific Islander',
     'White']
-  const religionOptions = ['Christianity', 'Protestantism', 'Catholicism', 'Orthodox Christianity', 'Judaism', 'Islam', 'Hinduism', 'Buddhism', 'Sikhism', 'Atheism', 'Agnosticism', 'Other', 'Prefer not to say', 'Any'];
+  const religionOptions = ['Buddhism', 'Catholicism', 'Hinduism', 'Islam', 'Judaism', 'Protestantism', 'No Religion'];
   const majorOptions = [
     'Anthropology',
     'Applied Physics',

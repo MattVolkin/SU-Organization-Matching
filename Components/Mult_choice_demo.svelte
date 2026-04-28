@@ -33,12 +33,12 @@ import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 
   const religionOptions = [
     'Buddhism',
-    'Catholocism',
+    'Catholicism',
     'Hinduism',
     'Islam',
     'Judaism',
     'Protestantism',    
-    'No religion',
+    'No Religion',
     'Other',
     'Prefer not to say',
   ]
