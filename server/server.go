@@ -453,7 +453,8 @@ func getClubsFromAnswers(answers []DBAnswer, userProfile *ent.User, clubs []*ent
 			continue
 		}
 
-		clubsByID[club.ID] = orgJSONFromEntClub(club)
+		clubsByID[club.ID] = includeOfficerEmailsIfSet(orgJSONFromEntClub(club), club)
+
 		matchClubs = append(matchClubs, matching.Organization{
 			ID:               club.ID,
 			Name:             club.ClubName,
@@ -974,7 +975,22 @@ func orgStructToJSON(clubs []*ent.Club) []OrgJSON {
 		}
 		result = append(result, orgJSONFromEntClub(club))
 	}
+	log.Printf("Converted clubs to JSON format: %v", result)
 	return result
+}
+
+func includeOfficerEmailsIfSet(clubJSON OrgJSON, club *ent.Club) OrgJSON {
+	if club.IncludeOfficerEmails {
+		if emails := officerEmailsFromClub(club); len(emails) > 0 {
+			joined := strings.Join(emails, ", ")
+			if strings.TrimSpace(clubJSON.ContactInfo) != "" {
+				clubJSON.ContactInfo = clubJSON.ContactInfo + "\n" + joined
+			} else {
+				clubJSON.ContactInfo = joined
+			}
+		}
+	}
+	return clubJSON
 }
 
 func orgJSONFromEntClub(club *ent.Club) OrgJSON {
