@@ -261,8 +261,8 @@
         --border: #d4e0ec;
         --accent: #0f6d8c;
         --accent-hover: #0b5972;
-        --danger: #a5294a;
-        --danger-hover: #8a1f3d;
+        --danger: #b42318;
+        --danger-hover: #922018;
 
         background: var(--bg);
         color: var(--text);
@@ -339,12 +339,12 @@
     }
 
     .admin-users-actions .secondary {
-        background: var(--muted);
-        color: #000000;
+        background: #b42318;
+        color: #ffffff;
     }
 
     .admin-users-actions .secondary:hover {
-        background: #828282;
+        background: #922018;
     }
 
     .admin-users-status {
@@ -544,8 +544,8 @@
             --border: #828282;
             --accent: #ffcd00;
             --accent-hover: #e5b800;
-            --danger: #828282;
-            --danger-hover: #6f6f6f;
+            --danger: #b42318;
+            --danger-hover: #922018;
         }
 
         .admin-users,
@@ -583,7 +583,7 @@
         }
 
         .admin-users-actions .secondary {
-            color: #000000;
+            color: #ffffff;
         }
 
         .quiz-quick-action {

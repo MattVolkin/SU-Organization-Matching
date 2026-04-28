@@ -402,30 +402,6 @@
     return merged;
   }
 
-  function buildContactInfoForSave(club: ClubValue) {
-    const baseContact = resultContactInfo.trim();
-    if (!includeOfficerEmailsInResults) {
-      return baseContact;
-    }
-
-    const officerEmails = getExistingClubOfficers(club)
-      .map((email) => String(email || '').trim())
-      .filter((email) => email.length > 0);
-
-    if (officerEmails.length === 0) {
-      return baseContact;
-    }
-
-    const existingText = baseContact.toLowerCase();
-    const missingEmails = officerEmails.filter((email) => !existingText.includes(email.toLowerCase()));
-    if (missingEmails.length === 0) {
-      return baseContact;
-    }
-
-    const officerLine = `Officer emails: ${missingEmails.join(', ')}`;
-    return baseContact ? `${baseContact}\n${officerLine}` : officerLine;
-  }
-
   function getTraitSelectOptions() {
     const seen = new Set<string>();
     const merged: string[] = [];
@@ -911,7 +887,7 @@
         resultActivitiesText,
         generalMeetingTime,
         generalSocialMedia,
-        resultContactInfo,
+        resultContactInfo.trim(),
         includeOfficerEmailsInResults
       );
       saveStateResults = 'saved';
@@ -970,7 +946,7 @@
       description: resultDescription.trim(),
       meetingTime: generalMeetingTime.trim(),
       externalLink: generalSocialMedia.trim(),
-      contactInfo: buildContactInfoForSave(clubInfo || ''),
+      contactInfo: resultContactInfo.trim(),
       includeOfficerEmails: includeOfficerEmailsInResults,
       personality: adjectives,
       activities: csvToList(resultActivitiesText),
@@ -1163,7 +1139,7 @@
       description: description.trim(),
       meetingTime: meetingTime.trim(),
       externalLink: socialMedia.trim(),
-      contactInfo: buildContactInfoForSave(clubInfo || ''),
+      contactInfo: contactInfo.trim(),
       includeOfficerEmails: includeOfficerEmails,
       activitiesDescription: activities,
     });
@@ -1575,11 +1551,12 @@
   }
 
   .delete-button {
-    background: var(--action);
+    background: #b42318;
+    color: #ffffff;
   }
 
   .delete-button:hover {
-    background: var(--action-hover);
+    background: #922018;
   }
 
   .officer-row button {
@@ -1726,6 +1703,10 @@
 
     .image-choice.selected {
       box-shadow: 0 0 0 2px rgba(255, 205, 0, 0.28);
+    }
+
+    .delete-button {
+      color: #ffffff;
     }
 
   }
