@@ -106,7 +106,7 @@ func UserFromAnswers(answers []Answer) UserInfo {
 // Sort ranks organizations by descending normalized match score.
 func Sort(user UserInfo, organizations []Organization) []MatchResult {
 	results := make([]MatchResult, 0, len(organizations))
-	if (len(user.Activities) == 0 && len(user.Personality) == 0) || (len(user.Activities) == 21 && len(user.Personality) == 16) {
+	if (len(user.Activities) == 0 && len(user.Personality) == 0) || (len(user.Activities) == 22 && len(user.Personality) == 16) { // 22 and 16 are the maximum number of activities and personality questions respectively
 		for _, org := range organizations {
 			if org.Name == "No Clubs Found" {
 				results = append(results, MatchResult{
