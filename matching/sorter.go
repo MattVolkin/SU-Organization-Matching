@@ -105,11 +105,20 @@ func UserFromAnswers(answers []Answer) UserInfo {
 
 // Sort ranks organizations by descending normalized match score.
 func Sort(user UserInfo, organizations []Organization) []MatchResult {
-	// if(len(user.Activities) == 0 && len(user.Personality) == 0) || (len(user.Activities) == 21 && len(user.Personality) == 16) {
-
-	// }
-
 	results := make([]MatchResult, 0, len(organizations))
+	if (len(user.Activities) == 0 && len(user.Personality) == 0) || (len(user.Activities) == 21 && len(user.Personality) == 16) {
+		for _, org := range organizations {
+			if org.Name == "No Clubs Found" {
+				results = append(results, MatchResult{
+					Organization:    org,
+					RawScore:        0,
+					NormalizedScore: 0,
+				})
+			}
+		}
+		return results
+	}
+
 	for _, org := range organizations {
 		maxScore := compareUserToOrg(toUserInfo(org), org)
 		rawScore := compareUserToOrg(user, org)
@@ -209,34 +218,6 @@ func religionScoring(user UserInfo, org Organization) float32 {
 	}
 	return score
 }
-
-// func demographicScoring(user UserInfo, org Organization) float32 {
-// 	totalDemographics := min(1, len(org.Genders)) + min(1, len(org.Ethnicities)) + min(1, len(org.Religions))
-// 	if totalDemographics == 0 { // check to avoid division by 0
-// 		return 0
-// 	}
-// 	genderMatches := 0
-// 	for _, gender := range user.Genders {
-// 		if containsFold(org.Genders, gender) {
-// 			genderMatches = 1
-// 		}
-// 	}
-// 	score := genderMatches
-
-// 	ethnicityMatches := 0
-// 	for _, ethnicity := range user.Ethnicities {
-// 		if containsFold(org.Ethnicities, ethnicity) {
-// 			ethnicityMatches = 1
-// 		}
-// 	}
-// 	score += ethnicityMatches
-
-// 	religionMatches := 0
-
-// 	score += religionMatches
-
-// 	return demographicWeight * float32(score) / float32(totalDemographics)
-// }
 
 // Calculates the matching score for academic interests between a user and an organization
 func academicScoring(user UserInfo, org Organization) float32 {
