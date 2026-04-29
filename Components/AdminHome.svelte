@@ -58,19 +58,24 @@
 
     // Loads current clubs for admin management mode.
     async function loadClubs() {
+        console.debug('AdminHome: loadClubs starting')
         isLoading = true
         loadError = ''
         try {
             const fetchedClubs = await APICreater('GET', '/api/admin/orgs', null)
-            clubs = Array.isArray(fetchedClubs) ? fetchedClubs : []
+            const normalized = Array.isArray(fetchedClubs) ? fetchedClubs : []
+            clubs = [...normalized]
+            console.debug('AdminHome: loadClubs fetched clubs=', clubs.length)
             if (pageNum > totalPages) {
                 pageNum = totalPages
             }
         } catch (error) {
+            console.error('AdminHome: loadClubs error', error)
             loadError = 'Unable to load clubs. Please refresh and try again.'
             clubs = []
         } finally {
             isLoading = false
+            console.debug('AdminHome: loadClubs finished, isLoading=', isLoading)
         }
     }
     function nextPage() {
@@ -88,7 +93,17 @@
         return typeof club === 'string' ? club : (club?.clubName || club?.name || 'Unknown Club')
     }
 
-    function editClub(club) {
+    async function editClub(club) {
+        // Refresh list to ensure the club still exists before navigating
+        await loadClubs()
+        if (!club?.id) {
+            return
+        }
+        const exists = clubs.some((c) => c && c.id === club.id)
+        if (!exists) {
+            window.alert('This club no longer exists.')
+            return
+        }
         window.location.href = `/settings.html?club=${encodeURIComponent(getClubName(club))}`
     }
 
@@ -107,8 +122,18 @@
               return
           }
 
-       await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
+       try {
+           console.debug('AdminHome: deleting club id=', club.id)
+           const delResp = await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
+           console.debug('AdminHome: delete response', delResp)
+       } catch (err) {
+           console.error('AdminHome: deleteClub error', err)
+           window.alert('Unable to delete club. Please try again.')
+           return
+       }
+
       await loadClubs()
+      console.debug('AdminHome: deleteClub finished and triggered loadClubs')
     }
 
     async function updateAdminRole(nextRole) {
