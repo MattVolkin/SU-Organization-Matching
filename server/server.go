@@ -588,10 +588,10 @@ func mergeUniqueFoldStrings(base []string, values []string) []string {
 func demographicsToOtherSignals(rawLGBTQ string, rawDisability string) []string {
 	signals := []string{}
 	if normalizeYesNo(rawLGBTQ) == "yes" {
-		signals = append(signals, "lgbtq", "lgbtq+")
+		signals = append(signals, "lgbtq")
 	}
 	if normalizeYesNo(rawDisability) == "yes" {
-		signals = append(signals, "disability")
+		signals = append(signals, "Disabilities")
 	}
 	return signals
 }
@@ -635,7 +635,7 @@ func handleAdminCreateOrgRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send email
-	sendEmailToOfficers(createdClub)
+	// sendEmailToOfficers(createdClub)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -686,7 +686,12 @@ func handleAdminDeleteOrgRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{
+		"message": "Club deleted successfully",
+		"id":      payload.ID,
+	})
 }
 
 func handleOfficerOrgsRequest(w http.ResponseWriter, r *http.Request) {
