@@ -1132,7 +1132,7 @@ func (db *DatabaseClient) resolveUsersByEmail(ctx context.Context, emails []stri
 			continue
 		}
 		seen[key] = struct{}{}
-		normalizedEmails = append(normalizedEmails, trimmed)
+		normalizedEmails = append(normalizedEmails, key)
 	}
 
 	if len(normalizedEmails) == 0 {
@@ -1156,12 +1156,52 @@ func (db *DatabaseClient) resolveUsersByEmail(ctx context.Context, emails []stri
 	for _, email := range normalizedEmails {
 		storedUser, ok := resolved[strings.ToLower(strings.TrimSpace(email))]
 		if !ok {
-			return nil, fmt.Errorf("officer with email %q not found", email)
+			var createErr error
+			storedUser, createErr = db.ensureUserExistsByEmail(ctx, email)
+			if createErr != nil {
+				return nil, fmt.Errorf("failed to create missing officer user %q: %w", email, createErr)
+			}
 		}
 		users = append(users, storedUser)
 	}
 
 	return users, nil
+}
+
+func pendingGoogleIDForEmail(email string) string {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	return "pending-email:" + normalized
+}
+
+func (db *DatabaseClient) ensureUserExistsByEmail(ctx context.Context, email string) (*ent.User, error) {
+	lookupEmail := strings.ToLower(strings.TrimSpace(email))
+	if lookupEmail == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	storedUser, err := db.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if err == nil {
+		return storedUser, nil
+	}
+	if err != nil && !ent.IsNotFound(err) {
+		return nil, err
+	}
+
+	createdUser, createErr := db.client.User.Create().
+		SetEmail(lookupEmail).
+		SetGoogleID(pendingGoogleIDForEmail(lookupEmail)).
+		Save(ctx)
+	if createErr == nil {
+		return createdUser, nil
+	}
+
+	// Handle races by loading the row if another request created it first.
+	storedUser, reloadErr := db.client.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	if reloadErr == nil {
+		return storedUser, nil
+	}
+
+	return nil, createErr
 }
 
 // SetUserRoleForTesting updates the persisted fields that determine effective role.
@@ -1178,7 +1218,7 @@ func (db *DatabaseClient) SetUserRoleForTesting(ctx context.Context, email strin
 		return next, next.lastErr
 	}
 
-	lookupEmail := strings.TrimSpace(email)
+	lookupEmail := strings.ToLower(strings.TrimSpace(email))
 	if lookupEmail == "" {
 		next.lastErr = fmt.Errorf("email is required")
 		return next, next.lastErr
@@ -1201,7 +1241,7 @@ func (db *DatabaseClient) SetUserRoleForTesting(ctx context.Context, email strin
 		}
 	}()
 
-	storedUser, err := tx.User.Query().Where(user.EmailEQ(lookupEmail)).Only(ctx)
+	storedUser, err := next.ensureUserExistsByEmail(ctx, lookupEmail)
 	if err != nil {
 		next.lastErr = err
 		return next, err
@@ -1669,7 +1709,7 @@ func (db *DatabaseClient) UpsertUserProfileByGoogleID(ctx context.Context, googl
 	if lookupID == "" {
 		lookupID = strings.TrimSpace(next.userGoogleID)
 	}
-	email := strings.TrimSpace(userInfo.Email)
+	email := strings.ToLower(strings.TrimSpace(userInfo.Email))
 
 	if lookupID == "" {
 		next.lastErr = fmt.Errorf("google id is required")
@@ -1698,6 +1738,26 @@ func (db *DatabaseClient) UpsertUserProfileByGoogleID(ctx context.Context, googl
 	if !ent.IsNotFound(err) {
 		next.lastErr = err
 		return next, err
+	}
+
+	// If the user was pre-created by email (e.g., assigned as officer/admin before first login),
+	// bind that existing row to the real Google subject on first successful OAuth callback.
+	existingByEmail, emailErr := next.client.User.Query().Where(user.EmailEQ(email)).Only(ctx)
+	if emailErr == nil {
+		tags = mergeProfileNameTag(existingByEmail.Tags, userInfo.Name)
+		err = next.client.User.UpdateOneID(existingByEmail.ID).
+			SetGoogleID(lookupID).
+			SetEmail(email).
+			SetTags(tags).
+			Exec(ctx)
+		next.lastErr = err
+		next.userGoogleID = lookupID
+		next.userEmail = email
+		return next, err
+	}
+	if !ent.IsNotFound(emailErr) {
+		next.lastErr = emailErr
+		return next, emailErr
 	}
 
 	_, createErr := next.client.User.Create().

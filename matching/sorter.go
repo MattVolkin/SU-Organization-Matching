@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"log"
 )
 
 // Organization defines club attributes used by the ranking algorithm.
@@ -120,6 +122,7 @@ func Sort(user UserInfo, organizations []Organization) []MatchResult {
 	}
 
 	for _, org := range organizations {
+		log.Printf("Org Other field", org.Other)
 		maxScore := compareUserToOrg(toUserInfo(org), org)
 		rawScore := compareUserToOrg(user, org)
 		normalized := float32(0)

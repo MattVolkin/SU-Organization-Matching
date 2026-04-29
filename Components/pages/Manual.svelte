@@ -5,6 +5,8 @@ import Footer from '../footer.svelte';
 import LoginPopup from '../login_popup.svelte';
 
 let userType = 'user';
+let isOfficer = false;
+let isAdmin = false;
 
 async function loadUserType() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
@@ -26,6 +28,8 @@ async function loadUserType() {
     const data = await response.json().catch(() => ({}));
     const role = String(data?.role || '').toLowerCase();
     userType = role === 'admin' || role === 'officer' ? role : 'user';
+	isOfficer = userType === 'officer';
+	isAdmin = userType === 'admin';
 }
 
 onMount(() => {
@@ -94,7 +98,7 @@ onMount(() => {
 
 			</p>
 		</article>
-
+		{#if isOfficer}
 		<article class="card">
 			<h2>Officers</h2>
 			<h3>Editing a club's information</h3>
@@ -128,7 +132,8 @@ onMount(() => {
 				<li><strong>Add New Officer</strong> - Type in an officer's email address and click the Add Officer button to add them as a new officer.</li>
 			</ul>
 		</article>
-
+		{/if}
+		{#if isAdmin}
 		<article class="card">
 			<h2>Admins</h2>
 			<h3>Editing clubs</h3>
@@ -163,7 +168,9 @@ onMount(() => {
 				select the Regular User or Officer button. To go back to an admin account, just reselect the Admin button. 
 			</p>
 		</article>
+		{/if}
 	</section>
+
 </main>
 </div>
 <Footer />

@@ -115,8 +115,9 @@
     'Undecided',
   ]
 
+  const hiddenTraitOptions = new Set(['greek life'])
 
-  const otherOptions = ['LGBTQ', 'Greek Life', "Disabilities"]
+  const otherOptions = ['LGBTQ', 'Greek Life', 'Disabilities']
 
   let trendsGender = $state<string[]>([]);
   let trendsEthnicities = $state<string[]>([]);
@@ -353,7 +354,7 @@
     for (const item of allAdjectives) {
       const normalized = String(item || '').trim();
       const key = normalized.toLowerCase();
-      if (normalized && !seen.has(key)) {
+      if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
         seen.add(key);
         merged.push(normalized);
       }
@@ -362,7 +363,7 @@
     for (const activity of selectedClubActivities) {
       const normalized = String(activity || '').trim();
       const key = normalized.toLowerCase();
-      if (normalized && !seen.has(key)) {
+      if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
         seen.add(key);
         merged.push(normalized);
       }
@@ -370,7 +371,7 @@
 
     for (const activity of csvToList(resultActivitiesText)) {
       const key = activity.toLowerCase();
-      if (!seen.has(key)) {
+      if (!seen.has(key) && !hiddenTraitOptions.has(key)) {
         seen.add(key);
         merged.push(activity);
       }
@@ -379,7 +380,7 @@
     for (const activity of allClubActivities) {
       const normalized = String(activity || '').trim();
       const key = normalized.toLowerCase();
-      if (normalized && !seen.has(key)) {
+      if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
         seen.add(key);
         merged.push(normalized);
       }

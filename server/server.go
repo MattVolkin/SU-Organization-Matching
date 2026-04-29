@@ -546,6 +546,9 @@ func buildMatchUser(answers []matching.Answer, profile *ent.User) matching.UserI
 	user.DedicatedMajors = mergeUniqueFoldStrings(user.DedicatedMajors, profile.DedicatedMajors)
 	user.Other = buildMatchingOtherSignals(user.Other, answers)
 
+	log.Printf("User profile after merging demographics for %s:	Genders: %v, Ethnicities: %v, Religions: %v, DedicatedMajors: %v, Other: %v",
+		user.Name, user.Genders, user.Ethnicities, user.Religions, user.DedicatedMajors, user.Other)
+
 	return user
 }
 
@@ -593,6 +596,7 @@ func demographicsToOtherSignals(rawLGBTQ string, rawDisability string) []string 
 	if normalizeYesNo(rawDisability) == "yes" {
 		signals = append(signals, "Disabilities")
 	}
+	log.Printf("Converted demographics LGBTQ: %s, Disability: %s into other signals: %v", rawLGBTQ, rawDisability, signals)
 	return signals
 }
 
@@ -980,7 +984,6 @@ func orgStructToJSON(clubs []*ent.Club) []OrgJSON {
 		}
 		result = append(result, orgJSONFromEntClub(club))
 	}
-	log.Printf("Converted clubs to JSON format: %v", result)
 	return result
 }
 
@@ -995,7 +998,6 @@ func includeOfficerEmailsIfSet(clubJSON OrgJSON, club *ent.Club) OrgJSON {
 			}
 		}
 	}
-	log.Printf("Included officer emails for club ID %d: %s", club.ID, clubJSON.ContactInfo)
 	return clubJSON
 }
 
