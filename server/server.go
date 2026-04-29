@@ -995,6 +995,7 @@ func includeOfficerEmailsIfSet(clubJSON OrgJSON, club *ent.Club) OrgJSON {
 			}
 		}
 	}
+	log.Printf("Included officer emails for club ID %d: %s", club.ID, clubJSON.ContactInfo)
 	return clubJSON
 }
 
