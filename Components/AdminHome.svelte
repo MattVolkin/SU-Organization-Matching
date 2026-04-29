@@ -108,10 +108,7 @@
           }
 
        await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
-       clubs = clubs.filter((existingClub) => existingClub?.id !== club.id)
-       if (pageNum > totalPages) {
-            pageNum = totalPages
-       }
+      await loadClubs()
     }
 
     async function updateAdminRole(nextRole) {

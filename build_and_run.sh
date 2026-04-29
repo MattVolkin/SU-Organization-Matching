@@ -9,6 +9,7 @@ sudo pkill -f '\./server' || true
 export GOOGLE_CLIENT_ID='1079255593069-2q1tq5l5jjdphphqoi3ekr4kiu0vmcb6.apps.googleusercontent.com '
 export GOOGLE_CLIENT_SECRET='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'
 export GOOGLE_REDIRECT_URL='https://capstone.benmckallip.com/auth/callback'
+export GOOGLE_INTEGRATION_TRIGGER_URL='https://integrations.googleapis.com/v2/projects/capstone-489704/locations/us-south1/integrations/email-on-pubsub-event:execute?triggerId=api_trigger/sendEmail'
 
 # Load nvm when available so this script uses the project Node version.
 export NVM_DIR="$HOME/.nvm"

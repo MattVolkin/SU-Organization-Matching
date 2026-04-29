@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,8 +19,6 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-
-	gomail "gopkg.in/mail.v2"
 )
 
 // host=localhost port=5432 user=dev_user password=testing
@@ -1366,28 +1366,97 @@ func sendEmailToOfficers(club *ent.Club) {
 		if email == "" {
 			continue
 		}
-		// sendEmail(email, fmt.Sprintf("Your club '%s' has been created/updated", club.ClubName), "Please check the officer portal for details.")
+		if err := sendEmail(email, fmt.Sprintf("Your club '%s' has been created/updated", club.ClubName), "Please check the officer portal for details."); err != nil {
+			log.Printf("failed to send notification email to %s: %v", email, err)
+		}
 	}
 }
 
-func sendEmail(to, subject, body string) {
-	message := gomail.NewMessage()
-
-	// Set email headers
-	message.SetHeader("From", "youremail@email.com")
-	message.SetHeader("To", to)
-	message.SetHeader("Subject", subject)
-
-	// Set email body
-	message.SetBody("text/plain", body)
-
-	// Set up the SMTP dialer
-	dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
-
-	// Send the email
-	if err := dialer.DialAndSend(message); err != nil {
-		fmt.Println("Error:", err)
+func sendEmail(to, subject, body string) error {
+	triggerURL := strings.TrimSpace(os.Getenv("GOOGLE_INTEGRATION_TRIGGER_URL"))
+	if triggerURL == "" {
+		return fmt.Errorf("missing GOOGLE_INTEGRATION_TRIGGER_URL environment variable")
 	}
+
+	payload := map[string]string{
+		"Subject": subject,
+		"Body":    body,
+		"sendTo":  to,
+	}
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal trigger payload: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, triggerURL, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to build trigger request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	if err := attachTriggerAuthHeader(context.Background(), req); err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("trigger request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("trigger returned status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+	}
+
+	log.Printf("integration trigger invoked successfully for %s", to)
+	return nil
+}
+
+func attachTriggerAuthHeader(ctx context.Context, req *http.Request) error {
+	authMode := strings.ToLower(strings.TrimSpace(os.Getenv("GOOGLE_INTEGRATION_AUTH_MODE")))
+	if authMode == "" {
+		authMode = "adc"
+	}
+
+	switch authMode {
+	case "none":
+		return nil
+	case "bearer":
+		token := strings.TrimSpace(os.Getenv("GOOGLE_INTEGRATION_BEARER_TOKEN"))
+		if token == "" {
+			return fmt.Errorf("GOOGLE_INTEGRATION_AUTH_MODE=bearer requires GOOGLE_INTEGRATION_BEARER_TOKEN")
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		return nil
+	case "adc":
+		token, err := fetchCloudPlatformAccessToken(ctx)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		return nil
+	default:
+		return fmt.Errorf("unsupported GOOGLE_INTEGRATION_AUTH_MODE %q (supported: none, bearer, adc)", authMode)
+	}
+}
+
+func fetchCloudPlatformAccessToken(ctx context.Context) (string, error) {
+	creds, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		return "", fmt.Errorf("failed to load Application Default Credentials: %w", err)
+	}
+
+	tok, err := creds.TokenSource.Token()
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch ADC access token: %w", err)
+	}
+
+	if strings.TrimSpace(tok.AccessToken) == "" {
+		return "", fmt.Errorf("received empty ADC access token")
+	}
+
+	return tok.AccessToken, nil
 }
 
 // decodeJSONBody decodes a JSON request body into target and writes a 400 response

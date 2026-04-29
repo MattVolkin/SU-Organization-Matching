@@ -42,7 +42,7 @@
 
   let userType = 'user';
   let pageNotice = $state('');
-  let accessibleClubs = $state<string[]>(["Test Club 1"]);
+  let accessibleClubs = $state<string[]>([]);
   let selectedClubFromUrl = $state('');
   let generalMeetingTime = $state('');
   let generalSocialMedia = $state('');
@@ -132,8 +132,6 @@
   let selectedOfficerEmailsByClub = $state<Record<string, string[]>>({});
   let officerStatusByClub = $state<Record<string, string>>({});
   let loading = $state(true);
-  let isTestMode = $state(false);
-  let previewUrl = $state('');
   let saveStateResults = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
   let saveStateAdjectives = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
   let saveStateTrends = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -169,66 +167,9 @@
     userType = role === 'admin' || role === 'officer' ? role : 'user';
   }
 
-  const testAdjectives = [
-    'Welcoming',
-    'Community Service',
-    'Study Group',
-    'Greek Life',
-    'Board Games',
-    'Nerdy',
-  ];
-
-
   function makePreviewImage(label: string, color: string) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="${color}"/><stop offset="100%" stop-color="#0f172a"/></linearGradient></defs><rect width="1200" height="720" fill="url(#g)"/><circle cx="280" cy="280" r="180" fill="rgba(255,255,255,0.15)"/><circle cx="910" cy="470" r="240" fill="rgba(255,255,255,0.12)"/><text x="70" y="640" fill="white" font-family="Arial" font-size="62" font-weight="700">${label}</text></svg>`;
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-  }
-
-  function enablePreviewMode(requestedClubName: string, noticeMessage = '') {
-    const requestedTestClub = requestedClubName || 'Test Club';
-    isTestMode = true;
-    pageNotice = noticeMessage;
-    selectedClubFromUrl = requestedTestClub;
-    accessibleClubs = [requestedTestClub];
-    allAdjectives = testAdjectives;
-    allClubActivities = csvToList('Board Games, Study Group, Movies, Guest Speakers, Community Service, Leadership');
-    generalMeetingTime = 'Thursdays at 6:30 PM';
-    generalSocialMedia = 'https://instagram.com/yourclub';
-    resultContactInfo = '';
-    includeOfficerEmailsInResults = false;
-    resultDescription = 'Add your club description for the results page here.';
-    resultActivitiesText = 'Board Games, Study Group, Movies, Guest Speakers, Community Service';
-    selectedAdjectives = mergeUniqueStrings(
-      ['Welcoming', 'Community-focused'],
-      csvToList(resultActivitiesText),
-      allClubActivities
-    );
-    trendsGender = ['Any'];
-    trendsEthnicities = ['Any'];
-    trendsReligions = ['Any'];
-    trendsDedicatedMajors = ['Computer Science'];
-    trendsAssociatedMajors = ['Computer Science'];
-    trendsOther = ['No experience required'];
-    trendsStrictGenders = false;
-
-    if (!(clubImageLibrary[requestedTestClub] || []).length) {
-      const previewImages = [
-        makePreviewImage(`${requestedTestClub} Activity`, '#1d4ed8'),
-        makePreviewImage(`${requestedTestClub} Event`, '#0891b2'),
-      ];
-
-      clubImageLibrary = {
-        ...clubImageLibrary,
-        [requestedTestClub]: previewImages,
-      };
-      selectedImageByClub = {
-        ...selectedImageByClub,
-        [requestedTestClub]: previewImages[0],
-      };
-      saveClubMedia();
-    }
-
-    loading = false;
   }
 
   function getClubName(club: ClubValue) {
@@ -647,9 +588,7 @@
     }
 
     try {
-      if (!isTestMode) {
-        await saveClubOfficer(club, officerEmail);
-      }
+      await saveClubOfficer(club, officerEmail);
 
       setPendingOfficerEmail(club, '');
       setOfficerStatus(club, `Added ${officerEmail} to ${club}.`);
@@ -693,12 +632,10 @@
     }
 
     try {
-      if (!isTestMode) {
-        await APICreater('PATCH', getOrgApiPath(), {
-          id: clubID,
-          officers: remainingOfficers,
-        });
-      }
+      await APICreater('PATCH', getOrgApiPath(), {
+        id: clubID,
+        officers: remainingOfficers,
+      });
 
       officerClubs = officerClubs.map((entry) => {
         if (getClubName(entry) !== club || typeof entry === 'string') {
@@ -755,81 +692,58 @@
       return;
     }
 
-    if (!isTestMode) {
-      const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
-      if (!clubInfo) {
-        input.value = '';
-        return;
-      }
-
-      try {
-        const uploadedPaths: string[] = [];
-        for (const file of Array.from(input.files)) {
-          const responsePayload = await uploadClubImageFile(clubInfo, file);
-          const uploadedPath = extractUploadedImagePath(responsePayload);
-          if (uploadedPath) {
-            uploadedPaths.push(uploadedPath);
-          }
-        }
-
-        if (uploadedPaths.length === 0) {
-          throw new Error('Upload completed without a returned image path.');
-        }
-
-        const latestImage = uploadedPaths[uploadedPaths.length - 1];
-
-        clubImageLibrary = {
-          ...clubImageLibrary,
-          [club]: [latestImage],
-        };
-
-        selectedImageByClub = {
-          ...selectedImageByClub,
-          [club]: latestImage,
-        };
-
-        officerClubs = officerClubs.map((entry) => {
-          if (typeof entry === 'string' || getClubName(entry) !== club) {
-            return entry;
-          }
-
-          return {
-            ...entry,
-            imagePath: latestImage,
-            ImagePath: latestImage,
-          };
-        });
-
-        saveClubMedia();
-        input.value = '';
-        return;
-      } catch (error) {
-        console.error('Unable to upload club image', error);
-        input.value = '';
-        return;
-      }
-    }
-
-    const encodedImages = await Promise.all(Array.from(input.files).map(toDataUrl));
-    const latestImage = encodedImages[encodedImages.length - 1];
-
-    if (!latestImage) {
+    const clubInfo = officerClubs.find((entry) => getClubName(entry) === club);
+    if (!clubInfo) {
       input.value = '';
       return;
     }
 
-    clubImageLibrary = {
-      ...clubImageLibrary,
-      [club]: [latestImage],
-    };
+    try {
+      const uploadedPaths: string[] = [];
+      for (const file of Array.from(input.files)) {
+        const responsePayload = await uploadClubImageFile(clubInfo, file);
+        const uploadedPath = extractUploadedImagePath(responsePayload);
+        if (uploadedPath) {
+          uploadedPaths.push(uploadedPath);
+        }
+      }
 
-    selectedImageByClub = {
-      ...selectedImageByClub,
-      [club]: latestImage,
-    };
+      if (uploadedPaths.length === 0) {
+        throw new Error('Upload completed without a returned image path.');
+      }
 
-    saveClubMedia();
-    input.value = '';
+      const latestImage = uploadedPaths[uploadedPaths.length - 1];
+
+      clubImageLibrary = {
+        ...clubImageLibrary,
+        [club]: [latestImage],
+      };
+
+      selectedImageByClub = {
+        ...selectedImageByClub,
+        [club]: latestImage,
+      };
+
+      officerClubs = officerClubs.map((entry) => {
+        if (typeof entry === 'string' || getClubName(entry) !== club) {
+          return entry;
+        }
+
+        return {
+          ...entry,
+          imagePath: latestImage,
+          ImagePath: latestImage,
+        };
+      });
+
+      saveClubMedia();
+      input.value = '';
+      return;
+    } catch (error) {
+      console.error('Unable to upload club image', error);
+      input.value = '';
+      return;
+    }
   }
 
   function chooseResultImage(club: string, imageUrl: string) {
@@ -965,25 +879,7 @@
     loading = true;
 
     const searchParams = new URLSearchParams(window.location.search);
-    const previewParams = new URLSearchParams(window.location.search);
-    previewParams.set('preview', '1');
-    previewUrl = `${window.location.pathname}?${previewParams.toString()}`;
-    const requestedClubFromParams = searchParams.get('testClub') || searchParams.get('club') || '';
-    const previewModeRequested = searchParams.get('preview') === '1';
-    const shouldUseTestMode =
-      previewModeRequested ||
-      searchParams.get('test') === '1' ||
-      requestedClubFromParams.trim().toLowerCase() === 'test club';
-
-    if (shouldUseTestMode) {
-      enablePreviewMode(
-        requestedClubFromParams,
-        previewModeRequested
-          ? 'Preview mode enabled. You are viewing mock content for layout testing.'
-          : 'Test mode enabled. API checks are bypassed for this page.'
-      );
-      return;
-    }
+    const requestedClubFromParams = searchParams.get('club') || '';
 
     try {
       await loadUserType();
@@ -1004,8 +900,8 @@
       selectedClubFromUrl = requestedClub;
 
       if (!requestedClub) {
-        enablePreviewMode(
-          'Test Club')
+        pageNotice = 'No club was selected.';
+        accessibleClubs = [];
         return;
       }
 
@@ -1076,28 +972,18 @@
       accessibleClubs = [requestedClub];
     } catch (error) {
       console.error('Unable to load club settings', error);
-      enablePreviewMode(
-        requestedClubFromParams,
-        'Unable to load club settings from the API. Showing preview mode instead.'
-      );
+      pageNotice = 'Unable to load club settings from the API.';
+      accessibleClubs = [];
     } finally {
-      if (!isTestMode) {
-        loading = false;
-      }
+      loading = false;
     }
   }
 
   function handleAuthLogin() {
-    if (isTestMode) {
-      return;
-    }
     void initializeSettingsPage();
   }
 
   function handleAuthLogout() {
-    if (isTestMode) {
-      return;
-    }
     void initializeSettingsPage();
   }
   async function saveTrends(

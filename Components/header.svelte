@@ -31,7 +31,6 @@
   let authToken = $state('');
   let resolvedUserType = $state('user');
   let officerClubs = $state([]);
-  let isTestMode = $state(false);
   let isAuthChecking = $state(true);
 
   function getApiUserType() {
@@ -99,18 +98,6 @@
     }
   }
 
-  /*
-  function loginWithGooglePopup() {
-    const popup = window.open(
-      '/login?popup=1',
-      'google-login',
-      'width=520,height=640,menubar=no,toolbar=no,location=yes,resizable=yes,scrollbars=yes,status=no'
-    );
-    if (!popup) {
-      alert('Popup blocked. Please allow popups for this site and try again.');
-    }
-  }
-  */
 
   async function logout() {
     const headers = authToken
@@ -161,7 +148,6 @@
     window.addEventListener('message', onAuthMessage);
     window.addEventListener('auth-login', handleAuthLogin);
     window.addEventListener('auth-logout', handleAuthLogout);
-    isTestMode = new URLSearchParams(window.location.search).get('test') === '1';
     void refreshUser();
   });
 
@@ -213,17 +199,7 @@
       return leftName.localeCompare(rightName, undefined, { sensitivity: 'base' });
     };
 
-    if (clubs.length === 0) {
-      return isTestMode ? ['Test Club'] : [];
-    }
-
-    if (!isTestMode) {
-      return [...clubs].sort(sortByClubName);
-    }
-
-    const hasTestClub = clubs.some((club) => getClubName(club).trim().toLowerCase() === 'test club');
-    const clubsWithTest = hasTestClub ? [...clubs] : ['Test Club', ...clubs];
-    return clubsWithTest.sort(sortByClubName);
+    return [...clubs].sort(sortByClubName);
   }
 
   $effect(() => {
@@ -243,11 +219,7 @@
 
   function getManageClubHref(club) {
     const clubName = getClubName(club);
-    const shouldUseTestMode = isTestMode || clubName.trim().toLowerCase() === 'test club';
     const params = new URLSearchParams({ club: clubName });
-    if (shouldUseTestMode) {
-      params.set('test', '1');
-    }
     return `/settings.html?${params.toString()}`;
   }
 

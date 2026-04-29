@@ -76,15 +76,30 @@
     :global(body) {
         min-height: 100%;
         margin: 0;
-        background: linear-gradient(180deg, #edf4fb 0%, #f6f9fd 100%);
-        color: #132c45;
+        background: #ffffff;
+        color: #000000;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .create-club-shell {
+        --page-bg: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+        --text-main: #000000;
+        --text-subtle: #4a4a4a;
+        --card-bg: #ffffff;
+        --card-border: #828282;
+        --input-bg: #ffffff;
+        --input-border: #828282;
+        --action: #000000;
+        --action-hover: #828282;
+        --status-bg: #f3f3f3;
+        --status-border: #828282;
+        --status-text: #000000;
+
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+        background: var(--page-bg);
+        color: var(--text-main);
     }
 
     .create-club-page {
@@ -97,9 +112,9 @@
 
     .create-club-card {
         border-radius: 1rem;
-        background: #ffffff;
-        border: 1px solid #d4e0ec;
-        box-shadow: 0 10px 24px rgba(13, 37, 62, 0.1);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
         padding: 1rem;
     }
 
@@ -112,12 +127,12 @@
         margin: 0.3rem 0 0.35rem;
         font-size: clamp(1.35rem, 1.5vw + 0.9rem, 2rem);
         line-height: 1.2;
-        color: #132c45;
+        color: var(--text-main);
     }
 
     .subtitle {
         margin: 0;
-        color: #4f6781;
+        color: var(--text-subtle);
         font-size: 0.95rem;
     }
 
@@ -129,43 +144,44 @@
     label {
         font-weight: 700;
         font-size: 0.9rem;
-        color: #132c45;
+        color: var(--text-main);
     }
 
     input {
         width: min(100%, 36rem);
         box-sizing: border-box;
-        border: 1px solid #d4e0ec;
+        border: 1px solid var(--input-border);
         border-radius: 0.55rem;
         padding: 0.56rem 0.68rem;
         font-size: 0.94rem;
-        background: #ffffff;
+        background: var(--input-bg);
+        color: var(--text-main);
         transition: border-color 140ms ease, box-shadow 140ms ease;
     }
 
     input:focus {
         outline: none;
-        border-color: #0f6d8c;
-        box-shadow: 0 0 0 3px rgba(15, 109, 140, 0.16);
+        border-color: var(--action);
+        box-shadow: 0 0 0 3px rgba(255, 205, 0, 0.24);
     }
 
     button {
         margin-top: 0.35rem;
-        border: none;
+        border: 1px solid transparent;
         border-radius: 0.6rem;
         padding: 0.62rem 0.9rem;
         font-weight: 700;
         font-size: 0.94rem;
         cursor: pointer;
         color: #ffffff;
-        background: #0f6d8c;
+        background: var(--action);
         transition: background-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
     }
 
     button:hover {
-        background: #0b5972;
+        background: var(--action-hover);
         transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(13, 37, 62, 0.18);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
     }
 
     button:active {
@@ -177,9 +193,9 @@
         border-radius: 0.6rem;
         padding: 0.5rem 0.7rem;
         width: fit-content;
-        background: #eef8ff;
-        border: 1px solid #b9dff0;
-        color: #0f4660;
+        background: var(--status-bg);
+        border: 1px solid var(--status-border);
+        color: var(--status-text);
         font-size: 0.89rem;
         font-weight: 600;
     }
@@ -189,6 +205,40 @@
             margin-top: 0.8rem;
             margin-bottom: 1rem;
             padding: 0 0.8rem;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :global(html),
+        :global(body) {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .create-club-shell {
+            --page-bg: linear-gradient(180deg, #000000 0%, #1e1e1e 100%);
+            --text-main: #ffffff;
+            --text-subtle: #d5d5d5;
+            --card-bg: #121212;
+            --card-border: #828282;
+            --input-bg: #1e1e1e;
+            --input-border: #828282;
+            --action: #ffcd00;
+            --action-hover: #e5b800;
+            --status-bg: #1e1e1e;
+            --status-border: #828282;
+            --status-text: #ffffff;
+        }
+
+        .create-club-card,
+        input,
+        .status-pill {
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        button {
+            color: #000000;
         }
     }
 </style>
