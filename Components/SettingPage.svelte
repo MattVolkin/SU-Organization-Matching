@@ -369,14 +369,6 @@
       }
     }
 
-    for (const activity of csvToList(resultActivitiesText)) {
-      const key = activity.toLowerCase();
-      if (!seen.has(key) && !hiddenTraitOptions.has(key)) {
-        seen.add(key);
-        merged.push(activity);
-      }
-    }
-
     for (const activity of allClubActivities) {
       const normalized = String(activity || '').trim();
       const key = normalized.toLowerCase();
@@ -864,7 +856,6 @@
       contactInfo: resultContactInfo.trim(),
       includeOfficerEmails: includeOfficerEmailsInResults,
       personality: adjectives,
-      activities: csvToList(resultActivitiesText),
       genders: trendsGender,
       ethnicities: trendsEthnicities,
       religions: trendsReligions,
@@ -939,8 +930,7 @@
       resultActivitiesText = getClubActivitiesText(requestedClubInfo || '');
       selectedAdjectives = mergeUniqueStrings(
         getClubPersonalityTraits(requestedClubInfo || ''),
-        getClubActivities(requestedClubInfo || ''),
-        csvToList(resultActivitiesText)
+        getClubActivities(requestedClubInfo || '')
       );
       setSelectedOfficerEmails(requestedClub, []);
 
