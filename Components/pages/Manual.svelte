@@ -98,7 +98,7 @@ onMount(() => {
 
 			</p>
 		</article>
-		{#if isOfficer}
+		{#if isOfficer || isAdmin}
 		<article class="card">
 			<h2>Officers</h2>
 			<h3>Editing a club's information</h3>

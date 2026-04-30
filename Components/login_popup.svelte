@@ -161,4 +161,37 @@
       width: auto;
     }
   }
+
+  @media (prefers-color-scheme: dark) {
+    .login-overlay {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .login-popup {
+      background: #121212;
+      border-color: #828282;
+      color: #ffffff;
+    }
+
+    h2 {
+      color: #ffffff;
+    }
+
+    p {
+      color: #b6c7df;
+    }
+
+    button {
+      background: #ffcd00;
+      color: #000000;
+    }
+
+    button:hover {
+      background: #e5b800;
+    }
+
+    .warn {
+      color: #ff6b6b;
+    }
+  }
 </style>

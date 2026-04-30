@@ -38,7 +38,6 @@ onMount(() => {
 <div class="page-shell">
     <main class="about-page">
         <section class="hero-section">
-            <p class="eyebrow">About</p>
             <h1>About This Project</h1>
             <p class="intro">
                 This project was created as part of a computer science capstone project for Southwestern University.
@@ -102,18 +101,6 @@ onMount(() => {
         text-align: center;
     }
 
-    .eyebrow {
-        margin: 0 0 0.5rem;
-        color: #000000;
-        background: var(--accent);
-        display: inline-block;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        font-weight: 700;
-    }
 
     h1 {
         margin: 0.55rem 0 0.9rem;

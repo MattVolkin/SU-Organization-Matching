@@ -444,7 +444,7 @@
                 <a href={club.externalLink} target="_blank" rel="noopener noreferrer">Visit website</a>
               {/if}
 
-              {#if club.includeOfficerEmails && club.contactInfo}
+              {#if club.contactInfo}
                 <p><strong>Contact:</strong> {club.contactInfo}</p>
               {/if}
 

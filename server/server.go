@@ -1374,7 +1374,7 @@ func sendEmailToOfficers(club *ent.Club) {
 		if email == "" {
 			continue
 		}
-		if err := sendEmail(email, fmt.Sprintf("Your club '%s' has been created/updated", club.ClubName), "Please check the officer portal for details."); err != nil {
+		if err := sendEmail(email, fmt.Sprintf("Southwestern Organization Matching Tool: Your organization '%s' has been created!", club.ClubName), fmt.Sprintf("Your organization '%s' has been successfully created. Please visit %s and check the officer portal for details!", club.ClubName, os.Getenv("OFFICER_PORTAL_URL"))); err != nil {
 			log.Printf("failed to send notification email to %s: %v", email, err)
 		}
 	}
