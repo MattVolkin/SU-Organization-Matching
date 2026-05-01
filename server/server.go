@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -177,6 +178,8 @@ var testRoleSwitchAllowlist = map[string]struct{}{
 	"kleinj@southwestern.edu":    {},
 	"balakrisa@southwestern.edu": {},
 }
+
+var emailPattern = regexp.MustCompile(`(?i)[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}`)
 
 // main wires up OAuth, database connectivity, middleware-protected routes,
 // and static file serving for the Svelte frontend.
@@ -544,15 +547,12 @@ func buildMatchUser(answers []matching.Answer, profile *ent.User) matching.UserI
 	user.Ethnicities = mergeUniqueFoldStrings(user.Ethnicities, profile.Ethnicities)
 	user.Religions = mergeUniqueFoldStrings(user.Religions, profile.Religions)
 	user.DedicatedMajors = mergeUniqueFoldStrings(user.DedicatedMajors, profile.DedicatedMajors)
-	user.Other = buildMatchingOtherSignals(user.Other, answers)
-
-	log.Printf("User profile after merging demographics for %s:	Genders: %v, Ethnicities: %v, Religions: %v, DedicatedMajors: %v, Other: %v",
-		user.Name, user.Genders, user.Ethnicities, user.Religions, user.DedicatedMajors, user.Other)
+	user.Other = addGreekLifeToOtherSignals(profile.Other, answers)
 
 	return user
 }
 
-func buildMatchingOtherSignals(current []string, answers []matching.Answer) []string {
+func addGreekLifeToOtherSignals(current []string, answers []matching.Answer) []string {
 	signals := []string{}
 
 	for _, a := range answers {
@@ -596,7 +596,6 @@ func demographicsToOtherSignals(rawLGBTQ string, rawDisability string) []string 
 	if normalizeYesNo(rawDisability) == "yes" {
 		signals = append(signals, "Disabilities")
 	}
-	log.Printf("Converted demographics LGBTQ: %s, Disability: %s into other signals: %v", rawLGBTQ, rawDisability, signals)
 	return signals
 }
 
@@ -1001,7 +1000,61 @@ func includeOfficerEmailsIfSet(clubJSON OrgJSON, club *ent.Club) OrgJSON {
 	return clubJSON
 }
 
+func sanitizeStoredContactInfo(rawContactInfo string, officerEmails []string) string {
+	trimmedContact := strings.TrimSpace(rawContactInfo)
+	if trimmedContact == "" {
+		return ""
+	}
+
+	officerEmailSet := make(map[string]struct{}, len(officerEmails))
+	for _, officerEmail := range officerEmails {
+		normalized := strings.ToLower(strings.TrimSpace(officerEmail))
+		if normalized == "" {
+			continue
+		}
+		officerEmailSet[normalized] = struct{}{}
+	}
+	if len(officerEmailSet) == 0 {
+		return trimmedContact
+	}
+
+	normalizedLineBreaks := strings.ReplaceAll(trimmedContact, "\r\n", "\n")
+	lines := strings.Split(normalizedLineBreaks, "\n")
+	cleanedLines := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" {
+			continue
+		}
+
+		lineEmails := emailPattern.FindAllString(trimmedLine, -1)
+		if len(lineEmails) == 0 {
+			cleanedLines = append(cleanedLines, trimmedLine)
+			continue
+		}
+
+		allLineEmailsAreOfficers := true
+		for _, lineEmail := range lineEmails {
+			normalizedLineEmail := strings.ToLower(strings.TrimSpace(lineEmail))
+			if _, exists := officerEmailSet[normalizedLineEmail]; !exists {
+				allLineEmailsAreOfficers = false
+				break
+			}
+		}
+
+		if allLineEmailsAreOfficers {
+			continue
+		}
+
+		cleanedLines = append(cleanedLines, trimmedLine)
+	}
+
+	return strings.Join(cleanedLines, "\n")
+}
+
 func orgJSONFromEntClub(club *ent.Club) OrgJSON {
+	officerEmails := officerEmailsFromClub(club)
 	return OrgJSON{
 		ID:                    club.ID,
 		ClubName:              club.ClubName,
@@ -1009,9 +1062,9 @@ func orgJSONFromEntClub(club *ent.Club) OrgJSON {
 		MeetingTime:           club.MeetingTime,
 		ImagePath:             club.ImagePath,
 		ExternalLink:          club.ExternalLink,
-		ContactInfo:           club.ContactInfo,
+		ContactInfo:           sanitizeStoredContactInfo(club.ContactInfo, officerEmails),
 		IncludeOfficerEmails:  club.IncludeOfficerEmails,
-		Officers:              officerEmailsFromClub(club),
+		Officers:              officerEmails,
 		Personality:           club.Personality,
 		Activities:            club.Activities,
 		ActivitiesDescription: club.ActivitiesDescription,
@@ -1329,6 +1382,7 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 		religions = []string{trimmed}
 	}
 
+
 	if _, err := dbClient.Query().UpsertUserDemographicsByEmail(
 		r.Context(),
 		email,
@@ -1374,7 +1428,7 @@ func sendEmailToOfficers(club *ent.Club) {
 		if email == "" {
 			continue
 		}
-		if err := sendEmail(email, fmt.Sprintf("Southwestern Organization Matching Tool: Your organization '%s' has been created!", club.ClubName), fmt.Sprintf("Your organization '%s' has been successfully created. Please visit %s and check the officer portal for details!", club.ClubName, os.Getenv("OFFICER_PORTAL_URL"))); err != nil {
+		if err := sendEmail(email, fmt.Sprintf("Southwestern University Organization Matching Tool: Your organization '%s' has been created!", club.ClubName), fmt.Sprintf("Your organization '%s' has been successfully created. Please visit %s and check the officer portal for details!", club.ClubName, os.Getenv("OFFICER_PORTAL_URL"))); err != nil {
 			log.Printf("failed to send notification email to %s: %v", email, err)
 		}
 	}
