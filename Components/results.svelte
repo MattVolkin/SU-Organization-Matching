@@ -34,7 +34,7 @@
   let resultsErrorMessage = $state('')
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
-  let threshold =0
+  let threshold =55
   let maxClub=20
   let minClub=5
 
@@ -99,6 +99,15 @@
 
   function getClubScore(club) {
     return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
+  }
+
+  function getClubDisplayKey(club) {
+    const clubId = getClubID(club)
+    if (clubId > 0) {
+      return `id:${clubId}`
+    }
+
+    return `name:${normalizeClubKey(getClubName(club))}`
   }
 
   function extractListPayload(payload) {
@@ -171,7 +180,15 @@
       return ''
     }
 
-    return text
+    const officerEmailsMatch = text.match(/officer emails?\s*:\s*(.+)$/i)
+    const emailSource = officerEmailsMatch ? officerEmailsMatch[1] : text
+    const emailMatches = emailSource.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)
+
+    if (emailMatches && emailMatches.length > 0) {
+      return emailMatches.join(', ')
+    }
+
+    return ''
   }
 
   function getVisibleExternalLink(value) {
@@ -229,12 +246,19 @@
 
   function getFilteredResults() {
     const resultsInThreshold = results.filter((club) => getClubScore(club) >= threshold)
+    const selectedKeys = new Set(resultsInThreshold.map((club) => getClubDisplayKey(club)))
+    const backfillResults = results.filter((club) => !selectedKeys.has(getClubDisplayKey(club)))
+    const combinedResults = [...resultsInThreshold]
 
-    if (resultsInThreshold.length > maxClub) {
-      return resultsInThreshold.slice(0, maxClub)
+    for (const club of backfillResults) {
+      if (combinedResults.length >= minClub && combinedResults.length >= maxClub) {
+        break
+      }
+
+      combinedResults.push(club)
     }
 
-    return resultsInThreshold
+    return combinedResults.slice(0, maxClub)
 
   }
 
@@ -414,11 +438,12 @@
       {#if resultsErrorMessage}
         <p>{resultsErrorMessage}</p>
       {:else if getVisibleResults().length === 0}
-        <p>No clubs meet the current threshold of {threshold}%.</p>
+        <p>Please fill out the sorting quiz to see organization results.</p>
       {:else}
         {#each getVisibleResults() as club, index (club.id || `${club.clubName}-${index}`)}
           <article class="club-card">
             <h1>{club.clubName}</h1>
+            <p class="match-score">Match: {Math.round(getClubScore(club))}%</p>
 
             <img
               class="club-hero-image"
@@ -426,7 +451,6 @@
               alt={`Image for ${club.clubName}`}
             />
 
-            <p class="match-score">Match score: {club.matchPercentage.toFixed(0)}%</p>
             <h2>{club.description || 'No description available yet.'}</h2>
 
             {#if club.meetingTime}
@@ -445,7 +469,7 @@
               {/if}
 
               {#if club.contactInfo}
-                <p><strong>Contact:</strong> {club.contactInfo}</p>
+                <p><strong>Officer Emails:</strong> {club.contactInfo}</p>
               {/if}
 
               

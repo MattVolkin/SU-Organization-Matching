@@ -93,7 +93,7 @@ function goToDeleteAccount() {
 
     {#if showChrome}
         <!-- Account management + global footer -->
-        <button type="button" onclick={goToDeleteAccount}>Delete Account Information</button>
+        <button type="button" class="delete-button" onclick={goToDeleteAccount}>Delete Account Information</button>
 
         <Footer />
     {/if}
@@ -184,6 +184,7 @@ function goToDeleteAccount() {
         cursor: pointer;
         transition: background-color 0.2s ease, transform 0.2s ease;
     }
+    
 
     button:hover {
         background: var(--action-hover);
@@ -194,6 +195,11 @@ function goToDeleteAccount() {
     a:focus-visible {
         outline: 2px solid var(--focus-ring);
         outline-offset: 2px;
+    }
+
+    .delete-button {
+        background-color: red;
+        color: var(--button-text-color);
     }
 
     .cta-row .cta-primary,
@@ -314,6 +320,10 @@ function goToDeleteAccount() {
 
         .info-list {
             border-top-color: #828282;
+        }
+
+        .delete-button {
+            --button-text-color: white;
         }
     }
 </style>

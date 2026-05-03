@@ -4,6 +4,7 @@
 
     import API, { APICreater } from './APIHandler.svelte' // import the API handler to make calls to the backend
 
+  
 
     async function handleDelete() {
         if (!clickedCheckBox) {
@@ -24,9 +25,29 @@
 
             
             alert("Your account has been deleted."); 
-            window.location.href = '/'; // go back to home page (will most likely prompt you to login/make an account again)
+
+            logout(); // log the user out after deleting their account
+
         }
     }
+
+    async function logout() {
+        console.log('Logging out user');
+    const headers = authToken
+      ? { Authorization: `Bearer ${authToken}` }
+      : {};
+    await fetch('/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+    });
+    userEmail = '';
+    authToken = '';
+    resolvedUserType = 'user';
+    officerClubs = [];
+    localStorage.removeItem('authToken');
+    window.dispatchEvent(new CustomEvent('auth-logout'));
+  }
 
     function toggleCheckBox() {
         clickedCheckBox = !clickedCheckBox;
@@ -44,17 +65,40 @@
         <input type="checkbox" on:change={toggleCheckBox} />
         I understand that this action cannot be undone.
     </label>
-    <button on:click={handleDelete}>Delete Information</button>
+    <button on:click={logout}>Delete Information</button>
 </div>
 
 
 <style>
 
+@media (prefers-color-scheme: dark) {
+		:root {
+
+	--in-darkmode: 255;
+	--text-color: white;
+	--background-color: #1a1a1a;
+
+	}
+
+}
+
+@media (prefers-color-scheme: light) {
+		:root {
+
+	--in-darkmode: 0;
+	--text-color: #1a1a1a;
+	--background-color: white;
+
+	}
+
+}
+
 :global(body) {
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background: #ffffff;
+        background: var(--background-color);
+        color: var(--text-color);
     }
 
     .delete-container {
@@ -72,7 +116,7 @@
         margin-top: 20px;
         padding: 10px 20px;
         background-color: red;
-        color: white;
+        color: var(--text-color);
         border: none;
         border-radius: 5px;
         cursor: pointer;
