@@ -6,25 +6,11 @@ Repo for the SU Organization Matching Capstone Project
 
 Credit to Dr. Debika Sihi and her students for the initial proposal
 
-Multiple students have shared that they didn’t learn about many student organizations until their senior year. They suggested that an automated system matching students to organizations based on their interests (pulled from their application or survey responses) would be incredibly helpful. As first-year students, many expressed feeling overwhelmed and unsure of where to even begin looking for community.
+"Multiple students have shared that they didn’t learn about many student organizations until their senior year. They suggested that an automated system matching students to organizations based on their interests (pulled from their application or survey responses) would be incredibly helpful. As first-year students, many expressed feeling overwhelmed and unsure of where to even begin looking for community."
 
 ## Team
 
-This team is is comprised of Tanner Klein (TannerK7), Matthew Volkin (MattVolkin), Ben McKallip (bmck039), and Aidan Balakrishnan (drumb0y)
-
-While all members will be working on various portions of the project together, the general roles are as follows
-
-Leadership/Project Management - Tanner
-Database Management - Ben
-UX/UI - Matt, Aidan
-Communication with other student orgs - Aidan and Tanner
-
-## Task list
-
-- [x] Create a webpage (using Svelte) to start showing concepts of how we want the user to interact with entering their information (Aidan and Matt)
-- [x] Start building and researching the best way to set up a database, as well as what kind (Ben)
-- [x] Finish form for club officers to fill out to give data about the individual organizations across campus (Tanner)
-- [ ] Create brand guidelines document that discusses what colors and logos to use, as to fit into the Southwestern image (all)
+This team is is comprised of Tanner Klein (TannerK7), Matthew Volkin (MattVolkin), Ben McKallip (bmck039), and Aidan Balakrishnan (drumb0y).
 
 ## SSH Setup
 
@@ -183,14 +169,119 @@ cd 'Svelte Examples/plain-svelte-app'
 npm install
 ```
 
-## Running:
-### Build Frontend:
+## Running
+### Build Frontend
 In the "Svelte Examples/plain-svelte-app" directory, run the following:
 ```
 npm run build
 ```
-### Run Server:
+### Run Server
 In the "Server Examples" directory, run this:
 ```
 go run server.go
 ```
+
+## Hosting:
+To view our product go to https://capstone.benmckallip.com/
+
+## Files: 
+
+- API_REFERENCE.md: Examples, usage guide, and syntax information about each API method, what parameters it takes, and what given variable/category names are.
+- build_and_run.bat: Executable file to build server.
+- build_and_run.sh: Shell runnable file to build server.
+- dbout.txt: Text representation of true false values to rest swiping application.
+- go.mod: List of direct libraries or tools used by the go portions of the application (especially for API calling).
+- go.sum: List of all libraries and their dependencies for the go portions of the application.
+- init_db.sql: Initialization for the database structure.
+- package-lock.json: Node.js library dependencies for application.
+- package.json: Node information for this application.
+- README.md: README that illustrates project goals, process, and other information.
+- sorting.go: Go file that is used to test out different (hypothetical) users for testing the matching algorithm to refine it.
+- ssh_setup.bat: SSH setup file for developers to be able to ssh into a communal machine to work on code together and have the application webpage update in real time.
+- ssh_setup.sh: SSH setup file for developers to be able to ssh into a communal machine to work on code together and have the application webpage update in real time.
+- user_setup.sh: Setup the various development accounts with the correct permissions to edit and execute files.
+- vite.config.js: Setup the settings for the webpages used for this project and establish the routings.
+
+### BaseCSVTemplate
+- Question Planning: List of Adjectives.csv: List of adjectives used primarily by the swiping and matching parts in a CSV format to show the formatting that is used for the database.
+- Question Planning: Reformatted Data.csv: Formatted CSV that reflects the different organizations and what preferences/traits they are aiming towards.
+- Results Page.csv: Names, times, descriptions, etc for each organization in the system in a csv format.
+
+### cmd
+#### import_organizations
+- main.go: Read and parse through Question Planning: Reformatted Data.csv file and add organizations to DB.
+
+#### import_questions
+- main.go Read and parse through Question Planning: List of Adjectives.csv file and add question (adjectives) to DB.
+
+### Components
+- AdminCreateNewClub.svelte: Component that allows a user with an admin account (one of the projects creators or a faculty member of Student activities) to create a new club on the application that can be populated with information later by the respective clubs officers.
+- AdminHome.svelte: Accessible only to the admins, this component provides the above page the power to edit any already existing organizations.
+- AdminSwitch.svelte: Component that allows for an Admin to switch into officer or base user views for testing and checking purposes.
+- APIHandler.svelte: Component that does not do any visual displaying but makes sure that any API calls are all routed the same way, through the element to streamline calls and dataflows.
+- Card.svelte: Cards for each adjective/activity in the swiping portion of the application, these read directly from the database to generate the correct amount of cards as well as randomize their order.
+- deleteAccount.svelte: Component that performs checks that the user wants to consciously take this action and sends API calls to clear an accounts data.
+- Footer.svelte: Element that displays the team that made this project as well as purpose. At the bottom of every webpage.
+- Header.svelte: Element that displays the name of the project, sign in/out option, and available pages for a user’s navigation.
+- Login_popup.svelte: Component that prompts the user to sign into the google account service (and returns a secure token so that our application can accurately recall their information as needed) to match their information to an organization.
+- Mult_choice_demo.svelte: Demo to show how the multiple choice components work.
+- ProgressBar.svelte: Custom component that can be used for wherever is needed (including the swiping component) to indicate to the user how close they are to the end.
+- Results.svelte: Display a club’s name, image of the club, associated activities, and much more information to the user. Also takes care of necessary API calls.
+- SettingPage.svelte: Handles API calls and other information to allow for an officer to manage/edit their organization.
+- SwipingApp.svelte: Part of the quiz, allows the user to swipe left or right depending on if they like a topic or activity.
+
+#### OrgPhotos
+- (photos for each organization).jpg: Each organization provided a photo to represent them on the final homepage.
+
+#### pages
+- AdminCreateNewClub.svelte: Page that allows a user with an admin account (one of the projects creators or a faculty member of Student activities) to create a new club on the application that can be populated with information later by the respective clubs officers.
+- AdminHomeFinal.svelte: Accessible only to the admins, this page allows for the overview and editing of any already existing organizations.
+- DeleteAccountPage.svelte: Page that allows for a basic user (like a student) to clear all of their preferences/reset their account of they want their information cleared from our system.
+- DemographicQuiz.svelte: Page that handles the user interface that allows them to put in their demographic information (gender, ethnicity, religion, etc) as those can be factors that help recommend aligned orgs.
+- HomePage.svelte: Homepage that proposes the concept of the project as well as the option to start the demographics quiz. First page a user typically encounters upon encountering our site.
+- Manual.svelte: Displays the user manual.
+- ResultsPage.svelte: After taking both the demographics quiz as well as the swiping portion of the project, this component displays the best organizations for each user sorted by their closest match.
+- SettingsPage.svelte: For officers or above, this page allows for the user to change aspects of a given organization.
+- SwipingPart.svelte: This page allows for the user to show what aspects of clubs they could be interested in in a swipe left/right format.
+
+### matching
+- sorter.go: Go file that contains the algorithms that evaluates a user and sorts them according to their likes, dislikes, and demographic information into a descending list of their most aligned organizations.
+
+### node_modules
+- (...) various libraries we use
+
+### server
+
+- db.go: Access the DB (using ent) as an object to make requests.
+- login.go: Allow for the user to use the google profile authentication and the DB to store their unique tokenID for later recalling of data/results.
+- server: Compiled binary file of server.go.
+- server.go: Top level server file that builds and compiles the server and allows for the connectivity between the DB, front-end webpages, with correct permissions given a user’s type of access.
+- server.log: Created when the build script is run to log any activities that are happening within the project.
+
+#### ent
+- (...).go: Various ent generated files that allow for the user to treat the database as an Object with methods and access it in a more user friendly way, with ent formatting any SQL queries. 
+
+
+###### schema
+- answer.go: Documents answer-table database schema for ent
+- club.go: Documents club-table database schema for ent
+- question.go: Documents question-table database schema for ent
+- user.go: Documents user-table database schema for ent
+
+### Webpages
+
+- (...).html: User-generated html files that have a basic representation of each front-facing webpage
+
+#### dist (Files in this folder were automatically created by the build methods, not user generated)
+
+- (...).html: Html parts created in the build process for each webpage 
+
+##### assets
+- (...).js: Javascript part for each front-facing webpage
+- (...).css: CSS parts for each front-facing webpage
+
+#### src
+- mountPage.js: mountPage method to call a svelte function from JS
+
+##### entries
+- (...).js: Using the mount function in svelte, these files (one for each webpage) mount the files from the component folder
