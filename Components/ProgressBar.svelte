@@ -1,16 +1,23 @@
+<!-- @component Displays a visual progress bar that fills based on quiz completion percentage. -->
 <script>
+/**
+ * @type {state} barWidth - Calculated percentage width of the progress bar (0-100), updated when progress changes
+ * @type {state} progress - Current progress value tracked from quiz completion (0-100 range)
+ * @type {state} elmWidth - Current width of the progress bar container element in pixels
+ * @type {state} elmHeight - Current height of the progress bar container element in pixels
+ * @type {props} maxLimit - Maximum progress value for calculating percentage, defaults to 100
+ * @function advanceProgress - Updates the progress value and recalculates the bar width for animation
+ * @function changeWidth - Calculates the new bar width percentage based on current progress and max limit
+ */
 	let barWidth = $state(0); // start from 0 so there is always some amount of progress made/some appearance (1-99 range)
 	let progress = $state(0); // range of 0-100
 	let {maxLimit = 100} = $props();
-
 	let elmWidth = $state(0);
 	let elmHeight = $state(0);
-
 	export function advanceProgress(incrementAmt) {
 		progress = incrementAmt;
 		changeWidth();
 	}
-
 	function changeWidth() {
 		if (progress)
 		console.log(elmWidth);

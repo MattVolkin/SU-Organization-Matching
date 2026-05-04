@@ -1,4 +1,10 @@
+<!-- @component Settings page wrapper that loads user authentication and displays the club settings management interface. -->
 <script>
+/**
+ * @type {state} userType - Current user's role loaded from authentication token
+ * @function loadUserType - Fetches and sets user's role from backend
+ * @lifecycle onMount - Loads user type on component initialization
+ */
 	// Auth + role bootstrap for role-aware header behavior.
 	import { onMount } from 'svelte';
 	import Header from '../header.svelte';

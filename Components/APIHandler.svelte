@@ -1,5 +1,13 @@
+<!-- @component Provides centralized API request handling with authentication token management and debug logging. -->
 <script context="module">
-// /api/results
+/**
+ * @function APICreater - Centralized API request handler that manages authentication tokens, headers, and request/response logging
+ * @param {string} method - HTTP method (GET, POST, PATCH, DELETE, etc.)
+ * @param {string} url - API endpoint URL
+ * @param {object} body - Request body payload, automatically JSON stringified for non-GET requests
+ * @param {boolean} debug - Enable console logging of requests and responses for debugging, defaults to false
+ * @returns {Promise<object>} Parsed JSON response from the server
+ */
 export async function APICreater(method, url, body, debug = false) {
     const token = (typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : '');
     const requestHeaders = {

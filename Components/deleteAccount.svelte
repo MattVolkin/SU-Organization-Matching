@@ -1,5 +1,11 @@
+<!-- @component Provides a delete account interface with confirmation checkbox and dual confirmation dialogs for account removal. -->
 <script>
-    // This component will handle the delete account functionality. It will be a simple page with a button that will delete the user's account when clicked. We will also add a confirmation popup to prevent accidental deletions. 
+/**
+ * @type {state} clickedCheckBox - Boolean to track whether user has confirmed they understand account deletion is permanent
+ * @function handleDelete - Handles account deletion request after confirmation, calls logout on success
+ * @function logout - Clears local auth state, removes token from localStorage, and dispatches logout event
+ * @function toggleCheckBox - Toggles the confirmation checkbox state
+ */
     let clickedCheckBox = false;
 
     import API, { APICreater } from './APIHandler.svelte' // import the API handler to make calls to the backend

@@ -1,4 +1,10 @@
+<!-- @component Results page wrapper that loads user authentication and displays the organization match results interface. -->
 <script>
+/**
+ * @type {state} userType - Current user's role loaded from authentication token
+ * @function loadUserType - Fetches and sets user's role from backend
+ * @lifecycle onMount - Loads user type on component initialization
+ */
     // Auth + role bootstrap for role-aware header/results views.
     import { onMount } from 'svelte';
     import Results from '../results.svelte'

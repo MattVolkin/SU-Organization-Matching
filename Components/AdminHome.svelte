@@ -18,6 +18,7 @@
     import { APICreater } from './APIHandler.svelte'
     import HomePage from './pages/HomePage.svelte'
 
+    // Initialize state variables for admin page
     let adminPreviewType = $state('admin')
     let maxClubsPerPage = $state(8)
     let pageNum = $state(1)
@@ -27,6 +28,8 @@
     let adminEmail = $state('')
     let adminRoleUpdateState = $state('idle')
     let adminRoleStatus = $state('')
+    
+    // Derived values for pagination and club list management
     const totalPages = $derived(Math.max(1, Math.ceil(clubs.length / maxClubsPerPage)))
     const startIndex = $derived((pageNum - 1) * maxClubsPerPage)
     const sortedClubs = $derived(
@@ -34,38 +37,45 @@
     )
     const paginatedClubs = $derived(sortedClubs.slice(startIndex, startIndex + maxClubsPerPage))
 
+    // Handle login event - reload clubs when admin logs back in
     function handleAuthLogin() {
         if (adminPreviewType === 'admin') {
             void loadClubs()
         }
     }
 
+    // Handle logout event - clear clubs data when admin logs out
     function handleAuthLogout() {
         clubs = []
         loadError = ''
     }
 
+    // Setup event listeners on component mount
     onMount(() => {
         window.addEventListener('auth-login', handleAuthLogin)
         window.addEventListener('auth-logout', handleAuthLogout)
         void loadClubs()
     })
 
+    // Clean up event listeners on component destroy
     onDestroy(() => {
         window.removeEventListener('auth-login', handleAuthLogin)
         window.removeEventListener('auth-logout', handleAuthLogout)
     })
 
-    // Loads current clubs for admin management mode.
+    // Fetch and load all clubs from admin API
     async function loadClubs() {
         console.debug('AdminHome: loadClubs starting')
         isLoading = true
         loadError = ''
         try {
+            // Fetch clubs from backend admin endpoint
             const fetchedClubs = await APICreater('GET', '/api/admin/orgs', null)
             const normalized = Array.isArray(fetchedClubs) ? fetchedClubs : []
             clubs = [...normalized]
             console.debug('AdminHome: loadClubs fetched clubs=', clubs.length)
+            
+            // Reset to last valid page if pagination is out of bounds
             if (pageNum > totalPages) {
                 pageNum = totalPages
             }
@@ -78,44 +88,57 @@
             console.debug('AdminHome: loadClubs finished, isLoading=', isLoading)
         }
     }
+    
+    // Navigate to next page of clubs
     function nextPage() {
         if (pageNum < totalPages) {
             pageNum += 1
         }
     }
+    
+    // Navigate to previous page of clubs
     function prevPage() {
         if (pageNum > 1) {
             pageNum -= 1
         }
     }
 
+    // Extract club name from club object or string
     function getClubName(club) {
         return typeof club === 'string' ? club : (club?.clubName || club?.name || 'Unknown Club')
     }
 
+    // Navigate to club settings page for editing
     async function editClub(club) {
         // Refresh list to ensure the club still exists before navigating
         await loadClubs()
         if (!club?.id) {
             return
         }
+        
+        // Verify club exists in current list before navigating
         const exists = clubs.some((c) => c && c.id === club.id)
         if (!exists) {
             window.alert('This club no longer exists.')
             return
         }
+        
+        // Navigate to club settings page with club name parameter
         window.location.href = `/settings.html?club=${encodeURIComponent(getClubName(club))}`
     }
 
+    // Navigate to demographic quiz page
     function goToQuiz() {
         window.location.href = '/demographic-quiz.html'
     }
 
+    // Delete a club from the system with confirmation
     async function deleteClub(club) {
        if (!club?.id) {
             return
        }
 
+          // Confirm deletion with admin
           const clubName = getClubName(club)
           const confirmed = window.confirm(`Delete "${clubName}"? This action cannot be undone.`)
           if (!confirmed) {
@@ -124,6 +147,7 @@
 
        try {
            console.debug('AdminHome: deleting club id=', club.id)
+           // Send delete request to backend
            const delResp = await APICreater('DELETE', '/api/admin/orgs', { id: club.id })
            console.debug('AdminHome: delete response', delResp)
        } catch (err) {
@@ -132,6 +156,7 @@
            return
        }
 
+      // Refresh club list after successful deletion
       await loadClubs()
       console.debug('AdminHome: deleteClub finished and triggered loadClubs')
     }

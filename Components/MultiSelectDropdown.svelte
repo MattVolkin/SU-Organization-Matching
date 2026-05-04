@@ -24,9 +24,10 @@ Only one dropdown can be open at a time across the page.
     id: string;
   }
 
+  // Initialize props for dropdown configuration
   let { label, options, value = $bindable([]), id } = $props();
 
-  // Module-level store to track which dropdown is open (shared across all instances)
+  // Module-level store to track which dropdown is open (only one at a time)
   const getOpenDropdownStore = (): Writable<string | null> => {
     if (!globalThis.__multiselectOpenDropdown__) {
       globalThis.__multiselectOpenDropdown__ = writable<string | null>(null);
@@ -34,24 +35,30 @@ Only one dropdown can be open at a time across the page.
     return globalThis.__multiselectOpenDropdown__;
   };
 
+  // Get reference to the global open dropdown store
   const openDropdownStore = getOpenDropdownStore();
+  // Derived value to determine if this dropdown is currently open
   let isOpen = $derived($openDropdownStore === id);
 
+  // Initialize search and positioning state
   let searchTerm = $state('');
   let dropdownElement = $state<HTMLDivElement>();
-  let openAbove = $state(false);
-  let menuMaxHeight = $state('300px');
+  let openAbove = $state(false);  // Dropdown opens above trigger button
+  let menuMaxHeight = $state('300px');  // Maximum height for dropdown menu
 
+  // Open this dropdown and close others
   function openThis() {
     openDropdownStore.set(id);
   }
 
+  // Close this dropdown if it's currently open
   function closeThis() {
     if ($openDropdownStore === id) {
       openDropdownStore.set(null);
     }
   }
 
+  // Toggle dropdown open/closed state with position calculations
   async function toggleOpen() {
     if (isOpen) {
       closeThis();
@@ -61,6 +68,7 @@ Only one dropdown can be open at a time across the page.
       openThis();
       await tick();
 
+      // Calculate available space and determine if menu should open above or below
       const bounds = dropdownElement?.getBoundingClientRect();
       if (!bounds) {
         openAbove = false;
@@ -74,11 +82,13 @@ Only one dropdown can be open at a time across the page.
       const shouldOpenAbove = spaceBelow < 240 && spaceAbove > spaceBelow;
       const availableSpace = shouldOpenAbove ? spaceAbove : spaceBelow;
 
+      // Set menu position and height based on available space
       openAbove = shouldOpenAbove;
       menuMaxHeight = `${Math.max(180, Math.min(300, availableSpace))}px`;
     }
   }
 
+  // Handle clicks outside dropdown to close it
   $effect.root(() => {
     function handleClickOutside(event: MouseEvent) {
       if (isOpen && dropdownElement && !dropdownElement.contains(event.target as Node)) {
@@ -92,6 +102,7 @@ Only one dropdown can be open at a time across the page.
     }
   });
 
+  // Toggle individual option in selected values
   function toggleOption(option: string) {
     if (value.includes(option)) {
       value = value.filter((item) => item !== option);
@@ -100,10 +111,12 @@ Only one dropdown can be open at a time across the page.
     }
   }
 
+  // Remove single option from selected values
   function removeOption(option: string) {
     value = value.filter((item) => item !== option);
   }
 
+  // Filter options based on search term
   function filteredOptions() {
     return options.filter((option) => option.toLowerCase().includes(searchTerm.toLowerCase()));
   }

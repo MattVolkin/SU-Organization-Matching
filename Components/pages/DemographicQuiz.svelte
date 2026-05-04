@@ -1,4 +1,10 @@
+<!-- @component Demographic quiz page wrapper that loads user authentication and displays the demographic form component. -->
 <script>
+/**
+ * @type {state} userType - Current user's role loaded from authentication token
+ * @function loadUserType - Fetches and sets user's role from backend
+ * @lifecycle onMount - Loads user type on component initialization
+ */
 	import { onMount } from 'svelte';
 	import Header from '../header.svelte';
 	import Footer from '../footer.svelte';

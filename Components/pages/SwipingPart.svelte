@@ -1,4 +1,9 @@
+<!-- @component Swiping page wrapper combining header, swiping interface, and footer for the personality traits quiz section. -->
 <script>
+/**
+ * No internal state - this is a layout wrapper component.
+ * Delegates all swiping functionality to the child SwipingApp component.
+ */
     // Shared page chrome + swipe experience component imports.
     import Header from "../header.svelte";
     import Footer from "../footer.svelte";

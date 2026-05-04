@@ -1,9 +1,10 @@
+<!-- @component Admin interface for creating new organizations in the system with initial officer email assignment. -->
 <script>
 /**
- * @type {state} clubName - Name entered for the new club
- * @type {state} PresidentEmail - Email entered for the first club officer
- * @type {state} statusMessage - Confirmation message shown after successful submission
- * @function createClub - Submits the new club to the admin API, then clears the form and shows a status message
+ * @type {state} clubName - Name of the new club being created
+ * @type {state} PresidentEmail - Email address of the initial club president/officer
+ * @type {state} statusMessage - Feedback message displayed after form submission
+ * @function createClub - Validates form, submits new club data to admin API, then resets form and displays confirmation
  */
     import Header from '../header.svelte';
     import Footer from '../footer.svelte';

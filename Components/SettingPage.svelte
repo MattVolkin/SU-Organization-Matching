@@ -1,4 +1,34 @@
+<!-- @component Admin/officer interface for managing club information displayed on results pages and for setting club attributes (personality traits, demographics, etc.). -->
 <script lang="ts">
+/**
+ * @type {state} userType - Current user's role (admin, officer, or user)
+ * @type {state} pageNotice - Message displayed at top of page for notices or errors
+ * @type {state} accessibleClubs - List of clubs the current officer can manage
+ * @type {state} selectedClubFromUrl - Club selected via URL parameter to edit
+ * @type {state} generalMeetingTime - Club's meeting time/schedule for results page
+ * @type {state} generalSocialMedia - Club's social media/website URL for results page
+ * @type {state} resultContactInfo - Club's contact information (officer emails) for results page
+ * @type {state} includeOfficerEmailsInResults - Boolean to include officer emails on results page
+ * @type {state} resultDescription - Club description shown on results page
+ * @type {state} resultActivitiesText - Club activities description shown on results page
+ * @type {state} selectedAdjectives - Array of personality traits associated with club
+ * @type {state} trendsGender - Gender demographics targeted by club
+ * @type {state} trendsEthnicities - Ethnic demographics targeted by club
+ * @type {state} trendsReligions - Religious demographics targeted by club
+ * @type {state} trendsDedicatedMajors - Majors dedicated to club's purpose
+ * @type {state} trendsAssociatedMajors - Associated major trends in club membership
+ * @type {state} trendsOther - Other demographic trends (LGBTQ, disabilities, etc.)
+ * @type {state} trendsStrictGenders - Boolean to make gender matching strict/absolute
+ * @type {state} saveStateResults - Save status for results page changes
+ * @type {state} saveStateAdjectives - Save status for personality traits changes
+ * @type {state} saveStateTrends - Save status for demographic trends changes
+ * @function handleSaveResultsPageContent - Saves results page info (description, meeting time, etc.)
+ * @function handleSaveAdjectives - Saves personality traits selection for club
+ * @function handleSaveTrends - Saves demographic trend selections for club
+ * @function initializeSettingsPage - Loads club list and initializes form with club data from URL parameter
+ * @lifecycle onMount - Sets up page initialization and event listeners
+ * @lifecycle onDestroy - Cleans up event listeners and timers
+ */
   import { onDestroy, onMount } from 'svelte';
   import { APICreater } from './APIHandler.svelte';
   import MultiSelectDropdown from './MultiSelectDropdown.svelte';

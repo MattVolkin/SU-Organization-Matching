@@ -1,4 +1,9 @@
+<!-- @component Page wrapper for account deletion interface with header, footer, and delete account form. -->
 <script>
+/**
+ * No internal state or functions - this is a layout wrapper component.
+ * Delegates all functionality to child DeleteAccount component.
+ */
     import Header from "../header.svelte";
     import Footer from "../footer.svelte";
     import DeleteAccount from "../deleteAccount.svelte";

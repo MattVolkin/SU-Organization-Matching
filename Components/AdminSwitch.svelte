@@ -7,16 +7,19 @@
  * @function setView - helper function to change the preview mode when a button is clicked, calls the onChange callback with the next view if it is different from the current value
  */
 
+	// Initialize component props
 	let {
-		enabled = false,
-		value = 'admin',
-		onChange = () => {},
+		enabled = false,  // Show/hide admin switch banner
+		value = 'admin',  // Current preview mode
+		onChange = () => {},  // Callback when mode changes
 	} = $props();
 
+	// Change preview mode if different from current value
 	function setView(nextView) {
 		if (nextView === value) {
 			return;
 		}
+		// Trigger callback with new preview mode
 		onChange(nextView);
 	}
 </script>

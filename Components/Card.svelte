@@ -1,4 +1,16 @@
+<!-- @component Displays individual quiz cards with personality traits or activity options for the swiping interface. -->
 <script>
+/**
+ * @type {state} counter - Tracks the current position in the card list, initialized to 0
+ * @type {state} directionInt - Stores direction information from swiping actions (animated state)
+ * @type {state} items - Active card list rendered at runtime, normalized from API payload
+ * @type {state} showServerErrorPopup - Boolean to display server error messages to the user
+ * @type {state} isLoadingQuestions - Boolean indicating whether questions are being fetched from the backend
+ * @function normalizeApiCardItems - Normalizes incoming API payload into standardized card objects for rendering
+ * @function advanceCard - Moves to the next card in the list, triggered by user swipes
+ * @function getID - Helper function to extract card ID from current card
+ * @function setDirection - Helper function to track swipe direction for animations
+ */
 
 // TODO make it look like its somthing that can be swipable
 	// put items on a stack of cards rather than just box on a page

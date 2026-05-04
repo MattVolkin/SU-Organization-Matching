@@ -1,4 +1,15 @@
+<!-- @component Main landing page displaying project overview, call-to-action buttons, and "how it works" information. -->
 <script>
+/**
+ * @type {props} previewAs - Admin preview mode to show page as different user type (overrides actual role)
+ * @type {props} showChrome - Boolean to show/hide header, footer, and chrome elements for preview modes
+ * @type {state} userType - Current user's actual role loaded from authentication token
+ * @function getActiveUserType - Returns preview mode if active, otherwise returns actual user type
+ * @function loadUserType - Fetches and sets user's role from backend authentication
+ * @function goToQuiz - Navigates user to demographic quiz page
+ * @function goToDeleteAccount - Navigates user to account deletion page
+ * @lifecycle onMount - Loads user type on component initialization
+ */
 import { onMount } from 'svelte';
 import Header from '../header.svelte';
 import Footer from '../footer.svelte';

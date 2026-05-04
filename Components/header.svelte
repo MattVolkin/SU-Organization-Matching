@@ -9,63 +9,72 @@
   - Links are placeholders and should be updated once real pages are created.
 -->
 <script>
+  // Import Svelte lifecycle functions
   import { onMount, onDestroy } from 'svelte';
   import AdminSwitch from './AdminSwitch.svelte';
   import { APICreater } from './APIHandler.svelte';
   import LoginPopup from './login_popup.svelte';
 
-/**
- * @type {props} userType - defaults to user view if no user type is provided, can be 'admin', 'officer' or 'user'
- * @type {state} isMenuOpen - boolean to track whether the mobile hamburger menu is open or closed
- * @function toggleMenu - toggles the state of isMenuOpen when the hamburger menu button is clicked
- * @function closeMenu - sets isMenuOpen to false, used to close the mobile menu when a navigation link is clicked
- */
+  // Initialize component props
   let { userType = "user", previewAs = '', onPreviewChange = undefined } = $props();
+  
+  // Track internal admin preview mode if not controlled by parent
   let internalPreviewAs = $state('');
   const hasControlledPreview = () => typeof onPreviewChange === 'function';
   const getPreviewAs = () => (hasControlledPreview() ? previewAs : internalPreviewAs);
   const getNavUserType = () => (getPreviewAs() || resolvedUserType || userType);
-  let isMenuOpen = $state(false);
-  let isManageClubOpen = $state(false);
+  
+  // Initialize header state
+  let isMenuOpen = $state(false);  // Mobile hamburger menu state
+  let isManageClubOpen = $state(false);  // Manage club dropdown state
   let userEmail = $state('');
   let authToken = $state('');
-  let resolvedUserType = $state('user');
-  let officerClubs = $state([]);
-  let isAuthChecking = $state(true);
+  let resolvedUserType = $state('user');  // Actual logged-in user type
+  let officerClubs = $state([]);  // Clubs managed by officer
+  let isAuthChecking = $state(true);  // Auth check in progress
 
+  // Determine which API endpoint to use based on user type
   function getApiUserType() {
     return resolvedUserType === 'admin' || resolvedUserType === 'officer'
       ? resolvedUserType
       : userType;
   }
 
+  // Check if admin preview bar should be shown
   function canShowAdminPreviewBar() {
     return resolvedUserType === 'admin' || userType === 'admin';
   }
 
+  // Check if admin is currently previewing as officer
   function isAdminPreviewingOfficer() {
     return canShowAdminPreviewBar() && getNavUserType() === 'officer';
   }
 
+  // Get the appropriate organization API path based on user type
   function getOrgApiPath() {
     return getApiUserType() === 'admin' ? '/api/admin/orgs' : '/api/officer/orgs';
   }
 
+  // Refresh user authentication status from backend
   async function refreshUser() {
     isAuthChecking = true;
     const tokenFromStorage = localStorage.getItem('authToken') || '';
     authToken = tokenFromStorage;
+    
+    // Prepare authorization header if token exists
     const headers = tokenFromStorage
       ? { Authorization: `Bearer ${tokenFromStorage}` }
       : {};
 
     try {
+      // Fetch current user info from backend
       const res = await fetch('/api/user', {
         method: 'GET',
         credentials: 'include',
         headers,
       });
 
+      // If auth failed, clear user data
       if (!res.ok) {
         userEmail = '';
         authToken = '';
@@ -74,6 +83,7 @@
         return;
       }
 
+      // Parse and store user info
       const data = await res.json();
       userEmail = data.email || '';
       const role = String(data?.role || '').toLowerCase();
@@ -83,6 +93,7 @@
     }
   }
 
+  // Refresh list of clubs managed by officer
   async function refreshOfficerClubs() {
     if (getNavUserType() !== 'officer') {
       officerClubs = [];
@@ -90,6 +101,7 @@
     }
 
     try {
+      // Fetch clubs from appropriate endpoint
       const clubs = await APICreater('GET', getOrgApiPath(), null, authToken);
       officerClubs = Array.isArray(clubs) ? clubs : [];
     } catch (error) {

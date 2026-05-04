@@ -443,7 +443,7 @@
         {#each getVisibleResults() as club, index (club.id || `${club.clubName}-${index}`)}
           <article class="club-card">
             <h1>{club.clubName}</h1>
-            <p class="match-score">Match: {Math.round(getClubScore(club))}%</p>
+        
 
             <img
               class="club-hero-image"
@@ -545,11 +545,7 @@
     padding-bottom: 0;
   }
 
-  .match-score {
-    margin: 0;
-    font-weight: 700;
-    color: var(--action);
-  }
+
 
   h1 {
     margin: 0;

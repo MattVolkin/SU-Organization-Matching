@@ -11,55 +11,68 @@
  * @lifecycle onMount - adds the onAuthMessage event listener to the window when the component is mounted
  * @lifecycle onDestroy - removes the onAuthMessage event listener from the window when the component is destroyed
  */
+  // Import Svelte lifecycle functions
   import { onMount, onDestroy } from 'svelte';
 
+  // Initialize component props with defaults
   let {
-    autoOpen = false,
-    onSuccess = () => {},
-    onBlocked = () => {},
+    autoOpen = false,  // Automatically open login popup on mount
+    onSuccess = () => {},  // Callback on successful login
+    onBlocked = () => {},  // Callback if popup is blocked
   } = $props();
 
+  // Track whether browser blocked the popup window
   let popupBlocked = $state(false);
 
+  // Toggle body scroll lock when popup is active
   function setBodyLock(locked) {
     if (typeof document === 'undefined') {
       return;
     }
-
     document.body.classList.toggle('login-required-open', locked);
   }
 
+  // Open Google login popup window
   function openLoginPopup() {
     popupBlocked = false;
+    // Open popup with specific dimensions and settings
     const popup = window.open(
       '/login?popup=1',
       'google-login',
       'width=520,height=640,menubar=no,toolbar=no,location=yes,resizable=yes,scrollbars=yes,status=no'
     );
 
+    // Detect if popup was blocked by browser
     if (!popup) {
       popupBlocked = true;
       onBlocked();
     }
   }
 
+  // Handle messages from login popup window
   function onAuthMessage(event) {
+    // Verify message origin matches current site for security
     if (event.origin !== window.location.origin) {
       return;
     }
+    
+    // Only process successful authentication messages
     if (event.data?.type !== 'google-auth-success') {
       return;
     }
 
+    // Store authentication token in localStorage
     if (event.data.token) {
       localStorage.setItem('authToken', event.data.token);
     }
 
+    // Call success callback with email and token
     onSuccess({
       email: event.data.email || '',
       token: event.data.token || '',
     });
 
+    // Dispatch custom event for other components to listen to
     window.dispatchEvent(new CustomEvent('auth-login', {
       detail: {
         email: event.data.email || '',
@@ -70,6 +83,7 @@
     popupBlocked = false;
   }
 
+  // Manage body lock when autoOpen changes
   $effect(() => {
     if (!autoOpen) {
       popupBlocked = false;
@@ -78,10 +92,12 @@
     setBodyLock(autoOpen);
   });
 
+  // Attach message listener on component mount
   onMount(() => {
     window.addEventListener('message', onAuthMessage);
   });
 
+  // Clean up listener and reset body lock on destroy
   onDestroy(() => {
     window.removeEventListener('message', onAuthMessage);
     setBodyLock(false);

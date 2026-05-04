@@ -1,4 +1,12 @@
+<!-- @component Comprehensive documentation page explaining how to use the organization matching tool for students, officers, and admins. -->
 <script>
+/**
+ * @type {state} userType - Current user's role loaded from authentication token
+ * @type {state} isOfficer - Boolean indicating if current user is an officer
+ * @type {state} isAdmin - Boolean indicating if current user is an admin
+ * @function loadUserType - Fetches and sets user's role from backend, updates officer and admin flags
+ * @lifecycle onMount - Loads user type on component initialization
+ */
 import { onMount } from 'svelte';
 import Header from '../header.svelte';
 import Footer from '../footer.svelte';

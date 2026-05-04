@@ -1,4 +1,21 @@
+<!-- @component Demographic quiz form component collecting user information for organization matching (gender, race, religion, major, etc.). -->
 <script>
+/**
+ * @type {state} name - User's name input field
+ * @type {state} gender - Selected gender preference
+ * @type {state} race - Array of selected racial/ethnic identities
+ * @type {state} religion - Selected religious affiliation
+ * @type {state} major - Array of selected academic majors
+ * @type {state} LGBTQ - User's LGBTQ identification status
+ * @type {state} disability - User's disability status
+ * @type {state} majorRequiredProxy - Helper state to track if major selection is required
+ * @type {constant} genderOptions - Array of gender presentation options
+ * @type {constant} raceOptions - Array of racial and ethnic identity options
+ * @type {constant} religionOptions - Array of religious affiliation options
+ * @type {constant} majorOptions - Comprehensive list of academic majors available
+ * @type {constant} yes_no_options - Standard yes/no/prefer not to say options
+ * @function submitDemographics - Validates and submits demographic form to backend API
+ */
 import { APICreater } from './APIHandler.svelte';
 import MultiSelectDropdown from './MultiSelectDropdown.svelte';
 

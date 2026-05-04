@@ -1,4 +1,10 @@
+<!-- @component About page displaying project information, goals, and team credits for the organization matching system. -->
 <script>
+/**
+ * @type {state} userType - Current user's role loaded from authentication token
+ * @function loadUserType - Fetches and sets user's role from backend
+ * @lifecycle onMount - Loads user type on component initialization
+ */
 import { onMount } from 'svelte';
 import Header from '../header.svelte';
 import Footer from '../footer.svelte';

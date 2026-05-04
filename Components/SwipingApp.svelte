@@ -1,5 +1,26 @@
+<!-- @component Main swiping interface component for personality traits and activities quiz with touch/mouse gesture support. -->
 <script lang='ts'>
-	let name = $state('world');
+/**
+ * @type {state} count - Tracks current card index in the quiz sequence
+ * @type {state} cardObject - Reference to the Card component instance for controlling card state and navigation
+ * @type {state} barObject - Reference to the ProgressBar component for updating visual progress
+ * @type {state} left - Animation state for left swipe direction
+ * @type {state} right - Animation state for right swipe direction
+ * @type {state} activities - Array of selected activity preferences from quiz responses
+ * @type {state} personality - Array of selected personality traits from quiz responses
+ * @type {state} surveyResponses - Complete set of all quiz responses sent to backend
+ * @type {state} direction - Tracks swipe direction as string ('left', 'right', 'none yet')
+ * @type {state} directionInt - Numeric representation of swipe direction (-1 for left, 1 for right)
+ * @type {state} submissionError - Error message from failed submission
+ * @type {state} IsPersonality - Boolean to determine if current card is personality trait or activity
+ * @function swipeLeft - Records response as dislike and advances to next card
+ * @function swipeRight - Records response as like and advances to next card
+ * @function recordCurrentCardResponse - Stores user's response to current card in survey responses
+ * @function checkIfFinished - Checks if quiz is complete and submits responses if so
+ * @function handleKeydown - Maps arrow keys to swipe gestures for keyboard navigation
+ * @lifecycle onMount - Sets up keyboard event listeners and initializes quiz data
+ * @lifecycle onDestroy - Removes keyboard event listeners on component destruction
+ */
 	let count = $state(0);
 	// https://svelte.dev/playground/f696ca27e6374f2cab1691727409a31d?version=5.53.2
 	// https://svelte.dev/docs/svelte/animate

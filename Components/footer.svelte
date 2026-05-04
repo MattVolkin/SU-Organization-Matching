@@ -1,6 +1,4 @@
-<!-- @component 
-  creates a footer for the pages with capstone information 
- -->
+<!-- @component Global footer component displaying project credits and capstone information for all pages. -->
 <div class="footer">
 
   <div class="capstone-info">
