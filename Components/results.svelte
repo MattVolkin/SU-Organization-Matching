@@ -185,10 +185,28 @@
     const emailMatches = emailSource.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)
 
     if (emailMatches && emailMatches.length > 0) {
-      return emailMatches.join(', ')
+      const seen = new Set()
+      const unique = []
+      for (const e of emailMatches) {
+        const lower = String(e || '').toLowerCase()
+        if (!seen.has(lower)) {
+          seen.add(lower)
+          unique.push(lower)
+        }
+      }
+
+      return unique.join(', ')
     }
 
     return ''
+  }
+
+  function getVisibleMeetingTime(value) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (!text || isOfficerPlaceholder(text)) {
+      return ''
+    }
+    return text
   }
 
   function getVisibleExternalLink(value) {
@@ -376,7 +394,7 @@
           id: resolvedId,
           clubName,
           description: getClubDescription(mergedClub, item),
-          meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
+          meetingTime: getVisibleMeetingTime(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
           activitiesDescription: getVisibleActivitiesDescription(mergedClub),
           imagePath: getClubImagePath(mergedClub),
           externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
