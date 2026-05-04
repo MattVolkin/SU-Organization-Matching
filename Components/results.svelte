@@ -1,6 +1,4 @@
-<!-- @component this creates the result page template 
-  **TODO**:
-  - Replace placeholder data with actual API calls 
+<!-- @component this creates the result page template that users see after completing the quiz, it fetches the results from the backend and displays them in a user-friendly format, it also handles pagination if there are more results than we want to show on one page, and it conditionally renders the UI based on whether the user is signed in or not.
   -->
 <script>
   /**
@@ -34,9 +32,9 @@
   let resultsErrorMessage = $state('')
   let resultsPageElement = $state(null)
   let ClubsPerPage = 5
-  let threshold =55
-  let maxClub=20
-  let minClub=5
+  let threshold = 55
+  let maxClubs = 20
+  let minClubs = 5
 
   function scrollToResultsTop() {
     if (resultsPageElement) {
@@ -97,9 +95,9 @@
     )
   }
 
-  function getClubScore(club) {
-    return normalizeClubScore(club?.matchPercentage ?? club?.score ?? 0)
-  }
+function getClubScore(club) {
+  return normalizeClubScore(club?.matchScore ?? club?.matchPercentage ?? club?.score ?? 0)
+}  
 
   function getClubDisplayKey(club) {
     const clubId = getClubID(club)
@@ -263,24 +261,23 @@
   }
 
   function getFilteredResults() {
-    const resultsInThreshold = results.filter((club) => getClubScore(club) >= threshold)
-    const selectedKeys = new Set(resultsInThreshold.map((club) => getClubDisplayKey(club)))
-    const backfillResults = results.filter((club) => !selectedKeys.has(getClubDisplayKey(club)))
-    const combinedResults = [...resultsInThreshold]
 
-    for (const club of backfillResults) {
-      if (combinedResults.length >= minClub && combinedResults.length >= maxClub) {
-        break
-      }
+  
+  // Log the first club's raw keys and values
+  const resultsInThreshold = results.filter((club) => getClubScore(club) >= threshold)
+  const selectedKeys = new Set(resultsInThreshold.map((club) => getClubDisplayKey(club)))
+  const belowThresholdResults = results.filter((club) => !selectedKeys.has(getClubDisplayKey(club)))
+  const cappedAbove = resultsInThreshold.slice(0, maxClubs)
+  const remaining = Math.max(minClubs - cappedAbove.length, 0)
+  const final = [...cappedAbove, ...belowThresholdResults.slice(0, remaining)]
 
-      combinedResults.push(club)
-    }
-
-    return combinedResults.slice(0, maxClub)
-
-  }
+  return final
+}
+  
 
   function getTotalPages() {
+
+
     const filteredResults = getFilteredResults()
     return filteredResults.length > 0 ? Math.ceil(filteredResults.length / ClubsPerPage) : 0
   }
@@ -297,21 +294,31 @@
       ? { Authorization: `Bearer ${tokenFromStorage}` }
       : {};
 
-    const response = await fetch('/api/user', {
-      method: 'GET',
-      credentials: 'include',
-      headers,
-    });
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
 
-    if (response.ok) {
-      const data = await response.json().catch(() => ({}))
-      const role = String(data?.role || '').toLowerCase()
-      activeRole = role === 'admin' || role === 'officer' ? role : 'user'
+      const response = await fetch('/api/user', {
+        method: 'GET',
+        credentials: 'include',
+        headers,
+        signal: controller.signal,
+      });
 
-      isAuthenticated = true;
-      isAuthChecking = false;
-      await getResults();
-      return;
+      clearTimeout(timeoutId)
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}))
+        const role = String(data?.role || '').toLowerCase()
+        activeRole = role === 'admin' || role === 'officer' ? role : 'user'
+
+        isAuthenticated = true;
+        isAuthChecking = false;
+        await getResults();
+        return;
+      }
+    } catch (error) {
+      console.warn('Auth check failed or timed out:', error.message)
     }
 
     isAuthenticated = false
@@ -376,7 +383,6 @@
       }
 
       const sourceList = scoreList.length > 0 ? scoreList : detailList
-
       results = sourceList.map((item) => {
         const clubId = getClubID(item)
         const clubName = getClubName(item)
@@ -389,7 +395,6 @@
           ...(matchedDetail && typeof matchedDetail === 'object' ? matchedDetail : {}),
         }
         const resolvedId = getClubID(mergedClub) || clubId
-
         return {
           id: resolvedId,
           clubName,
@@ -399,6 +404,7 @@
           imagePath: getClubImagePath(mergedClub),
           externalLink: getVisibleExternalLink(mergedClub?.externalLink ?? mergedClub?.ExternalLink),
           contactInfo: getVisibleContactInfo(mergedClub?.contactInfo ?? mergedClub?.ContactInfo),
+          matchScore: getClubScore(item),
           includeOfficerEmails: Boolean(mergedClub?.includeOfficerEmails ?? mergedClub?.IncludeOfficerEmails),
           updatedAt: typeof (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt) === 'string'
             ? (mergedClub?.updatedAt ?? mergedClub?.UpdatedAt).trim()
@@ -495,8 +501,8 @@
         {/each}
 
         <div class="pager">
-          <button onclick={prevPage} disabled={pageNum === 1}>Previous Organizations</button>
-          <button onclick={nextPage} disabled={pageNum >= getTotalPages()}>Next Organizations</button>
+          <button onclick={() => prevPage()} disabled={pageNum === 1}>Previous Organizations</button>
+          <button onclick={() => nextPage()} disabled={pageNum >= getTotalPages()}>Next Organizations</button>
         </div>
       {/if}
     </section>

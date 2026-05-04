@@ -8,7 +8,10 @@
  */
     let clickedCheckBox = false;
 
-    import API, { APICreater } from './APIHandler.svelte' // import the API handler to make calls to the backend
+    import { APICreater } from './APIHandler.svelte'; // import the API handler to make calls to the backend
+    import Header from './header.svelte'; // import header component so we can call its exported instance methods
+
+    let headerRef = $state(null); // hold the Header component instance
 
   
 
@@ -23,37 +26,40 @@
 
             try {
 				await APICreater('POST', '/api/delete', {});
-				console.log('tried to delete account information', payload.length);
+                console.log('Delete account request sent successfully');
 			} catch (error) {
 				console.error('Unable to send delete request', error);
+                alert('Unable to delete your account right now. Please try again.');
+                return;
 			}
-			
-
             
             alert("Your account has been deleted."); 
 
-            logout(); // log the user out after deleting their account
+            await headerRef?.logout?.(); // log the user out after deleting their account
+
+            window.location.href = '/'; // go back to home page (will most likely prompt you to login/make an account again)
+
 
         }
     }
 
-    async function logout() {
-        console.log('Logging out user');
-    const headers = authToken
-      ? { Authorization: `Bearer ${authToken}` }
-      : {};
-    await fetch('/logout', {
-      method: 'POST',
-      credentials: 'include',
-      headers,
-    });
-    userEmail = '';
-    authToken = '';
-    resolvedUserType = 'user';
-    officerClubs = [];
-    localStorage.removeItem('authToken');
-    window.dispatchEvent(new CustomEvent('auth-logout'));
-  }
+//     async function logout() {
+//         console.log('Logging out user');
+//     const headers = authToken
+//       ? { Authorization: `Bearer ${authToken}` }
+//       : {};
+//     await fetch('/logout', {
+//       method: 'POST',
+//       credentials: 'include',
+//       headers,
+//     });
+//     userEmail = '';
+//     authToken = '';
+//     resolvedUserType = 'user';
+//     officerClubs = [];
+//     localStorage.removeItem('authToken');
+//     window.dispatchEvent(new CustomEvent('auth-logout'));
+//   }
 
     function toggleCheckBox() {
         clickedCheckBox = !clickedCheckBox;
@@ -68,11 +74,15 @@
     <h1>Delete stored information</h1>
     <p>Are you sure you want to delete your information? This action cannot be undone.</p>
     <label>
-        <input type="checkbox" on:change={toggleCheckBox} />
+        <input type="checkbox" onchange={toggleCheckBox} />
         I understand that this action cannot be undone.
     </label>
-    <button on:click={logout}>Delete Information</button>
+    <button onclick={handleDelete}>Delete Information</button>
 </div>
+
+<div class="hidden">
+    <Header bind:this={headerRef} />
+</div>  
 
 
 <style>
@@ -99,12 +109,18 @@
 
 }
 
+
 :global(body) {
         margin: 0;
         padding: 0;
         min-height: 100%;
         background: var(--background-color);
         color: var(--text-color);
+    }
+
+    .hidden {
+        visibility: hidden;
+        display: none;
     }
 
     .delete-container {

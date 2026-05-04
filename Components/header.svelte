@@ -4,9 +4,6 @@
 
   Notes:
   - Defaults to normal user view if no user type is provided.
-
-  **TODO**:
-  - Links are placeholders and should be updated once real pages are created.
 -->
 <script>
   // Import Svelte lifecycle functions
@@ -94,7 +91,7 @@
   }
 
   // Refresh list of clubs managed by officer
-  async function refreshOfficerClubs() {
+  export async function refreshOfficerClubs() {
     if (getNavUserType() !== 'officer') {
       officerClubs = [];
       return;
@@ -109,9 +106,8 @@
       officerClubs = [];
     }
   }
-
-
-  async function logout() {
+  
+  export async function logout() {
     const headers = authToken
       ? { Authorization: `Bearer ${authToken}` }
       : {};
