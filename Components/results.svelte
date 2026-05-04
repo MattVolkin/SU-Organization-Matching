@@ -375,7 +375,6 @@
         return {
           id: resolvedId,
           clubName,
-          matchPercentage: getClubScore(item),
           description: getClubDescription(mergedClub, item),
           meetingTime: getVisibleContactInfo(mergedClub?.meetingTime ?? mergedClub?.MeetingTime),
           activitiesDescription: getVisibleActivitiesDescription(mergedClub),
