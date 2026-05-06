@@ -488,7 +488,7 @@ function getClubScore(club) {
 
             <div class="club-meta">
               {#if club.externalLink}
-                <a href={club.externalLink} target="_blank" rel="noopener noreferrer">Visit website</a>
+                <a class="external-link" href={club.externalLink} target="_blank" rel="noopener noreferrer">Visit website</a>
               {/if}
 
               {#if club.contactInfo}
@@ -568,8 +568,6 @@ function getClubScore(club) {
     padding-bottom: 0;
   }
 
-
-
   h1 {
     margin: 0;
     font-size: clamp(1.3rem, 2vw + 0.9rem, 2rem);
@@ -614,13 +612,13 @@ function getClubScore(club) {
 
   .club-meta a {
     width: fit-content;
-    color: var(--action);
+    color: #321fff;
+    text-decoration: underline;
     font-weight: 600;
-    text-decoration: none;
   }
 
   .club-meta a:hover {
-    text-decoration: underline;
+    text-decoration: italic underline;
   }
 
   .pager {

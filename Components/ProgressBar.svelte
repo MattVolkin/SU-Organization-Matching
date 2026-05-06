@@ -29,12 +29,6 @@
 </script>
 
 <div class="progress-shell" bind:clientWidth={elmWidth} bind:clientHeight={elmHeight}>
-	<!-- <h1>
-		width height is : ({elmWidth}, {elmHeight})
-	</h1>
-	<h2>
-		Progress is {progress}  and progress width is {barWidth}
-	</h2> -->
 	<div id="progBar" style="width: {barWidth}%" > </div>
 
 </div>

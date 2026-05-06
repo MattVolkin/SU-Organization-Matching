@@ -306,8 +306,8 @@
         --text: #132c45;
         --muted: #4f6781;
         --border: #d4e0ec;
-        --accent: #0f6d8c;
-        --accent-hover: #0b5972;
+        --accent: #ffcd00;
+        --accent-hover: #e5b800;
         --danger: #b42318;
         --danger-hover: #922018;
 
@@ -487,7 +487,7 @@
         padding: 0.42rem 0.78rem;
         font-size: 0.84rem;
         font-weight: 700;
-        color: #ffffff;
+        color: #000000;
         background: var(--accent);
         cursor: pointer;
         transition: background-color 0.2s ease;

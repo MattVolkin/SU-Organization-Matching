@@ -450,7 +450,7 @@ Possible errors:
 
 ### `GET /api/adjectives`
 
-Returns swipe question content for `adjective` and `personality_traits` question types.
+Returns swipe question content for `activities`, `personality_traits`, and `other` question types.
 
 Authentication:
 
@@ -462,7 +462,7 @@ Success response example:
 [
   {
     "id": 4,
-    "question_type": "adjective",
+    "question_type": "activities",
     "translations": {
       "en": ["Creative", "A trait related to imagination and originality"]
     }

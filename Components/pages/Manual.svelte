@@ -78,6 +78,9 @@ onMount(() => {
 				religion, ethnicity, and other details. We collect this data because it is important to certain organizations
 				on campus.
 			</p>
+			<p> It is important to note that answering “Prefer not to say” for any of the questions is functionally the same for sorting as
+				answering with nothing. This is particularly important for organizations with strict gender matching requirements, as you will 
+				not see any of them with this option selected. </p>
 			<p>
 				It is important to note that answering “Prefer not to say” for any of the questions is functionally the same for sorting as answering with nothing. 
 				This is particularly important for organizations with strict gender matching requirements, as you will not see any of them with this option selected.

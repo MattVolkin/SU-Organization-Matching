@@ -1155,12 +1155,12 @@
 
       <h3>Personality Traits</h3>
       <div class="adjective-row">
-        <MultiSelectDropdown id="personality-traits" label="Personality Traits" options={personalityAdjectives} bind:value={selectedPersonality} />
+        <MultiSelectDropdown id="personality-traits" label="" options={personalityAdjectives} bind:value={selectedPersonality} />
       </div>
 
       <h3>Activities</h3>
       <div class="adjective-row">
-        <MultiSelectDropdown id="activities" label="Activities" options={activityAdjectives} bind:value={selectedActivities} />
+        <MultiSelectDropdown id="activities" label="" options={activityAdjectives} bind:value={selectedActivities} />
       </div>
 
       <button class="save-button action-button" type="button" onclick={() => handleSaveAdjectives()} disabled={saveStateAdjectives === 'saving'}>Save Traits and Activites</button>

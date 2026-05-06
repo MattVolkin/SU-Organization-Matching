@@ -96,7 +96,14 @@ func UserFromAnswers(answers []Answer) UserInfo {
 		case "associatedmajor", "associatedmajors":
 			addUnique(&user.AssociatedMajors, answerText)
 		case "other":
-			addUnique(&user.Other, answerText)
+			if hasBool {
+				if !boolValue {
+					continue
+				}
+				addUnique(&user.Other, preferredAnswerValue(a))
+			} else {
+				addUnique(&user.Other, answerText)
+			}
 		}
 	}
 

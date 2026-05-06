@@ -501,16 +501,20 @@ func (db *DatabaseClient) FetchAllQuestions(ctx context.Context) (*DatabaseClien
 }
 
 // FetchSwipeQuestionContents returns question IDs plus translation payloads
-// for all adjective and personality traits questions.
+// for all activities, personality trait, and other swipe questions.
 func (db *DatabaseClient) FetchSwipeQuestionContents(ctx context.Context) (*DatabaseClient, []map[string]any, error) {
-	questions := db.FetchQuestionsByTypeAndAppend(ctx, "activities").FetchQuestionsByTypeAndAppend(ctx, "personality_traits").Results()
+	questions := db.
+		FetchQuestionsByTypeAndAppend(ctx, "activities").
+		FetchQuestionsByTypeAndAppend(ctx, "other").
+		FetchQuestionsByTypeAndAppend(ctx, "personality_traits").
+		Results()
 
 	return db, questions, nil
 }
 
-// ReplaceSwipeQuestionsForTesting fully replaces activities and personality
-// trait question sets in one transaction.
-func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, activities []SwipeQuestionInput, personalityTraits []SwipeQuestionInput) (*DatabaseClient, error) {
+// ReplaceSwipeQuestionsForTesting fully replaces activities, personality trait,
+// and optional other question sets in one transaction.
+func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, activities []SwipeQuestionInput, personalityTraits []SwipeQuestionInput, otherQuestions []SwipeQuestionInput) (*DatabaseClient, error) {
 	next := db.clone()
 	if next.lastErr != nil {
 		return next, next.lastErr
@@ -529,6 +533,15 @@ func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, a
 	if err != nil {
 		next.lastErr = err
 		return next, err
+	}
+
+	normalizedOtherQuestions := make([]SwipeQuestionInput, 0, len(otherQuestions))
+	if len(otherQuestions) > 0 {
+		normalizedOtherQuestions, err = normalizeSwipeQuestionInputs(otherQuestions, "other")
+		if err != nil {
+			next.lastErr = err
+			return next, err
+		}
 	}
 
 	tx, err := next.client.Tx(ctx)
@@ -550,6 +563,13 @@ func (db *DatabaseClient) ReplaceSwipeQuestionsForTesting(ctx context.Context, a
 	if err := upsertSwipeQuestionsByType(ctx, tx, "personality_traits", normalizedPersonalityTraits); err != nil {
 		next.lastErr = err
 		return next, err
+	}
+
+	if len(normalizedOtherQuestions) > 0 {
+		if err := upsertSwipeQuestionsByType(ctx, tx, "other", normalizedOtherQuestions); err != nil {
+			next.lastErr = err
+			return next, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

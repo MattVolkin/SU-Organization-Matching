@@ -547,20 +547,9 @@ func buildMatchUser(answers []matching.Answer, profile *ent.User) matching.UserI
 	user.Ethnicities = mergeUniqueFoldStrings(user.Ethnicities, profile.Ethnicities)
 	user.Religions = mergeUniqueFoldStrings(user.Religions, profile.Religions)
 	user.DedicatedMajors = mergeUniqueFoldStrings(user.DedicatedMajors, profile.DedicatedMajors)
-	user.Other = addGreekLifeToOtherSignals(profile.Other, answers)
+	user.Other = mergeUniqueFoldStrings(profile.Other, user.Other)
 
 	return user
-}
-
-func addGreekLifeToOtherSignals(current []string, answers []matching.Answer) []string {
-	signals := []string{}
-
-	for _, a := range answers {
-		if strings.EqualFold(a.Translations["en"][0], "Greek Life") && strings.EqualFold(a.AnswerText, "true") {
-			signals = append(signals, "Greek Life")
-		}
-	}
-	return mergeUniqueFoldStrings(current, signals)
 }
 
 func mergeUniqueFoldStrings(base []string, values []string) []string {
@@ -1200,6 +1189,7 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 
 	activities := make([]SwipeQuestionInput, 0, len(payload))
 	personalityTraits := make([]SwipeQuestionInput, 0, len(payload))
+	otherQuestions := make([]SwipeQuestionInput, 0, len(payload))
 	for i, item := range payload {
 		normalizedType := normalizeTestQuestionType(item.QuestionType)
 		if normalizedType == "" {
@@ -1222,6 +1212,8 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 			activities = append(activities, question)
 		case "personality_traits":
 			personalityTraits = append(personalityTraits, question)
+		case "other":
+			otherQuestions = append(otherQuestions, question)
 		}
 	}
 
@@ -1232,7 +1224,7 @@ func handleTestQuestionBankUpdateRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if _, err := dbClient.Query().ReplaceSwipeQuestionsForTesting(r.Context(), activities, personalityTraits); err != nil {
+	if _, err := dbClient.Query().ReplaceSwipeQuestionsForTesting(r.Context(), activities, personalityTraits, otherQuestions); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -1263,6 +1255,8 @@ func normalizeTestQuestionType(raw string) string {
 		return "activities"
 	case "personality", "personalitytrait", "personalitytraits":
 		return "personality_traits"
+	case "other", "others":
+		return "other"
 	default:
 		return ""
 	}
@@ -1381,7 +1375,6 @@ func handleDemographicsSubmission(w http.ResponseWriter, r *http.Request) {
 	if trimmed := strings.TrimSpace(submission.Religion); trimmed != "" {
 		religions = []string{trimmed}
 	}
-
 
 	if _, err := dbClient.Query().UpsertUserDemographicsByEmail(
 		r.Context(),

@@ -287,6 +287,12 @@
       "en": ["Welcoming", "Open and friendly with new people"],
       "es": ["Acogedor", "Abierto y amable con gente nueva"]
     }
+  },
+  {
+    "question_type": "other",
+    "translations": {
+      "en": ["Greek Life", "Interested in fraternities and sororities"]
+    }
   }
 ]</textarea>
       </div>
@@ -727,6 +733,9 @@
     if (normalized === 'personality' || normalized === 'personalitytrait' || normalized === 'personalitytraits') {
       return 'personality_traits';
     }
+    if (normalized === 'other' || normalized === 'others') {
+      return 'other';
+    }
     return '';
   }
 
@@ -824,7 +833,7 @@
 
     const normalizedType = normalizeQuestionTypeForPatch(item.question_type);
     if (!normalizedType) {
-      errors.push(`${path}.question_type must be one of: activities, personality_traits`);
+      errors.push(`${path}.question_type must be one of: activities, personality_traits, other`);
     } else {
       typeCounts[normalizedType] = (typeCounts[normalizedType] || 0) + 1;
     }
@@ -842,7 +851,7 @@
       return { ok: false, errors: ['Request body must include at least one question'] };
     }
 
-    const typeCounts = { activities: 0, personality_traits: 0 };
+    const typeCounts = { activities: 0, personality_traits: 0, other: 0 };
     payload.forEach((item, index) => validateQuestionItem(item, index, errors, typeCounts));
 
     if (typeCounts.activities === 0 || typeCounts.personality_traits === 0) {
@@ -876,6 +885,7 @@
 
       const activityCount = payload.filter((q) => q.question_type === 'activities').length;
       const personalityCount = payload.filter((q) => q.question_type === 'personality_traits').length;
+      const otherCount = payload.filter((q) => q.question_type === 'other').length;
 
       showResult('res-test-questions', {
         status: 200,
@@ -884,6 +894,7 @@
           message: 'Loaded current questions into editor',
           activitiesCount: activityCount,
           personalityTraitsCount: personalityCount,
+          otherCount,
         },
       });
     } catch (e) {
