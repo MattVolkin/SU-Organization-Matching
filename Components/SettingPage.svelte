@@ -82,8 +82,11 @@
   let resultActivitiesText = $state('');
   let selectedAdjectives = $state<string[]>([]);
   let allAdjectives = $state<string[]>([]);
-  let allClubActivities = $state<string[]>([]);
+  let activityAdjectives = $state<string[]>([]);
+  let personalityAdjectives = $state<string[]>([]);
   let combinedTraitOptions = $derived(getTraitSelectOptions());
+    let selectedActivities = $state<string[]>([]);
+    let selectedPersonality = $state<string[]>([]);
 
   // Trend options
   const genderOptions = ['Man', 'Woman', 'Non-Binary', 'Other'];
@@ -178,7 +181,7 @@
 
   async function loadUserType() {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
-    const headers = tokenFromStorage
+    const headers: Record<string, string> = tokenFromStorage
       ? { Authorization: `Bearer ${tokenFromStorage}` }
       : {};
 
@@ -215,7 +218,7 @@
     return typeof rawID === 'number' ? rawID : 0;
   }
 
-  function getAuthHeaders() {
+  function getAuthHeaders(): Record<string, string> {
     const tokenFromStorage = localStorage.getItem('authToken') || '';
     return tokenFromStorage
       ? { Authorization: `Bearer ${tokenFromStorage}` }
@@ -378,29 +381,8 @@
     const seen = new Set<string>();
     const merged: string[] = [];
 
-    const selectedClub = officerClubs.find((club) => getClubName(club) === selectedClubFromUrl);
-    const selectedClubActivities = selectedClub ? getClubActivities(selectedClub) : [];
-
     for (const item of allAdjectives) {
       const normalized = String(item || '').trim();
-      const key = normalized.toLowerCase();
-      if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
-        seen.add(key);
-        merged.push(normalized);
-      }
-    }
-
-    for (const activity of selectedClubActivities) {
-      const normalized = String(activity || '').trim();
-      const key = normalized.toLowerCase();
-      if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
-        seen.add(key);
-        merged.push(normalized);
-      }
-    }
-
-    for (const activity of allClubActivities) {
-      const normalized = String(activity || '').trim();
       const key = normalized.toLowerCase();
       if (normalized && !seen.has(key) && !hiddenTraitOptions.has(key)) {
         seen.add(key);
@@ -498,8 +480,18 @@
     return '';
   }
 
+  function extractAdjectiveType(item: unknown) {
+    if (!item || typeof item !== 'object') {
+      return '';
+    }
+
+    const record = item as Record<string, unknown>;
+    const rawType = String(record.question_type ?? record.tag ?? record.type ?? '').trim().toLowerCase();
+    return rawType;
+  }
+
   async function createTraitsFromAdjectivesAPI() {
-    const response = await APICreater('GET', '/api/adjectives', null);
+    const response = await APICreater('GET', '/api/adjectives', {});
     const source = Array.isArray(response)
       ? response
       : (Array.isArray((response as { adjectives?: unknown[] } | null)?.adjectives)
@@ -508,6 +500,10 @@
 
     const seen = new Set<string>();
     const labels: string[] = [];
+    const activityLabels: string[] = [];
+    const personalityLabels: string[] = [];
+    const seenActivities = new Set<string>();
+    const seenPersonality = new Set<string>();
 
     for (const item of source) {
       const label = extractAdjectiveLabel(item);
@@ -515,11 +511,34 @@
       if (!label || seen.has(dedupeKey)) {
         continue;
       }
+
+      const type = extractAdjectiveType(item);
+      if (type !== 'activities' && type !== 'personality_traits') {
+        continue;
+      }
+
       seen.add(dedupeKey);
       labels.push(label);
+
+      if (type === 'activities' && !seenActivities.has(dedupeKey)) {
+        seenActivities.add(dedupeKey);
+        activityLabels.push(label);
+      }
+
+      if (type === 'personality_traits' && !seenPersonality.has(dedupeKey)) {
+        seenPersonality.add(dedupeKey);
+        personalityLabels.push(label);
+      }
     }
 
+    // Sort lists alphabetically for predictable UI ordering
+    labels.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    activityLabels.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    personalityLabels.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
     allAdjectives = labels;
+    activityAdjectives = activityLabels;
+    personalityAdjectives = personalityLabels;
   }
 
   async function loadAdjectives() {
@@ -527,29 +546,8 @@
   }
 
   async function getClubOfficers() {
-    const response = await APICreater('GET', getOrgApiPath(), null);
+    const response = await APICreater('GET', getOrgApiPath(), {});
     officerClubs = normalizeClubList(response);
-  }
-
-  async function loadAllClubActivities() {
-    const response = await APICreater('GET', '/api/results', null);
-    const clubs = Array.isArray(response) ? response : [];
-    const seen = new Set<string>();
-    const merged: string[] = [];
-
-    for (const club of clubs) {
-      const activities = Array.isArray(club?.activities) ? club.activities : [];
-      for (const activity of activities) {
-        const normalized = String(activity || '').trim();
-        const key = normalized.toLowerCase();
-        if (normalized && !seen.has(key)) {
-          seen.add(key);
-          merged.push(normalized);
-        }
-      }
-    }
-
-    allClubActivities = merged;
   }
 
   async function saveClubOfficer(club: string, officerEmail: string) {
@@ -840,7 +838,8 @@
     clearSaveStateResetTimer('adjectives');
 
     try {
-      await saveClubAdjectives(selectedClubFromUrl, selectedAdjectives);
+      const combined = [...selectedPersonality, ...selectedActivities];
+      await saveClubAdjectives(selectedClubFromUrl, combined);
       saveStateAdjectives = 'saved';
       scheduleSaveStateReset('adjectives');
     } catch (error) {
@@ -878,6 +877,12 @@
       return Promise.reject(new Error('Missing valid club ID for adjective update'));
     }
 
+    const normalizedActivities = new Set(activityAdjectives.map((entry) => entry.toLowerCase()));
+    const normalizedPersonality = new Set(personalityAdjectives.map((entry) => entry.toLowerCase()));
+
+    const selectedActivities = adjectives.filter((entry) => normalizedActivities.has(String(entry || '').trim().toLowerCase()));
+    const selectedPersonality = adjectives.filter((entry) => normalizedPersonality.has(String(entry || '').trim().toLowerCase()));
+
     return APICreater('PATCH', getOrgApiPath(), {
       id: clubID,
       description: resultDescription.trim(),
@@ -885,7 +890,8 @@
       externalLink: generalSocialMedia.trim(),
       contactInfo: resultContactInfo.trim(),
       includeOfficerEmails: includeOfficerEmailsInResults,
-      personality: adjectives,
+      personality: selectedPersonality,
+      activities: selectedActivities,
       genders: trendsGender,
       ethnicities: trendsEthnicities,
       religions: trendsReligions,
@@ -911,7 +917,7 @@
         return;
       }
 
-      await Promise.all([createTraitsFromAdjectivesAPI(), getClubOfficers(), loadAllClubActivities()]);
+      await Promise.all([createTraitsFromAdjectivesAPI(), getClubOfficers()]);
 
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const slugFromPath = pathParts[0] === 'manage-club' ? (pathParts[1] || '') : '';
@@ -956,12 +962,14 @@
       resultDescription = requestedClubInfo && typeof requestedClubInfo !== 'string'
         ? String(requestedClubInfo.description ?? requestedClubInfo.Description ?? '').trim()
         : '';
-        if(APICreater)
       resultActivitiesText = getClubActivitiesText(requestedClubInfo || '');
-      selectedAdjectives = mergeUniqueStrings(
-        getClubPersonalityTraits(requestedClubInfo || ''),
-        getClubActivities(requestedClubInfo || '')
-      );
+      const canonicalTraitLookup = new Set(allAdjectives.map((entry) => entry.toLowerCase()));
+      const clubPersonality = getClubPersonalityTraits(requestedClubInfo || '').filter((entry) => canonicalTraitLookup.has(String(entry || '').trim().toLowerCase()));
+      const clubActivities = getClubActivities(requestedClubInfo || '').filter((entry) => canonicalTraitLookup.has(String(entry || '').trim().toLowerCase()));
+
+      selectedPersonality = clubPersonality;
+      selectedActivities = clubActivities;
+      selectedAdjectives = mergeUniqueStrings(clubPersonality, clubActivities).filter((entry) => canonicalTraitLookup.has(String(entry || '').trim().toLowerCase()));
       setSelectedOfficerEmails(requestedClub, []);
 
       if (requestedClubInfo && typeof requestedClubInfo !== 'string') {
@@ -1145,12 +1153,17 @@
         <p class={`save-status ${saveStateResults}`} aria-live="polite">{getSaveIndicatorLabel(saveStateResults)}</p>
       {/if}
 
-      <h3>Personality Traits & Activities </h3>
+      <h3>Personality Traits</h3>
       <div class="adjective-row">
-        <MultiSelectDropdown id="personality-traits" label="Select traits" options={combinedTraitOptions} bind:value={selectedAdjectives} />
+        <MultiSelectDropdown id="personality-traits" label="Personality Traits" options={personalityAdjectives} bind:value={selectedPersonality} />
       </div>
 
-      <button class="save-button action-button" type="button" onclick={() => handleSaveAdjectives()} disabled={saveStateAdjectives === 'saving'}>Save Traits</button>
+      <h3>Activities</h3>
+      <div class="adjective-row">
+        <MultiSelectDropdown id="activities" label="Activities" options={activityAdjectives} bind:value={selectedActivities} />
+      </div>
+
+      <button class="save-button action-button" type="button" onclick={() => handleSaveAdjectives()} disabled={saveStateAdjectives === 'saving'}>Save Traits and Activites</button>
       {#if saveStateAdjectives !== 'idle'}
         <p class={`save-status ${saveStateAdjectives}`} aria-live="polite">{getSaveIndicatorLabel(saveStateAdjectives)}</p>
       {/if}
