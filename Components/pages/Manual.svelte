@@ -79,6 +79,10 @@ onMount(() => {
 				on campus.
 			</p>
 			<p>
+				It is important to note that answering “Prefer not to say” for any of the questions is functionally the same for sorting as answering with nothing. 
+				This is particularly important for organizations with strict gender matching requirements, as you will not see any of them with this option selected.
+			</p>
+			<p>
 				The next part is a personality quiz that asks about the types of activities you enjoy and what
 				personality traits you align with.
 			</p>
