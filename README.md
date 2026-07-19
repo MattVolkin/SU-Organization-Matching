@@ -13,7 +13,7 @@ Credit to Dr. Debika Sihi and her students for the initial proposal
 This team is is comprised of Tanner Klein (TannerK7), Matthew Volkin (MattVolkin), Ben McKallip (bmck039), and Aidan Balakrishnan (drumb0y).
 
 ### Contributions
-- Tanner Klien: Project manager, sorting logic and quiz question design
+- Tanner Klein: Project manager, sorting logic and quiz question design
 - Matthew Volkin: UI/UX and API integration 
 - Ben McKallip: Backend and Database
 - Aidan Balakrishnan: UI/UX
@@ -32,10 +32,10 @@ These scripts will install and configure the necessary connector software. It wi
 ### Connecting 
 * To use the updated server, the ssh key needs to be reset. To accomplish this, run the command: `ssh-keys -R capstonessh.benmckallip.com`
   * If this doesn't work, simply remove the `known_hosts` file from the `$USERNAME$/.ssh` folder
-* Username is your name (lowercase). so for Ben, the username is `ben`. You can connect with `ssh ben@capstone` (replacing `ben` with your username)
-* first-time password should be `ubuntu`, it will prompt you to change this
+* Username is your name (lowercase). The username is `name`. You can connect with `ssh name@capstone` (replacing `name` with your username)
+* first-time password is provided by the team lead , it will prompt you to change this
 * `~/capstone` is a shared folder with much more storage than the home directory, try to keep shared files in there. 
-* I have the server set up to host localhost:8080 at [capstone.benmckallip.com](capstone.benmckallip.com), so we can run the server and visit that site to test any changes.
+* I have the server set up to host localhost:8080 at [capstone.benmckallip.com](https://capstone.benmckallip.com), so we can run the server and visit that site to test any changes.
 
 
 ## Installing
