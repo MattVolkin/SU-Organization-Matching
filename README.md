@@ -12,6 +12,12 @@ Credit to Dr. Debika Sihi and her students for the initial proposal
 
 This team is is comprised of Tanner Klein (TannerK7), Matthew Volkin (MattVolkin), Ben McKallip (bmck039), and Aidan Balakrishnan (drumb0y).
 
+### Contributions
+- Tanner Klien: Project manager, sorting logic and quiz question design
+- Matthew Volkin: UI/UX and API integration 
+- Ben McKallip: Backend and Database
+- Aidan Balakrishnan: UI/UX
+
 ## SSH Setup
 
 ### Setup Script
