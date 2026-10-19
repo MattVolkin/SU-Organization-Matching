@@ -318,9 +318,9 @@ func extractSessionTokenFromRequest(r *http.Request) string {
 	return ""
 }
 
-// generateOAuthStateToken creates a simple unique value for OAuth state.
+// generateOAuthStateToken creates an unguessable value for OAuth state.
 func generateOAuthStateToken() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
+	return generateRandomToken()
 }
 
 // generateAuthSessionToken creates an unguessable session token for in-memory sessions.
