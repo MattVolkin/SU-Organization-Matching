@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -322,9 +323,18 @@ func generateOAuthStateToken() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
-// generateAuthSessionToken creates a unique session token for in-memory sessions.
+// generateAuthSessionToken creates an unguessable session token for in-memory sessions.
 func generateAuthSessionToken() string {
-	return fmt.Sprintf("%d-%d", time.Now().UnixNano(), time.Now().UnixMicro())
+	return generateRandomToken()
+}
+
+// generateRandomToken returns 32 bytes from crypto/rand encoded as URL-safe base64.
+func generateRandomToken() string {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		panic(fmt.Sprintf("crypto/rand failed: %v", err))
+	}
+	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
 // addState stores a new OAuth state value with a short expiration window.
