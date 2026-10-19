@@ -22,8 +22,6 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-// host=localhost port=5432 user=dev_user password=testing
-
 type UserRole int
 
 const (
@@ -236,7 +234,10 @@ func main() {
 	}
 
 	// Open the Postgres connection used by Ent queries and mutations.
-	dsn := "host=localhost port=5432 user=dev_user password=testing dbname=dev_project_db"
+	dsn := strings.TrimSpace(os.Getenv("DATABASE_DSN"))
+	if dsn == "" {
+		log.Fatal("missing DATABASE_DSN environment variable (see credentials.env.example)")
+	}
 	dbClient, err = NewDatabaseClient("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)

@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 *dbout.txt
+# Secrets -- never commit (template lives in credentials.env.example)
+credentials.env
+server/adc_cred.json
+*_cred.json

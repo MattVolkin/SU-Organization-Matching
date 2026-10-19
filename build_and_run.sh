@@ -4,14 +4,16 @@ set -euo pipefail
 # Kill any existing Go server instances
 sudo pkill -f '\./server' || true
 
-# Required for Google OAuth login.
-# Example:
-export GOOGLE_CLIENT_ID='1079255593069-2q1tq5l5jjdphphqoi3ekr4kiu0vmcb6.apps.googleusercontent.com '
-export GOOGLE_CLIENT_SECRET='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'
-export GOOGLE_REDIRECT_URL='https://capstone.benmckallip.com/auth/callback'
-export GOOGLE_INTEGRATION_TRIGGER_URL='https://integrations.googleapis.com/v2/projects/capstone-489704/locations/us-south1/integrations/email-on-pubsub-event:execute?triggerId=api_trigger/sendEmail'
-export GOOGLE_APPLICATION_CREDENTIALS='/mnt/capstone/SU-Organization-Matching/server/adc_cred.json'
-export GOOGLE_INTEGRATION_AUTH_MODE='adc'
+# Load secrets (OAuth, integration, database) from the gitignored credentials file.
+CREDENTIALS_FILE="$(dirname "$0")/credentials.env"
+if [ ! -f "$CREDENTIALS_FILE" ]; then
+	echo "Missing $CREDENTIALS_FILE. Copy credentials.env.example to credentials.env and fill in real values."
+	exit 1
+fi
+while IFS='=' read -r key value || [ -n "$key" ]; do
+	case "$key" in ''|\#*) continue ;; esac
+	export "$key=$value"
+done < "$CREDENTIALS_FILE"
 
 # Load nvm when available so this script uses the project Node version.
 export NVM_DIR="$HOME/.nvm"
