@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 *dbout.txt
+
+# Compiled go binaries
+server/server
+
 # Secrets -- never commit (template lives in credentials.env.example)
 credentials.env
 server/adc_cred.json
