@@ -277,8 +277,14 @@ func main() {
 	apiRouter.HandleFunc("/prefill", makePrefillFieldsHandler()).Methods(http.MethodGet)
 
 	apiRouter.Handle("/adjectives", http.HandlerFunc(handleAdjectivesRequest)).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/test/role", handleTestRoleSwitchRequest).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/test/questions", handleTestQuestionBankUpdateRequest).Methods(http.MethodPatch)
+
+	// Test-only endpoints (role switching, question bank replacement) are disabled
+	// unless explicitly enabled, so they are never exposed in production by default.
+	if readBoolEnv("ENABLE_TEST_ENDPOINTS", false) {
+		log.Printf("WARNING: test endpoints /api/test/* are enabled")
+		apiRouter.HandleFunc("/test/role", handleTestRoleSwitchRequest).Methods(http.MethodPost)
+		apiRouter.HandleFunc("/test/questions", handleTestQuestionBankUpdateRequest).Methods(http.MethodPatch)
+	}
 
 	apiRouter.HandleFunc("/results", getUserOrgsHandler).Methods(http.MethodGet)
 
