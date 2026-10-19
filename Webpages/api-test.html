@@ -519,7 +519,8 @@
   /* ────────────────────────────────────────────────────────────────
      Auth state
   ──────────────────────────────────────────────────────────────── */
-  let authToken = localStorage.getItem('authToken') || '';
+  // Session auth uses the HttpOnly session_token cookie; drop any token left by older versions.
+  localStorage.removeItem('authToken');
 
   function updateAuthUI(email) {
     const status = document.getElementById('auth-status');
@@ -538,15 +539,13 @@
 
   /* Check if we already have a stored session. */
   (async function init() {
-    if (!authToken) return;
     try {
       const response = await api('GET', '/api/user');
       if (response.ok && response.data && response.data.email) {
         updateAuthUI(response.data.email);
       }
     } catch {
-      authToken = '';
-      localStorage.removeItem('authToken');
+      updateAuthUI('');
     }
   })();
 
@@ -565,19 +564,12 @@
   window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin) return;
     if (event.data?.type !== 'google-auth-success') return;
-    if (event.data.token) {
-      authToken = event.data.token;
-      localStorage.setItem('authToken', authToken);
-    }
     updateAuthUI(event.data.email || '');
   });
 
   /* ── Logout ── */
   document.getElementById('btn-logout').addEventListener('click', async () => {
-    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-    await fetch('/logout', { method: 'POST', credentials: 'include', headers });
-    authToken = '';
-    localStorage.removeItem('authToken');
+    await fetch('/logout', { method: 'POST', credentials: 'include' });
     updateAuthUI('');
   });
 
@@ -586,7 +578,6 @@
   ──────────────────────────────────────────────────────────────── */
   async function api(method, url, body) {
     const headers = { 'Content-Type': 'application/json' };
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
     const opts = { method, headers, credentials: 'include' };
     if (body !== undefined && body !== null && method !== 'GET') {
       opts.body = JSON.stringify(body);

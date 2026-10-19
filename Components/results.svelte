@@ -289,11 +289,6 @@ function getClubScore(club) {
   }
 
   async function promptLoginIfNeeded() {
-    const tokenFromStorage = localStorage.getItem('authToken') || '';
-    const headers = tokenFromStorage
-      ? { Authorization: `Bearer ${tokenFromStorage}` }
-      : {};
-
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
@@ -301,7 +296,6 @@ function getClubScore(club) {
       const response = await fetch('/api/user', {
         method: 'GET',
         credentials: 'include',
-        headers,
         signal: controller.signal,
       });
 

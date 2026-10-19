@@ -180,15 +180,9 @@
   }
 
   async function loadUserType() {
-    const tokenFromStorage = localStorage.getItem('authToken') || '';
-    const headers: Record<string, string> = tokenFromStorage
-      ? { Authorization: `Bearer ${tokenFromStorage}` }
-      : {};
-
     const response = await fetch('/api/user', {
       method: 'GET',
       credentials: 'include',
-      headers,
     });
 
     if (!response.ok) {
@@ -216,13 +210,6 @@
     }
     const rawID = (club as { ID?: number; id?: number }).ID ?? (club as { ID?: number; id?: number }).id;
     return typeof rawID === 'number' ? rawID : 0;
-  }
-
-  function getAuthHeaders(): Record<string, string> {
-    const tokenFromStorage = localStorage.getItem('authToken') || '';
-    return tokenFromStorage
-      ? { Authorization: `Bearer ${tokenFromStorage}` }
-      : {};
   }
 
   function buildClubImageApiPath(club: ClubValue) {
@@ -253,7 +240,6 @@
     const response = await fetch(buildClubImageApiPath(club), {
       method: 'POST',
       credentials: 'include',
-      headers: getAuthHeaders(),
       body: requestBody,
     });
 

@@ -1,7 +1,7 @@
-<!-- @component Provides centralized API request handling with authentication token management and debug logging. -->
+<!-- @component Provides centralized API request handling with cookie-based authentication and debug logging. -->
 <script context="module">
 /**
- * @function APICreater - Centralized API request handler that manages authentication tokens, headers, and request/response logging
+ * @function APICreater - Centralized API request handler that sends the session cookie, sets headers, and request/response logging
  * @param {string} method - HTTP method (GET, POST, PATCH, DELETE, etc.)
  * @param {string} url - API endpoint URL
  * @param {object} body - Request body payload, automatically JSON stringified for non-GET requests
@@ -9,14 +9,10 @@
  * @returns {Promise<object>} Parsed JSON response from the server
  */
 export async function APICreater(method, url, body, debug = false) {
-    const token = (typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : '');
+    // Authentication rides on the HttpOnly session_token cookie (credentials: 'include').
     const requestHeaders = {
         'Content-Type': 'application/json',
     };
-
-    if (token) {
-        requestHeaders.Authorization = `Bearer ${token}`;
-    }
 
     const requestOptions = {
         method,

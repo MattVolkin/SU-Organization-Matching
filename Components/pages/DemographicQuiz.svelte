@@ -14,15 +14,9 @@
 	let userType = 'user';
 
 	async function loadUserType() {
-		const tokenFromStorage = localStorage.getItem('authToken') || '';
-		const headers = tokenFromStorage
-			? { Authorization: `Bearer ${tokenFromStorage}` }
-			: {};
-
 		const response = await fetch('/api/user', {
 			method: 'GET',
 			credentials: 'include',
-			headers,
 		});
 
 		if (!response.ok) {

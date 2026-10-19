@@ -25,7 +25,6 @@
   let isMenuOpen = $state(false);  // Mobile hamburger menu state
   let isManageClubOpen = $state(false);  // Manage club dropdown state
   let userEmail = $state('');
-  let authToken = $state('');
   let resolvedUserType = $state('user');  // Actual logged-in user type
   let officerClubs = $state([]);  // Clubs managed by officer
   let isAuthChecking = $state(true);  // Auth check in progress
@@ -55,28 +54,20 @@
   // Refresh user authentication status from backend
   async function refreshUser() {
     isAuthChecking = true;
-    const tokenFromStorage = localStorage.getItem('authToken') || '';
-    authToken = tokenFromStorage;
-    
-    // Prepare authorization header if token exists
-    const headers = tokenFromStorage
-      ? { Authorization: `Bearer ${tokenFromStorage}` }
-      : {};
+    // Session auth uses the HttpOnly cookie; drop any token left by older versions.
+    localStorage.removeItem('authToken');
 
     try {
       // Fetch current user info from backend
       const res = await fetch('/api/user', {
         method: 'GET',
         credentials: 'include',
-        headers,
       });
 
       // If auth failed, clear user data
       if (!res.ok) {
         userEmail = '';
-        authToken = '';
         resolvedUserType = 'user';
-        localStorage.removeItem('authToken');
         return;
       }
 
@@ -99,7 +90,7 @@
 
     try {
       // Fetch clubs from appropriate endpoint
-      const clubs = await APICreater('GET', getOrgApiPath(), null, authToken);
+      const clubs = await APICreater('GET', getOrgApiPath(), null);
       officerClubs = Array.isArray(clubs) ? clubs : [];
     } catch (error) {
       console.error('Unable to load officer clubs', error);
@@ -108,19 +99,13 @@
   }
   
   export async function logout() {
-    const headers = authToken
-      ? { Authorization: `Bearer ${authToken}` }
-      : {};
     await fetch('/logout', {
       method: 'POST',
       credentials: 'include',
-      headers,
     });
     userEmail = '';
-    authToken = '';
     resolvedUserType = 'user';
     officerClubs = [];
-    localStorage.removeItem('authToken');
     window.dispatchEvent(new CustomEvent('auth-logout'));
   }
 
@@ -132,10 +117,6 @@
       return;
     }
 
-    if (event.data.token) {
-      authToken = event.data.token;
-      localStorage.setItem('authToken', event.data.token);
-    }
     userEmail = event.data.email || '';
     void refreshUser();
   }
@@ -146,7 +127,6 @@
 
   function handleAuthLogout() {
     userEmail = '';
-    authToken = '';
     resolvedUserType = 'user';
     officerClubs = [];
     isAuthChecking = false;
