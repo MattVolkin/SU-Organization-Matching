@@ -647,6 +647,12 @@ func handlePatchOrgRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Admins may patch any club; officers only the clubs they lead.
+	userEmail := strings.TrimSpace(r.Header.Get("X-User-Email"))
+	if _, ok := fetchWritableClubForUser(w, r, payload.ID, userEmail); !ok {
+		return
+	}
+
 	_, updatedClub, err := dbClient.Query().PatchClubFromJSON(r.Context(), payload.ID, &payload)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
