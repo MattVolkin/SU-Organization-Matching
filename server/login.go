@@ -61,6 +61,10 @@ var authSessionStore *AuthSessionStore
 
 const sessionInactivityTimeout = 30 * time.Minute
 
+// secureSessionCookies marks the session cookie Secure so it is only sent over
+// HTTPS. main enables it when the OAuth redirect URL uses https.
+var secureSessionCookies bool
+
 // NewAuthSessionStore creates an initialized in-memory auth session store.
 func NewAuthSessionStore() *AuthSessionStore {
 	return &AuthSessionStore{sessions: make(map[string]*AuthSession)}
@@ -146,9 +150,12 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
 			Value:    sessionToken,
 			Path:     "/",
 			HttpOnly: true,
+			Secure:   secureSessionCookies,
 			SameSite: http.SameSiteLaxMode,
 		})
 
+		// The session token is only delivered via the HttpOnly cookie so page
+		// scripts (and any injected script) cannot read it.
 		if stateInfo.Popup {
 			// Popup mode reports success to the opener and closes itself.
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -159,8 +166,7 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
       (function () {
         const payload = {
           type: "google-auth-success",
-          email: %q,
-          token: %q
+          email: %q
         };
         if (window.opener && !window.opener.closed) {
           window.opener.postMessage(payload, window.location.origin);
@@ -171,7 +177,7 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
       })();
     </script>
   </body>
-</html>`, userInfo.Email, sessionToken)
+</html>`, userInfo.Email)
 			return
 		}
 
@@ -181,7 +187,6 @@ func makeOAuthCallbackHandler(oauthConfig *OAuthRuntimeConfig) http.HandlerFunc 
 		json.NewEncoder(w).Encode(map[string]any{
 			"message": "Successfully authenticated",
 			"email":   userInfo.Email,
-			"token":   sessionToken,
 		})
 	}
 }
@@ -439,10 +444,13 @@ func makeLogoutHandler() http.HandlerFunc {
 		}
 
 		http.SetCookie(w, &http.Cookie{
-			Name:   "session_token",
-			Value:  "",
-			Path:   "/",
-			MaxAge: -1,
+			Name:     "session_token",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   secureSessionCookies,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		w.Header().Set("Content-Type", "application/json")

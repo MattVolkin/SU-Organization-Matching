@@ -212,6 +212,8 @@ func main() {
 	}
 
 	log.Printf("Google OAuth redirect URL: %s", googleRedirectURL)
+	secureSessionCookies = strings.HasPrefix(strings.ToLower(googleRedirectURL), "https://")
+	log.Printf("Secure session cookies: %t", secureSessionCookies)
 	log.Printf("Google OAuth client ID suffix: %s", redactValueSuffix(googleClientID, 10))
 
 	// Build the OAuth client used by /login and /auth/callback.
