@@ -199,9 +199,13 @@ func main() {
 	// Read OAuth settings from the environment and apply safe defaults.
 	googleClientID := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
 	googleClientSecret := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_SECRET"))
+	listenPort := strings.TrimSpace(os.Getenv("PORT"))
+	if listenPort == "" {
+		listenPort = "8080"
+	}
 	googleRedirectURL := strings.TrimSpace(os.Getenv("GOOGLE_REDIRECT_URL"))
 	if googleRedirectURL == "" {
-		googleRedirectURL = "http://localhost:8080/auth/callback"
+		googleRedirectURL = "http://localhost:" + listenPort + "/auth/callback"
 	}
 
 	if googleClientID == "" {
@@ -238,7 +242,7 @@ func main() {
 	// Open the Postgres connection used by Ent queries and mutations.
 	dsn := strings.TrimSpace(os.Getenv("DATABASE_DSN"))
 	if dsn == "" {
-		log.Fatal("missing DATABASE_DSN environment variable (see credentials.env.example)")
+		log.Fatal("missing DATABASE_DSN environment variable (see config.env.example)")
 	}
 	dbClient, err = NewDatabaseClient("postgres", dsn)
 	if err != nil {
@@ -317,7 +321,7 @@ func main() {
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
 	// Start HTTP server.
-	port := ":8080"
+	port := ":" + listenPort
 	fmt.Println("Server is running on http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, router))
 }

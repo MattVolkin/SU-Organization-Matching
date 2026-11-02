@@ -21,7 +21,7 @@ type questionImport struct {
 
 func main() {
 	csvPath := flag.String("csv", "Question Planning - List of Adjectives.csv", "Path to the question CSV file")
-	dsn := flag.String("dsn", os.Getenv("DATABASE_DSN"), "Postgres DSN (defaults to $DATABASE_DSN from credentials.env)")
+	dsn := flag.String("dsn", os.Getenv("DATABASE_DSN"), "Postgres DSN (defaults to $DATABASE_DSN from config.env)")
 	dryRun := flag.Bool("dry-run", false, "Parse and report changes without writing to the database")
 	flag.Parse()
 

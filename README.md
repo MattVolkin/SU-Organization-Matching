@@ -35,7 +35,8 @@ These scripts will install and configure the necessary connector software. It wi
 * Username is your name (lowercase). The username is `name`. You can connect with `ssh name@capstone` (replacing `name` with your username)
 * first-time password is provided by the team lead , it will prompt you to change this
 * `~/capstone` is a shared folder with much more storage than the home directory, try to keep shared files in there. 
-* I have the server set up to host localhost:8080 at [capstone.benmckallip.com](https://capstone.benmckallip.com), so we can run the server and visit that site to test any changes.
+* [capstone.benmckallip.com](https://capstone.benmckallip.com) serves the production server on port 8080, which runs the latest GitHub release and is deployed automatically. It is separate from the shared folder, so dev work won't affect it.
+* The shared dev checkout runs on port 8081 (set by `PORT` in `config.env`; the server defaults to 8080 when unset). Run `./build_and_run.sh` to rebuild and restart it with your changes.
 
 
 ## Installing
@@ -195,6 +196,7 @@ To view our product go to https://capstone.benmckallip.com/
 - API_REFERENCE.md: Examples, usage guide, and syntax information about each API method, what parameters it takes, and what given variable/category names are.
 - build_and_run.bat: Executable file to build server.
 - build_and_run.sh: Shell runnable file to build server.
+- config.env.example: Template for config.env (gitignored), which holds the server port and secrets.
 - dbout.txt: Text representation of true false values to rest swiping application.
 - go.mod: List of direct libraries or tools used by the go portions of the application (especially for API calling).
 - go.sum: List of all libraries and their dependencies for the go portions of the application.

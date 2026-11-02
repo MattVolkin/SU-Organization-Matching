@@ -38,7 +38,7 @@ type clubImportData struct {
 
 func main() {
 	csvPath := flag.String("csv", "Question Planning - Reformatted Data.csv", "Path to the organization planning CSV file")
-	dsn := flag.String("dsn", os.Getenv("DATABASE_DSN"), "Postgres DSN (defaults to $DATABASE_DSN from credentials.env)")
+	dsn := flag.String("dsn", os.Getenv("DATABASE_DSN"), "Postgres DSN (defaults to $DATABASE_DSN from config.env)")
 	dryRun := flag.Bool("dry-run", false, "Parse and report changes without writing to the database")
 	flag.Parse()
 

@@ -27,7 +27,9 @@ dist-ssr
 # Compiled go binaries
 server/server
 
-# Secrets -- never commit (template lives in credentials.env.example)
+# Secrets -- never commit (template lives in config.env.example)
+config.env
+# Legacy name for config.env; keep ignored so old copies are never committed
 credentials.env
 server/adc_cred.json
 *_cred.json
